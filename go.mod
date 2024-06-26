@@ -4,8 +4,9 @@ go 1.22
 
 require (
 	github.com/brianstrauch/cobra-shell v0.5.0
+	github.com/creasty/defaults v1.7.0
+	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/sync v0.7.0
 )
 
 require (
