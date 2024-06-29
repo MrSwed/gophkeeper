@@ -1,81 +1,90 @@
 package config
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
-	gkErr "gophKeeper/internal/client/errors"
-
 	"github.com/kirsle/configdir"
-
-	"github.com/creasty/defaults"
+	"github.com/spf13/viper"
 )
 
 const (
-	AppName        = "GophKeeper"
-	configFileName = "config.json"
+	AppName = "GophKeeper"
 )
 
-type Global struct {
+type config struct {
+	*viper.Viper
 }
 
-type Config struct {
-	ServerAddress string
-	ServerType    string        `json:"server_type" default:"grpc"`
-	SyncInterval  time.Duration `json:"sync_interval" default:"10m"`
-	LogFileName   string
-	user          string
-	configFile    string
+var (
+	User = config{viper.New()}
+	Glob = config{viper.New()}
+)
+
+func (c *config) Print() {
+	v := make(map[string]any)
+	if err := c.Unmarshal(&v); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf(" %v\n", v)
 }
 
-func NewUserConfig(user string) (c *Config, err error) {
-	c = &Config{
-		user: user,
-	}
-	if err = defaults.Set(c); err != nil {
-		return
-	}
+func (c *config) Set(key string, value any) {
+	c.Viper.Set(key, value)
+	c.Viper.Set("changed_at", time.Now())
+}
 
-	if c.user == "" {
-		err = gkErr.ErrUserNameInvalid
-		return
+func (c *config) Save() error {
+	isNew := true
+	if c.Get("loaded_at") != nil {
+		isNew = false
 	}
+	c.Viper.Set("loaded_at", nil)
+	c.Viper.Set("changed_at", nil)
+	if isNew {
+		return c.SafeWriteConfig()
+	}
+	return c.WriteConfig()
+}
 
-	configPath := configdir.LocalConfig(AppName, c.user)
-	err = configdir.MakePath(configPath) // Ensure it exists.
+func (c *config) IsChanged() bool {
+	return c.Get("changed_at") != nil
+}
+
+func (c *config) Load(name, path string, defaults map[string]any) error {
+	c.SetConfigName(name)
+	c.SetConfigType("json")
+	c.AddConfigPath(path)
+	c.AddConfigPath(".")
+
+	for k, v := range defaults {
+		c.Viper.Set(k, v)
+	}
+	_ = os.MkdirAll(path, 0755)
+
+	err := c.ReadInConfig()
+	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		return nil
+	}
+	c.Viper.Set("loaded_at", time.Now())
+	return err
+
+}
+
+func UserLoad(name string) error {
+	return User.Load(AppName+"_"+name, configdir.LocalConfig(AppName, name),
+		map[string]any{"name": name, "autosave": true})
+}
+
+func GlobalLoad() error {
+	return Glob.Load(AppName, configdir.LocalConfig(AppName), map[string]any{"autosave": true})
+}
+
+func init() {
+	// UserLoad()
+	err := GlobalLoad()
 	if err != nil {
-		return
+		panic(err)
 	}
-	c.configFile = filepath.Join(configPath, configFileName)
-	if _, err = os.Stat(c.configFile); os.IsNotExist(err) {
-		err = c.SaveConfig()
-	} else if err == nil {
-		err = c.LoadConfig()
-	}
-	return
-}
-
-func (c *Config) LoadConfig() (err error) {
-	var fh *os.File
-	if fh, err = os.Open(c.configFile); err != nil {
-		return
-	}
-	defer func() { err = fh.Close() }()
-	decoder := json.NewDecoder(fh)
-	err = decoder.Decode(&c)
-	return
-}
-
-func (c *Config) SaveConfig() (err error) {
-	var fh *os.File
-	if fh, err = os.Create(c.configFile); err != nil {
-		return
-	}
-	defer func() { err = fh.Close() }()
-	encoder := json.NewEncoder(fh)
-	encoder.SetIndent("", "\t")
-	err = encoder.Encode(&c)
-	return
 }

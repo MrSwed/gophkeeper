@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	cfg "gophKeeper/internal/client/config"
 	"os"
 	"path/filepath"
 
@@ -25,7 +27,26 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
+	}
+	if cfg.Glob.GetBool("autosave") {
+		fmt.Print("Saving global cfg files at exit..")
+		err = cfg.Glob.Save()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(" ..Success")
+	}
+	if cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") {
+		fmt.Print("Saving user cfg files at exit..")
+		err = cfg.User.Save()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(" ..Success")
 	}
 }
 
