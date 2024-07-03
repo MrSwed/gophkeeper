@@ -1,11 +1,12 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
-	"github.com/kirsle/configdir"
 	"github.com/spf13/viper"
 )
 
@@ -42,6 +43,7 @@ func (c *config) Save() error {
 	}
 	c.Viper.Set("loaded_at", nil)
 	c.Viper.Set("changed_at", nil)
+	c.Viper.Set("updated_at", time.Now())
 	if isNew {
 		return c.SafeWriteConfig()
 	}
@@ -72,19 +74,55 @@ func (c *config) Load(name, path string, defaults map[string]any) error {
 
 }
 
-func UserLoad(name string) error {
-	return User.Load(AppName+"_"+name, configdir.LocalConfig(AppName, name),
-		map[string]any{"name": name, "autosave": true})
+func UserLoad(name string) (err error) {
+	var cfgDir string
+	cfgDir, err = os.UserConfigDir()
+	if err != nil {
+		return
+	}
+	profiles, ok := Glob.Get("profiles").(map[string]any)
+	if !ok {
+		err = errors.New("error get profiles")
+		return
+	}
+	profile, ok := profiles[name].(map[string]any)
+	if !ok {
+		err = errors.New("error get profile " + name)
+		return
+	}
+	path, ok := profile["path"].(string)
+	if !ok {
+		profile["path"] = filepath.Join(cfgDir, name)
+	}
+	err = User.Load(AppName, path, map[string]any{"name": name, "autosave": true})
+	return
 }
 
-func GlobalLoad() error {
-	return Glob.Load(AppName, configdir.LocalConfig(AppName), map[string]any{"autosave": true})
+func GlobalLoad() (err error) {
+	var cfgDir string
+	cfgDir, err = os.UserConfigDir()
+	if err != nil {
+		return
+	}
+	cfgDir = filepath.Join(cfgDir, AppName)
+	err = Glob.Load(AppName, cfgDir, map[string]any{
+		"autosave": true,
+		"profile":  "default",
+		"profiles": map[string]any{"default": map[string]any{
+			"path": filepath.Join(cfgDir, "default"),
+		}},
+	})
+	return
 }
 
 func init() {
-	// UserLoad()
 	err := GlobalLoad()
 	if err != nil {
 		panic(err)
 	}
+	err = UserLoad(Glob.GetString("profile"))
+	if err != nil {
+		panic(err)
+	}
+
 }

@@ -30,7 +30,7 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if cfg.Glob.GetBool("autosave") {
+	if cfg.Glob.GetBool("autosave") && cfg.Glob.Get("changed_at") != nil {
 		fmt.Print("Saving global cfg files at exit..")
 		err = cfg.Glob.Save()
 		if err != nil {
@@ -39,7 +39,7 @@ func Execute() {
 		}
 		fmt.Println(" ..Success")
 	}
-	if cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") {
+	if cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.Get("changed_at") != nil {
 		fmt.Print("Saving user cfg files at exit..")
 		err = cfg.User.Save()
 		if err != nil {

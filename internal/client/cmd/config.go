@@ -27,10 +27,10 @@ func init() {
 			})
 
 			if !isAction {
-				fmt.Println("Global configuration")
+				fmt.Println("Global configuration:")
 				cfg.Glob.Print()
-				if cfg.User.GetString("user") != "" {
-					fmt.Printf(`User %s configuration:\n`, cfg.User.GetString("user"))
+				if cfg.User.GetString("name") != "" {
+					fmt.Printf("User %s configuration:\n", cfg.User.GetString("name"))
 					cfg.User.Print()
 				}
 
@@ -67,6 +67,7 @@ func init() {
 			// todo handle flags
 		},
 	}
+	// updUserCmd.Flags().StringP("mode", "m", "", "remote mode")
 	updUserCmd.Flags().StringP("server", "s", "", "server address")
 	updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("sync_interval", "i", "", "synchronisation interval ")
