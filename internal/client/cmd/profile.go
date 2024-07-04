@@ -1,13 +1,10 @@
 package cmd
 
 import (
-	"fmt"
-	"gophKeeper/internal/client/config"
+	cfg "gophKeeper/internal/client/config"
 	"log"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/exp/maps"
 )
 
 func init() {
@@ -20,7 +17,7 @@ func profileCmd() *cobra.Command {
 		Use:   "profile",
 		Short: "Profiles menu",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Current profile", config.Glob.Get("profile"))
+			cmd.Println("Current profile", cfg.Glob.Get("profile"))
 			// todo
 		},
 	}
@@ -30,11 +27,18 @@ func profileCmd() *cobra.Command {
 			Use:   "list",
 			Short: "list of profiles",
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(cmd.Short)
-				prs := config.Glob.Get("profiles").(map[string]any)
-				fmt.Println("Available profiles: ")
-				fmt.Println(" -", strings.Join(maps.Keys(prs), "\n -"))
-				fmt.Println()
+				cmd.Println(cmd.Short)
+				prs := cfg.Glob.Get("profiles").(map[string]any)
+				cmd.Println("Available profiles: ")
+				for profile := range prs {
+					if profile == cfg.Glob.Get("profile") {
+						cmd.Println(" -", profile, "*")
+					} else {
+						cmd.Println(" -", profile)
+					}
+				}
+				// cmd.Println(" -", strings.Join(maps.Keys(prs), "\n - "))
+				cmd.Println()
 				err := cmd.Usage()
 				if err != nil {
 					log.Fatal(err)
@@ -44,9 +48,16 @@ func profileCmd() *cobra.Command {
 		&cobra.Command{
 			Use:   "use",
 			Short: "switch to another profile",
+			Long:  "if it not exist, it will be created",
+			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println("Current profile", config.Glob.Get("profile.name"))
-				// todo
+				cmd.Println("Current profile", cfg.Glob.Get("profile"))
+				cmd.Println("Switching to profile.. ", args[0])
+				cfg.Glob.Set("profile", args[0])
+				err := cfg.UserLoad()
+				if err != nil {
+					cmd.PrintErrf("failed to load user profile: %v\n", err)
+				}
 			},
 		},
 	)

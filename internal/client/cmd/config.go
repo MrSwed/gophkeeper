@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	cfg "gophKeeper/internal/client/config"
 	"log"
 
@@ -22,19 +21,19 @@ func init() {
 				if flag.Changed {
 					isAction = true
 					cfg.Glob.Set(flag.Name, flag.Value)
-					fmt.Println("Global configuration: set ", flag.Name, flag.Value)
+					cmd.Println("Global configuration: set ", flag.Name, flag.Value)
 				}
 			})
 
 			if !isAction {
-				fmt.Println("Global configuration:")
+				cmd.Println("Global configuration:")
 				cfg.Glob.Print()
 				if cfg.User.GetString("name") != "" {
-					fmt.Printf("User %s configuration:\n", cfg.User.GetString("name"))
+					cmd.Printf("User %s configuration:\n", cfg.User.GetString("name"))
 					cfg.User.Print()
 				}
 
-				fmt.Println()
+				cmd.Println()
 				err := cmd.Usage()
 				if err != nil {
 					log.Fatal(err)
@@ -42,9 +41,9 @@ func init() {
 			} else {
 				if cfg.Glob.Get("autosave") == nil || cfg.Glob.GetBool("autosave") {
 					if err := cfg.Glob.Save(); err != nil {
-						fmt.Println("Error autosave config", err)
+						cmd.Println("Error autosave config", err)
 					} else {
-						fmt.Println("Success autosave config")
+						cmd.Println("Success autosave config")
 					}
 				}
 			}
@@ -57,11 +56,11 @@ func init() {
 		Short: "change user config params",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			if cfg.User.Get("user") == nil {
-				fmt.Println("You should auth before your can edit your settings")
+			if cfg.User.Get("name") == nil {
+				cmd.Println("You should auth before your can edit your settings")
 				return
 			}
-			fmt.Println("User params", cfg.User)
+			cmd.Println("User params")
 			cfg.User.Print()
 
 			// todo handle flags
@@ -79,32 +78,32 @@ func init() {
 			Short: "Save now",
 			Long:  ``,
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Print("Saving global config.. ")
+				cmd.Print("Saving global config.. ")
 				if cfg.Glob.IsChanged() {
 					err := cfg.Glob.Save()
 					if err != nil {
-						fmt.Println(err)
+						cmd.Println(err)
 					} else {
-						fmt.Println("success")
+						cmd.Println("success")
 					}
 				} else {
-					fmt.Println("not changed")
+					cmd.Println("not changed")
 				}
 
-				fmt.Print("Saving user config.. ")
+				cmd.Print("Saving user config.. ")
 				if cfg.User.GetString("user") != "" {
 					if cfg.User.IsChanged() {
 						err := cfg.User.Save()
 						if err != nil {
-							fmt.Println(err)
+							cmd.Println(err)
 						} else {
-							fmt.Println("succeess")
+							cmd.Println("succeess")
 						}
 					} else {
-						fmt.Println("not changed")
+						cmd.Println("not changed")
 					}
 				} else {
-					fmt.Println("You should auth before your can edit your settings")
+					cmd.Println("You should auth before your can edit your settings")
 				}
 			},
 		},
