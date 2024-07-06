@@ -10,7 +10,7 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 type Model interface {
 	Bytes() ([]byte, error)
-	IsValid() bool
+	Validate() error
 }
 
 type Common struct {

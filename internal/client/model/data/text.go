@@ -5,7 +5,7 @@ type Text struct {
 	Text string `json:"text"`
 }
 
-func (m *Text) IsValid() (err error) {
+func (m *Text) Validate() error {
 	return validate.Struct(m)
 }
 

@@ -5,7 +5,7 @@ type Bin struct {
 	Bin []byte `json:"bin"`
 }
 
-func (m *Bin) IsValid() (err error) {
+func (m *Bin) Validate() error {
 	return validate.Struct(m)
 }
 

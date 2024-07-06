@@ -20,7 +20,7 @@ type Card struct {
 	CVV    string `json:"cvv" validate:"omitempty,credit_card_cvv"`
 }
 
-func (m *Card) IsValid() (err error) {
+func (m *Card) Validate() error {
 	return validate.Struct(m)
 }
 

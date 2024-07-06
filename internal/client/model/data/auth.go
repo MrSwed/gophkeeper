@@ -6,7 +6,7 @@ type Auth struct {
 	Password string `json:"password"`
 }
 
-func (m *Auth) IsValid() (err error) {
+func (m *Auth) Validate() (err error) {
 	return validate.Struct(m)
 }
 
