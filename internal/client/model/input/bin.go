@@ -1,4 +1,4 @@
-package data
+package input
 
 type Bin struct {
 	Common

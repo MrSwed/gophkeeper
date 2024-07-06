@@ -1,4 +1,4 @@
-package data
+package input
 
 type Auth struct {
 	Common
