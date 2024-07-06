@@ -56,7 +56,7 @@ func (s *service) Set(data input.Model) (err error) {
 	}
 	var r storage.DBRecord
 	if r, err = s.r.DB.Get(data.GetKey()); err != nil &&
-		!errors.Is(err, sql.ErrNoRows) {
+			!errors.Is(err, sql.ErrNoRows) {
 		return
 	}
 	if r.Key == "" {
@@ -69,6 +69,8 @@ func (s *service) Set(data input.Model) (err error) {
 	if b, err = data.Bytes(); err != nil {
 		return
 	}
+
+	// todo: crypt here ??
 
 	if err = s.r.File.Save(r.Filename, b); err != nil {
 		return
