@@ -1,14 +1,16 @@
 package storage
 
 import (
+	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type DBItem struct {
-	Key         string `db:"key"`
-	Description string `db:"description"`
-	CreatedAt   string `db:"created_at"`
-	UpdatedAt   string `db:"updated_at"`
+	Key         string    `db:"key" json:"key"`
+	Description string    `db:"description" json:"description"`
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type DBRecord struct {
@@ -16,16 +18,6 @@ type DBRecord struct {
 	Filename string `db:"filename"`
 }
 
-type StoreRecord struct {
-	DBItem
-	Data []byte
-}
-
 type ListItem struct {
 	DBItem
-}
-
-type List struct {
-	Items []ListItem
-	Total int
 }

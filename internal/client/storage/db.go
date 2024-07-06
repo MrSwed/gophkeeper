@@ -2,7 +2,6 @@ package storage
 
 import (
 	"gophKeeper/internal/client/model/input"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -82,12 +81,13 @@ func (s *dbStore) Get(key string) (data DBRecord, err error) {
 }
 func (s *dbStore) Set(data DBRecord) (err error) {
 	_, err = s.db.Exec(`insert into storage 
- (key, description, created_at, updated_at, filename) values(?,?,?,?,?)
+ (key, description, created_at, updated_at, filename)
+ values(?,?,DATETIME('now'),DATETIME('now'),?)
  on conflict (key) do update 
   set description=excluded.description,
       updated_at=excluded.updated_at,
       filename=excluded.filename`,
-		data.Key, data.Description, time.Now(), time.Now(), data.Filename)
+		data.Key, data.Description, data.Filename)
 	return
 }
 

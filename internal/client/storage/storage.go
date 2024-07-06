@@ -16,7 +16,7 @@ type DB interface {
 
 type File interface {
 	Get(fileName string) (b []byte, err error)
-	Set(fileName string, b []byte) (err error)
+	Save(fileName string, b []byte) (err error)
 	Delete(fileName string) (err error)
 }
 

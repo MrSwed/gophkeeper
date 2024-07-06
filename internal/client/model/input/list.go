@@ -8,3 +8,7 @@ type ListQuery struct {
 	Limit       uint64 `json:"limit" validate:"omitempty" default:"10"`
 	Offset      uint64 `json:"offset" validate:"omitempty"`
 }
+
+func (m *ListQuery) Validate() (err error) {
+	return validate.Struct(m)
+}

@@ -21,7 +21,7 @@ func (s *fileStore) Get(fileName string) (b []byte, err error) {
 	return os.ReadFile(filepath.Join(s.path, fileName))
 }
 
-func (s *fileStore) Set(fileName string, b []byte) (err error) {
+func (s *fileStore) Save(fileName string, b []byte) (err error) {
 	if err = os.Mkdir(s.path, os.ModePerm); err != nil && !os.IsExist(err) {
 		return
 	}
