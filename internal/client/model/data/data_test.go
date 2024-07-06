@@ -2,6 +2,7 @@ package data
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -75,9 +76,9 @@ func TestModel_Bytes(t *testing.T) {
 
 func TestModel_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		m       Model
-		wantErr bool
+		name        string
+		m           Model
+		wantErrKeys []string
 	}{
 		{
 			name: "test auth 1",
@@ -88,7 +89,6 @@ func TestModel_Validate(t *testing.T) {
 				Login:    "test",
 				Password: "password",
 			},
-			wantErr: false,
 		},
 		{
 			name: "test auth 2, need key",
@@ -96,7 +96,7 @@ func TestModel_Validate(t *testing.T) {
 				Login:    "test",
 				Password: "password",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"Key"},
 		},
 
 		{
@@ -107,18 +107,17 @@ func TestModel_Validate(t *testing.T) {
 				},
 				Bin: []byte("test:test"),
 			},
-			wantErr: false,
 		},
 
 		{
-			name: "no card",
+			name: "no card number",
 			m: &Card{
 				Common: Common{Key: "some bank card 1"},
 				Exp:    "05/25",
 				Name:   "Some Name",
 				CVV:    "999",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"Number"},
 		},
 		{
 			name: "not valid card",
@@ -129,7 +128,7 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "999",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"Number"},
 		},
 		{
 			name: "valid data",
@@ -140,7 +139,6 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "999",
 			},
-			wantErr: false,
 		},
 		{
 			name: "bad cvv 1",
@@ -151,7 +149,7 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "9992",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"CVV"},
 		},
 		{
 			name: "bad cvv 2",
@@ -162,7 +160,7 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "99",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"CVV"},
 		},
 		{
 			name: "can be no cvv",
@@ -171,7 +169,6 @@ func TestModel_Validate(t *testing.T) {
 				Exp:    "05/25",
 				Number: "4012888888881881",
 			},
-			wantErr: false,
 		},
 		{
 			name: "bad exp",
@@ -182,7 +179,12 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "999",
 			},
-			wantErr: true,
+			wantErrKeys: []string{"Exp"},
+		},
+		{
+			name:        "no data",
+			m:           &Card{},
+			wantErrKeys: []string{"Number", "Key"},
 		},
 		{
 			name: "can no exp",
@@ -192,25 +194,37 @@ func TestModel_Validate(t *testing.T) {
 				Name:   "Some Name",
 				CVV:    "999",
 			},
-			wantErr: false,
 		},
 
 		{
-			name: "test 1",
+			name: "text 1",
 			m: &Text{
 				Common: Common{
 					Key: "some test record 1",
 				},
 				Text: "some text here",
 			},
-			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.m.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			err := tt.m.Validate()
+			if (err != nil) != (tt.wantErrKeys != nil) || (tt.wantErrKeys != nil) != containStrInErr(err, tt.wantErrKeys...) {
+				t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.wantErrKeys)
 			}
 		})
 	}
+}
+
+func containStrInErr(err error, str ...string) bool {
+	if err == nil {
+		return false
+	}
+	c := 0
+	for _, s := range str {
+		if strings.Contains(err.Error(), s) {
+			c++
+		}
+	}
+	return c == len(str)
 }
