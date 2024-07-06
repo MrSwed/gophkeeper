@@ -24,3 +24,8 @@ type StoreRecord struct {
 type ListItem struct {
 	DBItem
 }
+
+type List struct {
+	Items []ListItem
+	Total int
+}
