@@ -126,9 +126,9 @@ func (suite *serviceStoreTestSuite) Test_service_Get() {
 			wantData: out.Item{
 				DBItem: storage.DBItem{
 					Key:         "testKeyForGet",
-					Description: "Some description",
-					CreatedAt:   parseTime(t, `2024-07-06 20:00:39`),
-					UpdatedAt:   parseTime(t, `2024-07-06 20:00:39`),
+					Description: &[]string{"Some description"}[0],
+					CreatedAt:   parseTime(t, `2024-07-06 20:00:39`).Format(time.DateTime),
+					UpdatedAt:   parseTime(t, `2024-07-06 20:00:39`).Format(time.DateTime),
 				},
 				Data: nil, // / todo
 			},
@@ -173,25 +173,25 @@ func (suite *serviceStoreTestSuite) Test_service_List() {
 					{
 						DBItem: storage.DBItem{
 							Key:         "testKeyForGet",
-							Description: "Some description",
-							CreatedAt:   parseTime(t, "2024-07-06 20:00:39"),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:00:39"),
+							Description: &[]string{"Some description"}[0],
+							CreatedAt:   parseTime(t, "2024-07-06 20:00:39").Format(time.DateTime),
+							UpdatedAt:   parseTime(t, "2024-07-06 20:00:39").Format(time.DateTime),
 						},
 					},
 					{
 						DBItem: storage.DBItem{
 							Key:         "testkey2",
-							Description: "",
-							CreatedAt:   parseTime(t, "2024-07-06 20:02:20"),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:02:20"),
+							Description: nil,
+							CreatedAt:   parseTime(t, "2024-07-06 20:02:20").Format(time.DateTime),
+							UpdatedAt:   parseTime(t, "2024-07-06 20:02:20").Format(time.DateTime),
 						},
 					},
 					{
 						DBItem: storage.DBItem{
 							Key:         "testkey3",
-							Description: "",
-							CreatedAt:   parseTime(t, "2024-07-06 20:02:21"),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:02:21"),
+							Description: nil,
+							CreatedAt:   parseTime(t, "2024-07-06 20:02:21").Format(time.DateTime),
+							UpdatedAt:   parseTime(t, "2024-07-06 20:02:21").Format(time.DateTime),
 						},
 					},
 				},

@@ -9,3 +9,4 @@ create table storage
  filename    text
 );
 
+PRAGMA case_sensitive_like=OFF;

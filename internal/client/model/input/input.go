@@ -14,21 +14,21 @@ type Model interface {
 	Bytes() ([]byte, error)
 	Validate() error
 	GetKey() string
-	GetDescription() string
+	GetDescription() *string
 	GetFileName() string
 }
 
 type Common struct {
-	Key         string `json:"key" validate:"required"`
-	Description string `json:"description"`
-	FileName    string `json:"fileName"`
+	Key         string  `json:"key" validate:"required"`
+	Description *string `json:"description"`
+	FileName    string  `json:"fileName"`
 }
 
 func (c Common) GetKey() string {
 	return c.Key
 }
 
-func (c Common) GetDescription() string {
+func (c Common) GetDescription() *string {
 	return c.Description
 }
 

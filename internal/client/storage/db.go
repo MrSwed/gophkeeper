@@ -21,16 +21,16 @@ func NewDBStore(db *sqlx.DB) *dbStore {
 
 func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query input.ListQuery) sq.SelectBuilder {
 	if query.Key != "" {
-		b = b.Where(sq.ILike{"key": query.Key})
+		b = b.Where(sq.Like{"key": "%" + query.Key + "%"})
 	}
 	if query.Description != "" {
-		b = b.Where(sq.ILike{"description": query.Description})
+		b = b.Where(sq.Like{"description": "%" + query.Description + "%"})
 	}
 	if query.CreatedAt != "" {
-		b = b.Where(sq.ILike{"created_at": query.CreatedAt})
+		b = b.Where(sq.Like{"created_at": "%" + query.CreatedAt + "%"})
 	}
 	if query.UpdatedAt != "" {
-		b = b.Where(sq.ILike{"updated_at": query.UpdatedAt})
+		b = b.Where(sq.Like{"updated_at": "%" + query.UpdatedAt + "%"})
 	}
 	if query.Limit != 0 {
 		b.Limit(query.Limit)
@@ -43,9 +43,10 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query input.ListQuery) sq.
 
 func (s *dbStore) List(query input.ListQuery) (data []ListItem, err error) {
 	var (
-		builder = sq.Select("key", "description", "created_at", "updated_at")
-		sql     string
-		args    []interface{}
+		builder = sq.Select("key", "description", "created_at", "updated_at").
+			From("storage")
+		sql  string
+		args []interface{}
 	)
 
 	sql, args, err = s.querySqlBuilder(builder, query).ToSql()
@@ -58,9 +59,10 @@ func (s *dbStore) List(query input.ListQuery) (data []ListItem, err error) {
 
 func (s *dbStore) Count(query input.ListQuery) (n int, err error) {
 	var (
-		builder = sq.Select("count(*) as count")
-		sql     string
-		args    []interface{}
+		builder = sq.Select("count(*) as count").
+			From("storage")
+		sql  string
+		args []interface{}
 	)
 	query.Limit = 0
 	query.Offset = 0
