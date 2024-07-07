@@ -47,6 +47,8 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	}
 	data.DBItem = r.DBItem
 
+	// todo: decrypt here
+
 	return
 }
 
