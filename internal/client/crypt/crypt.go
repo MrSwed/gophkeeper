@@ -1,6 +1,8 @@
 package crypt
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
@@ -22,7 +24,20 @@ func getMD5Hash(text string) []byte {
 func AES256CBCEncode(plainText []byte, key string) (cipherText []byte, err error) {
 	md5key := getMD5Hash(key)
 
-	paddedText := pkcs7pad.Pad(plainText, aes.BlockSize)
+	compressed := new(bytes.Buffer)
+	w := gzip.NewWriter(compressed)
+	_, err = w.Write(plainText)
+	if err != nil {
+		err = fmt.Errorf("error writing to gzip: %v", err)
+		return
+	}
+	err = w.Close()
+	if err != nil {
+		err = fmt.Errorf("error close writing to gzip: %v", err)
+		return
+	}
+
+	paddedText := pkcs7pad.Pad(compressed.Bytes(), aes.BlockSize)
 
 	if len(paddedText)%aes.BlockSize != 0 {
 		err = fmt.Errorf("after pkcs7pad it has the wrong block size")
@@ -58,7 +73,7 @@ func AES256CBCDecode(cipherText []byte, key string) (plainText []byte, err error
 	}
 
 	if len(cipherText) < aes.BlockSize {
-		err = errors.New("plainText too short")
+		err = errors.New("cipherText too short")
 		return
 	}
 	iv := cipherText[:aes.BlockSize]
@@ -70,10 +85,31 @@ func AES256CBCDecode(cipherText []byte, key string) (plainText []byte, err error
 	decrypt := cipher.NewCBCDecrypter(block, iv)
 	decrypt.CryptBlocks(paddedText, cipherText[aes.BlockSize:])
 
-	plainText, err = pkcs7pad.Unpad(paddedText)
+	var compressed []byte
+	compressed, err = pkcs7pad.Unpad(paddedText)
+
 	if err != nil {
 		err = fmt.Errorf("unpad error %w", err)
 		return
 	}
+
+	var r *gzip.Reader
+	b := bytes.NewBuffer(compressed)
+	r, err = gzip.NewReader(b)
+	if err != nil {
+		err = fmt.Errorf("ungzip newReader error %w", err)
+		return
+	}
+	plainText, err = io.ReadAll(r)
+	if err != nil {
+		err = fmt.Errorf("ungzip readAll error %w", err)
+		return
+	}
+	err = r.Close()
+	if err != nil {
+		err = fmt.Errorf("ungzip close error %w", err)
+		return
+	}
+
 	return
 }
