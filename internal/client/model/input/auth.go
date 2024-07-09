@@ -1,9 +1,13 @@
 package input
 
-type Auth struct {
-	Common
+type AuthData struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+type Auth struct {
+	Common
+	Data AuthData `json:"data"`
 }
 
 func (m *Auth) Validate() (err error) {
@@ -11,5 +15,5 @@ func (m *Auth) Validate() (err error) {
 }
 
 func (m *Auth) Bytes() []byte {
-	return []byte(m.Login + ":" + m.Password)
+	return []byte(m.Data.Login + ":" + m.Data.Password)
 }

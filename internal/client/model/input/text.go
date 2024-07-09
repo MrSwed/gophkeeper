@@ -1,8 +1,12 @@
 package input
 
+type TextData struct {
+	Text string `json:"text"`
+}
+
 type Text struct {
 	Common
-	Text string `json:"text"`
+	Data TextData `json:"data"`
 }
 
 func (m *Text) Validate() error {
@@ -10,5 +14,5 @@ func (m *Text) Validate() error {
 }
 
 func (m *Text) Bytes() []byte {
-	return []byte(m.Text)
+	return []byte(m.Data.Text)
 }

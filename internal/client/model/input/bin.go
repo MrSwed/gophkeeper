@@ -1,8 +1,12 @@
 package input
 
+type BinData struct {
+	Bin []byte `json:"bin"`
+}
+
 type Bin struct {
 	Common
-	Bin []byte `json:"bin"`
+	Data BinData `json:"data"`
 }
 
 func (m *Bin) Validate() error {
@@ -10,5 +14,5 @@ func (m *Bin) Validate() error {
 }
 
 func (m *Bin) Bytes() []byte {
-	return m.Bin
+	return m.Data.Bin
 }

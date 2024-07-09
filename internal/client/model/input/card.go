@@ -12,12 +12,16 @@ const (
 	cvvRegexp     = `^\d{3}$`
 )
 
-type Card struct {
-	Common
+type CardData struct {
 	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
 	Number string `json:"number" validate:"required,credit_card"`
 	Name   string `json:"name" validate:"omitempty"`
 	CVV    string `json:"cvv" validate:"omitempty,credit_card_cvv"`
+}
+
+type Card struct {
+	Common
+	Data CardData `json:"data"`
 }
 
 func (m *Card) Validate() error {
@@ -25,7 +29,7 @@ func (m *Card) Validate() error {
 }
 
 func (m *Card) Bytes() []byte {
-	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Number, m.Exp, m.CVV, m.Name))
+	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Data.Number, m.Data.Exp, m.Data.CVV, m.Data.Name))
 }
 
 func init() {
