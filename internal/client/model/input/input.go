@@ -11,8 +11,8 @@ type Validate interface {
 }
 
 type Model interface {
+	Validate
 	Bytes() []byte
-	Validate() error
 	GetKey() string
 	GetDescription() *string
 	GetFileName() string

@@ -60,8 +60,10 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 		require.NoError(suite.T(), err)
 	}
 
-	_, err = suite.db.Exec(testSQLdata)
+	r := storage.NewStorage(suite.db, storePath)
+	suite.srv = NewService(r)
 
+	_, err = suite.db.Exec(testSQLdata)
 	require.NoError(suite.T(), err)
 
 	r := storage.NewStorage(suite.db, storePath)
