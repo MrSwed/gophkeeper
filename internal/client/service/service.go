@@ -66,7 +66,7 @@ func (s *service) Set(data input.Model) (err error) {
 		r.Filename = time.Now().Format("20060102150405") + "-" + r.Key
 	}
 	r.Description = data.GetDescription()
-	var b []byte
+	b := data.Bytes()
 
 	if b, err = data.Bytes(); err != nil {
 		return

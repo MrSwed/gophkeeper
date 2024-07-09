@@ -9,6 +9,6 @@ func (m *Bin) Validate() error {
 	return validate.Struct(m)
 }
 
-func (m *Bin) Bytes() ([]byte, error) {
-	return m.Bin, nil
+func (m *Bin) Bytes() []byte {
+	return m.Bin
 }

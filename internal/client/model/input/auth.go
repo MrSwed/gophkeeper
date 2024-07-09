@@ -10,6 +10,6 @@ func (m *Auth) Validate() (err error) {
 	return validate.Struct(m)
 }
 
-func (m *Auth) Bytes() ([]byte, error) {
-	return []byte(m.Login + ":" + m.Password), nil
+func (m *Auth) Bytes() []byte {
+	return []byte(m.Login + ":" + m.Password)
 }

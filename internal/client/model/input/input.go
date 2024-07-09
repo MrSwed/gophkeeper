@@ -11,7 +11,7 @@ type Validate interface {
 }
 
 type Model interface {
-	Bytes() ([]byte, error)
+	Bytes() []byte
 	Validate() error
 	GetKey() string
 	GetDescription() *string

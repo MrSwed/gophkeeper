@@ -24,8 +24,8 @@ func (m *Card) Validate() error {
 	return validate.Struct(m)
 }
 
-func (m *Card) Bytes() ([]byte, error) {
-	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Number, m.Exp, m.CVV, m.Name)), nil
+func (m *Card) Bytes() []byte {
+	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Number, m.Exp, m.CVV, m.Name))
 }
 
 func init() {
