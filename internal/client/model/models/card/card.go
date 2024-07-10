@@ -1,8 +1,11 @@
-package input
+package card
 
 import (
 	"fmt"
+	"gophKeeper/internal/client/model"
+	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -20,16 +23,23 @@ type CardData struct {
 }
 
 type Card struct {
-	Common
+	model.Common
 	Data CardData `json:"data"`
 }
 
+var _ model.Model = (*Card)(nil)
+
 func (m *Card) Validate() error {
-	return validate.Struct(m)
+	return model.Validator.Struct(m)
 }
 
 func (m *Card) Bytes() []byte {
 	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Data.Number, m.Data.Exp, m.Data.CVV, m.Data.Name))
+}
+
+func (m *Card) Type() string {
+	p := strings.Split(reflect.TypeOf(m).PkgPath(), "/")
+	return p[len(p)-1]
 }
 
 func init() {
@@ -39,7 +49,7 @@ func init() {
 	}
 
 	for k, v := range validators {
-		err := validate.RegisterValidation(k, func(fl validator.FieldLevel) bool {
+		err := model.Validator.RegisterValidation(k, func(fl validator.FieldLevel) bool {
 			result, err := regexp.Match(v, []byte(fl.Field().String()))
 			return result && err == nil
 		})

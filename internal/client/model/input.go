@@ -1,10 +1,10 @@
-package input
+package model
 
 import (
 	"github.com/go-playground/validator/v10"
 )
 
-var validate = validator.New(validator.WithRequiredStructEnabled())
+var Validator = validator.New(validator.WithRequiredStructEnabled())
 
 type Validate interface {
 	Validate() error
@@ -16,6 +16,7 @@ type Model interface {
 	GetKey() string
 	GetDescription() *string
 	GetFileName() string
+	Type() string
 }
 
 type Common struct {

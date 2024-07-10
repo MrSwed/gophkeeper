@@ -1,6 +1,11 @@
-package input
+package models
 
 import (
+	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/client/model/models/auth"
+	"gophKeeper/internal/client/model/models/bin"
+	"gophKeeper/internal/client/model/models/card"
+	"gophKeeper/internal/client/model/models/text"
 	"reflect"
 	"strings"
 	"testing"
@@ -9,14 +14,14 @@ import (
 func TestModel_Bytes(t *testing.T) {
 	tests := []struct {
 		name    string
-		m       Model
+		m       model.Model
 		want    []byte
 		wantErr bool
 	}{
 		{
 			name: "test auth",
-			m: &Auth{
-				Data: AuthData{
+			m: &auth.Auth{
+				Data: auth.AuthData{
 					Login:    "test",
 					Password: "password"},
 			},
@@ -24,8 +29,8 @@ func TestModel_Bytes(t *testing.T) {
 		},
 		{
 			name: "test bin",
-			m: &Bin{
-				Data: BinData{
+			m: &bin.Bin{
+				Data: bin.BinData{
 					Bin: []byte("test:test"),
 				},
 			},
@@ -34,8 +39,8 @@ func TestModel_Bytes(t *testing.T) {
 		},
 		{
 			name: "test card 1",
-			m: &Card{
-				Data: CardData{
+			m: &card.Card{
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "0000000000000000",
 					Name:   "Some Name",
@@ -47,8 +52,8 @@ func TestModel_Bytes(t *testing.T) {
 		},
 		{
 			name: "test card 2",
-			m: &Card{
-				Data: CardData{
+			m: &card.Card{
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "0000000000000000",
 					CVV:    "999",
@@ -59,9 +64,9 @@ func TestModel_Bytes(t *testing.T) {
 		},
 		{
 			name: "test text ",
-			m: &Text{
-				Common: Common{},
-				Data: TextData{
+			m: &text.Text{
+				Common: model.Common{},
+				Data: text.TextData{
 					Text: "some text here",
 				},
 			},
@@ -82,16 +87,16 @@ func TestModel_Bytes(t *testing.T) {
 func TestModel_Validate(t *testing.T) {
 	tests := []struct {
 		name        string
-		m           Model
+		m           model.Model
 		wantErrKeys []string
 	}{
 		{
 			name: "test auth 1",
-			m: &Auth{
-				Common: Common{
+			m: &auth.Auth{
+				Common: model.Common{
 					Key: "somesite.com",
 				},
-				Data: AuthData{
+				Data: auth.AuthData{
 					Login:    "test",
 					Password: "password",
 				},
@@ -99,8 +104,8 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "test auth 2, need key",
-			m: &Auth{
-				Data: AuthData{
+			m: &auth.Auth{
+				Data: auth.AuthData{
 					Login:    "test",
 					Password: "password",
 				},
@@ -110,11 +115,11 @@ func TestModel_Validate(t *testing.T) {
 
 		{
 			name: "test bin",
-			m: &Bin{
-				Common: Common{
+			m: &bin.Bin{
+				Common: model.Common{
 					Key: "some bin data",
 				},
-				Data: BinData{
+				Data: bin.BinData{
 					Bin: []byte("test:test"),
 				},
 			},
@@ -122,9 +127,9 @@ func TestModel_Validate(t *testing.T) {
 
 		{
 			name: "no card number",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:  "05/25",
 					Name: "Some Name",
 					CVV:  "999",
@@ -134,9 +139,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "not valid card",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "0000000000000001",
 					Name:   "Some Name",
@@ -147,9 +152,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "valid data",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "4012888888881881",
 					Name:   "Some Name",
@@ -159,9 +164,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "bad cvv 1",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "4012888888881881",
 					Name:   "Some Name",
@@ -172,9 +177,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "bad cvv 2",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "4012888888881881",
 					Name:   "Some Name",
@@ -185,9 +190,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "can be no cvv",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "05/25",
 					Number: "4012888888881881",
 				},
@@ -195,9 +200,9 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name: "bad exp",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Exp:    "48/25",
 					Number: "4012888888881881",
 					Name:   "Some Name",
@@ -208,14 +213,14 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name:        "no data",
-			m:           &Card{},
+			m:           &card.Card{},
 			wantErrKeys: []string{"Number", "Key"},
 		},
 		{
 			name: "can no exp",
-			m: &Card{
-				Common: Common{Key: "some bank card 1"},
-				Data: CardData{
+			m: &card.Card{
+				Common: model.Common{Key: "some bank card 1"},
+				Data: card.CardData{
 					Number: "4012888888881881",
 					Name:   "Some Name",
 					CVV:    "999",
@@ -225,11 +230,11 @@ func TestModel_Validate(t *testing.T) {
 
 		{
 			name: "text 1",
-			m: &Text{
-				Common: Common{
+			m: &text.Text{
+				Common: model.Common{
 					Key: "some test record 1",
 				},
-				Data: TextData{
+				Data: text.TextData{
 					Text: "some text here",
 				},
 			},

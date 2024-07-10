@@ -1,4 +1,4 @@
-package input
+package model
 
 type ListQuery struct {
 	Key         string `json:"key" validate:"omitempty,max=100"`
@@ -10,5 +10,5 @@ type ListQuery struct {
 }
 
 func (m *ListQuery) Validate() (err error) {
-	return validate.Struct(m)
+	return Validator.Struct(m)
 }

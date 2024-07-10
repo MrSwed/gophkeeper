@@ -1,14 +1,14 @@
 package storage
 
 import (
-	"gophKeeper/internal/client/model/input"
+	"gophKeeper/internal/client/model"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type DB interface {
-	List(query input.ListQuery) (data []ListItem, err error)
-	Count(query input.ListQuery) (n int, err error)
+	List(query model.ListQuery) (data []DBItem, err error)
+	Count(query model.ListQuery) (n int, err error)
 	Get(key string) (data DBRecord, err error)
 	Set(data DBRecord) (err error)
 	Delete(key string) (err error)

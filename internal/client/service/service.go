@@ -31,9 +31,12 @@ func (s *service) List(query input.ListQuery) (data out.List, err error) {
 	if data.Total, err = s.r.DB.Count(query); err != nil {
 		return
 	}
-	if data.Items, err = s.r.DB.List(query); err != nil {
+	var items []storage.DBItem
+	items, err = s.r.DB.List(query)
+	if err != nil {
 		return
 	}
+	data.FromDBItems(items...)
 	return
 }
 
@@ -52,7 +55,7 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	return
 }
 
-func (s *service) Set(data input.Model) (err error) {
+func (s *service) Set(data model.Model) (err error) {
 	if err = data.Validate(); err != nil {
 		return
 	}

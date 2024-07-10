@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"gophKeeper/internal/client/model/input"
+	"gophKeeper/internal/client/model"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -19,7 +19,7 @@ func NewDBStore(db *sqlx.DB) *dbStore {
 	}
 }
 
-func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query input.ListQuery) sq.SelectBuilder {
+func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.SelectBuilder {
 	if query.Key != "" {
 		b = b.Where(sq.Like{"key": "%" + query.Key + "%"})
 	}
@@ -41,7 +41,7 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query input.ListQuery) sq.
 	return b
 }
 
-func (s *dbStore) List(query input.ListQuery) (data []ListItem, err error) {
+func (s *dbStore) List(query model.ListQuery) (data []DBItem, err error) {
 	var (
 		builder = sq.Select("key", "description", "created_at", "updated_at").
 			From("storage")
@@ -57,7 +57,7 @@ func (s *dbStore) List(query input.ListQuery) (data []ListItem, err error) {
 	return
 }
 
-func (s *dbStore) Count(query input.ListQuery) (n int, err error) {
+func (s *dbStore) Count(query model.ListQuery) (n int, err error) {
 	var (
 		builder = sq.Select("count(*) as count").
 			From("storage")
