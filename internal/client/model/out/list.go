@@ -3,11 +3,13 @@ package out
 import "gophKeeper/internal/client/storage"
 
 type List struct {
-	Items []storage.ListItem `json:"items"`
-	Total int                `json:"total"`
+	Items []Item `json:"items"`
+	Total int    `json:"total"`
 }
 
-type Item struct {
-	storage.DBItem
-	Data []byte `json:"data"`
+func (l *List) FromDBItems(r ...storage.DBItem) {
+	l.Items = make([]Item, len(r))
+	for idx, item := range r {
+		l.Items[idx].DBItem = item
+	}
 }

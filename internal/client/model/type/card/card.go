@@ -3,9 +3,7 @@ package card
 import (
 	"fmt"
 	"gophKeeper/internal/client/model"
-	"reflect"
 	"regexp"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -15,31 +13,30 @@ const (
 	cvvRegexp     = `^\d{3}$`
 )
 
-type CardData struct {
+type ModelData struct {
 	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
 	Number string `json:"number" validate:"required,credit_card"`
 	Name   string `json:"name" validate:"omitempty"`
 	CVV    string `json:"cvv" validate:"omitempty,credit_card_cvv"`
 }
 
-type Card struct {
+type Model struct {
 	model.Common
-	Data CardData `json:"data"`
+	Data ModelData `json:"data"`
 }
 
-var _ model.Model = (*Card)(nil)
+var _ model.Model = (*Model)(nil)
 
-func (m *Card) Validate() error {
+func (m *Model) Validate() error {
 	return model.Validator.Struct(m)
 }
 
-func (m *Card) Bytes() []byte {
+func (m *Model) Bytes() []byte {
 	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Data.Number, m.Data.Exp, m.Data.CVV, m.Data.Name))
 }
 
-func (m *Card) Type() string {
-	p := strings.Split(reflect.TypeOf(m).PkgPath(), "/")
-	return p[len(p)-1]
+func (m *Model) Type() string {
+	return model.GetName(m)
 }
 
 func init() {
