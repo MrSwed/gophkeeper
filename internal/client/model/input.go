@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -12,7 +14,7 @@ type Validate interface {
 
 type Model interface {
 	Validate
-	Bytes() []byte
+	Bytes() (b []byte, err error)
 	GetKey() string
 	GetDescription() *string
 	GetFileName() string
@@ -25,6 +27,11 @@ type Common struct {
 	FileName    string  `json:"fileName"`
 }
 
+type Packed struct {
+	Type string `json:"type"`
+	Data any    `json:"data"`
+}
+
 func (c Common) GetKey() string {
 	return c.Key
 }
@@ -35,4 +42,11 @@ func (c Common) GetDescription() *string {
 
 func (c Common) GetFileName() string {
 	return c.FileName
+}
+
+func NewPackedBytes(t string, d any) ([]byte, error) {
+	return json.Marshal(Packed{
+		Type: t,
+		Data: d,
+	})
 }

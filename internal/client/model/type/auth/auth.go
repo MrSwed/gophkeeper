@@ -20,8 +20,8 @@ func (m *Model) Validate() (err error) {
 	return model.Validator.Struct(m)
 }
 
-func (m *Model) Bytes() []byte {
-	return []byte(m.Data.Login + ":" + m.Data.Password)
+func (m *Model) Bytes() (b []byte, err error) {
+	return model.NewPackedBytes(m.Type(), m.Data)
 }
 
 func (m *Model) Type() string {

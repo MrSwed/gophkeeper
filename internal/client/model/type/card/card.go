@@ -1,7 +1,6 @@
 package card
 
 import (
-	"fmt"
 	"gophKeeper/internal/client/model"
 	"regexp"
 
@@ -16,8 +15,8 @@ const (
 type ModelData struct {
 	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
 	Number string `json:"number" validate:"required,credit_card"`
-	Name   string `json:"name" validate:"omitempty"`
-	CVV    string `json:"cvv" validate:"omitempty,credit_card_cvv"`
+	Name   string `json:"name,omitempty" validate:"omitempty"`
+	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
 }
 
 type Model struct {
@@ -31,8 +30,8 @@ func (m *Model) Validate() error {
 	return model.Validator.Struct(m)
 }
 
-func (m *Model) Bytes() []byte {
-	return []byte(fmt.Sprintf("%s|%s|%s|%s", m.Data.Number, m.Data.Exp, m.Data.CVV, m.Data.Name))
+func (m *Model) Bytes() (b []byte, err error) {
+	return model.NewPackedBytes(m.Type(), m.Data)
 }
 
 func (m *Model) Type() string {

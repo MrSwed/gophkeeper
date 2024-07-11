@@ -63,7 +63,7 @@ func TestModel_Bytes(t *testing.T) {
 					Login:    "test",
 					Password: "password"},
 			},
-			want: []byte("test:password"),
+			want: []byte(`{"type":"auth","data":{"login":"test","password":"password"}}`),
 		},
 		{
 			name: "test bin",
@@ -72,7 +72,7 @@ func TestModel_Bytes(t *testing.T) {
 					Bin: []byte("test:test"),
 				},
 			},
-			want:    []byte("test:test"),
+			want:    []byte(`{"type":"bin","data":{"bin":"dGVzdDp0ZXN0"}}`),
 			wantErr: false,
 		},
 		{
@@ -85,7 +85,7 @@ func TestModel_Bytes(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte("0000000000000000|05/25|999|Some Name"),
+			want:    []byte(`{"type":"card","data":{"exp":"05/25","number":"0000000000000000","name":"Some Name","cvv":"999"}}`),
 			wantErr: false,
 		},
 		{
@@ -97,7 +97,7 @@ func TestModel_Bytes(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte("0000000000000000|05/25|999|"),
+			want:    []byte(`{"type":"card","data":{"exp":"05/25","number":"0000000000000000","cvv":"999"}}`),
 			wantErr: false,
 		},
 		{
@@ -108,13 +108,17 @@ func TestModel_Bytes(t *testing.T) {
 					Text: "some text here",
 				},
 			},
-			want:    []byte("some text here"),
+			want:    []byte(`{"type":"text","data":{"text":"some text here"}}`),
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.m.Bytes()
+			got, err := tt.m.Bytes()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Bytes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Bytes() got = %v, want %v", got, tt.want)
 			}
