@@ -5,8 +5,8 @@ import (
 	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -14,15 +14,9 @@ import (
 	"github.com/zenazn/pkcs7pad"
 )
 
-// getMD5Hash md5 as cipher key length 32
-func getMD5Hash(text string) []byte {
-	hash := md5.Sum([]byte(text))
-	return hash[:]
-}
-
-// AES256CBCEncode encrypt plain text into cipher text
-func AES256CBCEncode(plainText []byte, key string) (cipherText []byte, err error) {
-	md5key := getMD5Hash(key)
+// Encode encrypt plain text into cipher text
+func Encode(plainText []byte, key string) (cipherText []byte, err error) {
+	bKey := sha256.Sum256([]byte(key))
 
 	compressed := new(bytes.Buffer)
 	w := gzip.NewWriter(compressed)
@@ -45,7 +39,7 @@ func AES256CBCEncode(plainText []byte, key string) (cipherText []byte, err error
 	}
 	var block cipher.Block
 
-	block, err = aes.NewCipher(md5key)
+	block, err = aes.NewCipher(bKey[:])
 	if err != nil {
 		return
 	}
@@ -62,12 +56,12 @@ func AES256CBCEncode(plainText []byte, key string) (cipherText []byte, err error
 	return
 }
 
-// AES256CBCDecode decrypt cipher text into plain text
-func AES256CBCDecode(cipherText []byte, key string) (plainText []byte, err error) {
-	bKey := getMD5Hash(key)
+// Decode decrypt cipher text into plain text
+func Decode(cipherText []byte, key string) (plainText []byte, err error) {
+	bKey := sha256.Sum256([]byte(key))
 
 	var block cipher.Block
-	block, err = aes.NewCipher(bKey)
+	block, err = aes.NewCipher(bKey[:])
 	if err != nil {
 		return
 	}

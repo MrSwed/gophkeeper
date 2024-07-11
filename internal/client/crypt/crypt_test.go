@@ -29,27 +29,34 @@ func TestEncodeDecode(t *testing.T) {
 				key:       "somesecretkey2",
 			},
 		},
+		{
+			name: "test empty key",
+			args: args{
+				plainText: []byte("00001111222233330519333"),
+				key:       "",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCipherText, err := AES256CBCEncode(tt.args.plainText, tt.args.key)
+			gotCipherText, err := Encode(tt.args.plainText, tt.args.key)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AES256CBCEncode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			gotPlainText, err := AES256CBCDecode(gotCipherText, tt.args.key)
+			gotPlainText, err := Decode(gotCipherText, tt.args.key)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AES256CBCDecode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !reflect.DeepEqual(gotPlainText, tt.args.plainText) {
-				t.Errorf("AES256CBCDecode() gotPlainText = %v, want %v", gotPlainText, tt.args.plainText)
+				t.Errorf("Decode() gotPlainText = %v, want %v", gotPlainText, tt.args.plainText)
 			}
 
 			if reflect.DeepEqual(gotPlainText, gotCipherText) {
-				t.Errorf("AES256CBCDecode() gotPlainText = %v, gotCipherText %v", gotPlainText, gotCipherText)
+				t.Errorf("Decode() gotPlainText = %v, gotCipherText %v", gotPlainText, gotCipherText)
 			}
 		})
 	}
