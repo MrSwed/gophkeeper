@@ -8,7 +8,20 @@ import (
 
 var models = map[string]any{}
 
-func RegisterModel(model Model) {
+type Model interface {
+	Validate
+	Bytes() (b []byte, err error)
+	GetKey() string
+	GetDescription() *string
+	GetFileName() string
+}
+
+type Data interface {
+	Type() string
+	GetData() any
+}
+
+func RegisterModel(model Data) {
 	models[model.Type()] = model
 }
 

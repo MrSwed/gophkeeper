@@ -12,15 +12,6 @@ type Validate interface {
 	Validate() error
 }
 
-type Model interface {
-	Validate
-	Bytes() (b []byte, err error)
-	GetKey() string
-	GetDescription() *string
-	GetFileName() string
-	Type() string
-}
-
 type Common struct {
 	Key         string  `json:"key" validate:"required"`
 	Description *string `json:"description"`

@@ -14,28 +14,28 @@ import (
 func TestModel_Type(t *testing.T) {
 	tests := []struct {
 		name    string
-		m       model.Model
+		m       model.Data
 		want    string
 		wantErr bool
 	}{
 		{
 			name: "test auth",
-			m:    &auth.Model{},
+			m:    &auth.ModelData{},
 			want: "auth",
 		},
 		{
 			name: "test text",
-			m:    &text.Model{},
+			m:    &text.ModelData{},
 			want: "text",
 		},
 		{
 			name: "test card",
-			m:    &card.Model{},
+			m:    &card.ModelData{},
 			want: "card",
 		},
 		{
 			name: "test bin",
-			m:    &bin.Model{},
+			m:    &bin.ModelData{},
 			want: "bin",
 		},
 	}
@@ -308,24 +308,24 @@ func containStrInErr(err error, str ...string) bool {
 func TestModel_GetNewModel(t *testing.T) {
 	tests := []struct {
 		name    string
-		m       model.Model
+		m       model.Data
 		wantErr bool
 	}{
 		{
 			name: "test auth",
-			m:    &auth.Model{},
+			m:    &auth.ModelData{},
 		},
 		{
 			name: "test text",
-			m:    &text.Model{},
+			m:    &text.ModelData{},
 		},
 		{
 			name: "test card",
-			m:    &card.Model{},
+			m:    &card.ModelData{},
 		},
 		{
 			name: "test bin",
-			m:    &bin.Model{},
+			m:    &bin.ModelData{},
 		},
 	}
 	for _, tt := range tests {

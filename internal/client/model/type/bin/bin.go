@@ -20,13 +20,17 @@ func (m *Model) Validate() error {
 }
 
 func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(m.Type(), m.Data)
+	return model.NewPackedBytes(m.Data.Type(), m.Data)
 }
 
-func (m *Model) Type() string {
+func (m *ModelData) Type() string {
 	return model.GetName(m)
 }
 
+func (m *ModelData) GetData() any {
+	return m
+}
+
 func init() {
-	model.RegisterModel(&Model{})
+	model.RegisterModel(&ModelData{})
 }

@@ -10,6 +10,6 @@ type List struct {
 func (l *List) FromDBItems(r ...storage.DBItem) {
 	l.Items = make([]Item, len(r))
 	for idx, item := range r {
-		l.Items[idx].DBItem = item
+		l.Items[idx].FromDBItem(item)
 	}
 }
