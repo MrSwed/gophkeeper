@@ -25,11 +25,6 @@ var (
 )
 
 func (c *config) Print() {
-	// v := make(map[string]any)
-	// if err := c.Unmarshal(&v); err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Printf("%s %v\n", c.path, v)
 	fmt.Println(c.AllSettings())
 }
 
@@ -43,7 +38,7 @@ func (c *config) Save() error {
 	if c.Get("loaded_at") != nil {
 		isNew = false
 	}
-	excluded := append([]string{"loaded_at", "changed_at", "secret_pass"}, c.excluded...)
+	excluded := append([]string{"loaded_at", "changed_at", "encryption_key"}, c.excluded...)
 	for _, k := range excluded {
 		c.Viper.Set(k, nil)
 	}

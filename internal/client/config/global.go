@@ -5,6 +5,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	MaxBlobSize = 1024 * 64
+)
+
 type globProfileItem map[string]any
 
 func newGlobProfileItem(path string) globProfileItem {
