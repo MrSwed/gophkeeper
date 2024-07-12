@@ -75,11 +75,15 @@ func (s *dbStore) Count(query model.ListQuery) (n int, err error) {
 	return
 }
 
-func (s *dbStore) Get(key string) (data DBRecord, err error) {
-	err = s.db.Get(&data,
+func (s *dbStore) Get(key string) (DBRecord, error) {
+	var data DBRecord
+	err := s.db.Get(&data,
 		`SELECT key, description, created_at, updated_at, filename, blob FROM storage where key = ?`,
 		key)
-	return
+	if err != nil {
+		return DBRecord{}, err
+	}
+	return data, nil
 }
 func (s *dbStore) Save(data DBRecord) (err error) {
 	_, err = s.db.Exec(`insert into storage 

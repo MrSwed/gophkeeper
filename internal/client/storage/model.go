@@ -13,7 +13,7 @@ type DBItem struct {
 
 type DBRecord struct {
 	DBItem
-	Filename *string `db:"filename"`
+	Filename *string `db:"filename,omitempty"`
 	Blob     []byte  `db:"blob" json:"blob"`
 }
 

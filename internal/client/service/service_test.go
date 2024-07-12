@@ -1,7 +1,14 @@
 package service
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
+	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/client/model/type/auth"
+	"gophKeeper/internal/client/model/type/bin"
+	"gophKeeper/internal/client/model/type/card"
+	"gophKeeper/internal/client/model/type/text"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,25 +17,16 @@ import (
 
 	"gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
-	"gophKeeper/internal/client/model/input"
-	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/storage"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
-
-const testSQLdata = `
-insert into storage (key, description, created_at, updated_at, filename)
-values  ('testKeyForGet', 'Some description', '2024-07-06 20:00:39', '2024-07-06 20:00:39', '20240706200039-testKeyForGet'),
-        ('KeyForDelete', null, '2024-07-06 20:02:20', '2024-07-06 20:02:20', '20240706200220-KeyForDelete'),
-        ('testkey2', null, '2024-07-06 20:02:20', '2024-07-06 20:02:20', '20240706200220-testKey2'),
-        ('testkey3', null, '2024-07-06 20:02:21', '2024-07-06 20:02:21', '20240706200221-testKey3');
-`
 
 type serviceStoreTestSuite struct {
 	suite.Suite
@@ -41,7 +39,6 @@ func parseTime(t *testing.T, s string) (tm time.Time) {
 	tm, e = time.Parse(time.DateTime, s)
 	require.NoError(t, e)
 	return
-
 }
 
 func (suite *serviceStoreTestSuite) SetupSuite() {
@@ -49,6 +46,8 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	err := os.MkdirAll(storePath, os.ModePerm)
 	require.NoError(suite.T(), err)
 	dbFile := filepath.Join(storePath, "store.db")
+
+	config.User.Set("encryption_key", "SomePhraseEncryptionKey")
 
 	suite.db, err = sqlx.Open("sqlite3", dbFile)
 	require.NoError(suite.T(), err)
@@ -63,11 +62,35 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	r := storage.NewStorage(suite.db, storePath)
 	suite.srv = NewService(r)
 
-	_, err = suite.db.Exec(testSQLdata)
+	// _, err = suite.db.Exec(testSQLdata)
 	require.NoError(suite.T(), err)
 
-	r := storage.NewStorage(suite.db, storePath)
-	suite.srv = NewService(r)
+	/** /
+		token := "someKeyPhraseSecret"
+		config.User.Save("encryption_key", token)
+
+		testKeyForGet := input.Text{Text: "some sext1"}
+		/ *	testKeyForGetCard := input.Card{
+				Common: input.Common{},
+				Exp:    "",
+				Number: "",
+				Name:   "",
+				CVV:    "",
+			}
+		* /
+		for f, d := range map[string][]byte{
+			"20240706200220-KeyForDelete":  []byte("somebinarydata-no matter what"),
+			"20240706200039-testKeyForGet": testKeyForGet.Bytes(),
+			"20240706200220-testKey2":      []byte("some sext1"),
+			"20240706200221-testKey3":      []byte("some sext1"),
+		} {
+
+			d, err = crypt.AES256CBCEncode(d, token)
+			require.NoError(suite.T(), err)
+			err = r.File.Save(f, d)
+			require.NoError(suite.T(), err)
+		}
+	/**/
 }
 
 func (suite *serviceStoreTestSuite) TearDownSuite() {
@@ -80,166 +103,157 @@ func TestHandlersFileStoreTest(t *testing.T) {
 	suite.Run(t, new(serviceStoreTestSuite))
 }
 
-func (suite *serviceStoreTestSuite) Test_service_Delete() {
-	t := suite.T()
-	type args struct {
-		key string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name:    "test 1",
-			args:    args{key: "KeyForDelete"},
-			wantErr: false,
-		},
-		{
-			name:    "test 2",
-			args:    args{key: "someUnknownKey"},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := suite.srv.Delete(tt.args.key); (err != nil) != tt.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func (suite *serviceStoreTestSuite) Test_service_Get() {
+func (suite *serviceStoreTestSuite) Test_service() {
 	t := suite.T()
 
+	type wantErr struct {
+		save, get, list, del bool
+	}
 	type args struct {
-		key string
+		list *model.ListQuery
+		del  bool
 	}
 	tests := []struct {
 		name     string
+		dataItem model.Model
 		args     args
-		wantData out.Item
-		wantErr  bool
+		wantErr  wantErr
 	}{
 		{
-			name: "test 1",
-			args: args{key: "testKeyForGet"},
-			wantData: out.Item{
-				DBItem: storage.DBItem{
-					Key:         "testKeyForGet",
-					Description: &[]string{"Some description"}[0],
-					CreatedAt:   parseTime(t, `2024-07-06 20:00:39`).Format(time.DateTime),
-					UpdatedAt:   parseTime(t, `2024-07-06 20:00:39`).Format(time.DateTime),
+			name: "test auth",
+			dataItem: &auth.Model{
+				Common: model.Common{Key: "test-set-auth-1"},
+				Data: &auth.Data{
+					Login:    "login1",
+					Password: "password1",
 				},
-				Data: nil, // / todo
 			},
-			wantErr: false,
+			args: args{
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
 		},
 		{
-			name:    "test 2",
-			args:    args{key: "someUnknown"},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotData, err := suite.srv.Get(tt.args.key)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("Get() gotData = %v, want %v", gotData, tt.wantData)
-			}
-		})
-	}
-}
-
-func (suite *serviceStoreTestSuite) Test_service_List() {
-	t := suite.T()
-
-	tests := []struct {
-		name     string
-		query    input.ListQuery
-		wantData out.List
-		wantErr  bool
-	}{
-		{
-			name: "query test",
-			query: input.ListQuery{
-				Key: "test",
-			},
-			wantData: out.List{
-				Items: []storage.ListItem{
-					{
-						DBItem: storage.DBItem{
-							Key:         "testKeyForGet",
-							Description: &[]string{"Some description"}[0],
-							CreatedAt:   parseTime(t, "2024-07-06 20:00:39").Format(time.DateTime),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:00:39").Format(time.DateTime),
-						},
-					},
-					{
-						DBItem: storage.DBItem{
-							Key:         "testkey2",
-							Description: nil,
-							CreatedAt:   parseTime(t, "2024-07-06 20:02:20").Format(time.DateTime),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:02:20").Format(time.DateTime),
-						},
-					},
-					{
-						DBItem: storage.DBItem{
-							Key:         "testkey3",
-							Description: nil,
-							CreatedAt:   parseTime(t, "2024-07-06 20:02:21").Format(time.DateTime),
-							UpdatedAt:   parseTime(t, "2024-07-06 20:02:21").Format(time.DateTime),
-						},
-					},
+			name: "test card",
+			dataItem: &card.Model{
+				Common: model.Common{Key: "test-set-card-1"},
+				Data: &card.Data{
+					Exp:    "11/05",
+					Number: "0000000000000000",
+					Name:   "CardHolder Name",
+					CVV:    "000",
 				},
-				Total: 3,
 			},
-			wantErr: false,
+			args: args{
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-
-			gotData, err := suite.srv.List(tt.query)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("List() gotData = %v, want %v", gotData, tt.wantData)
-			}
-		})
-	}
-}
-
-func (suite *serviceStoreTestSuite) Test_service_Set() {
-	t := suite.T()
-
-	tests := []struct {
-		name    string
-		args    input.Model
-		wantErr bool
-	}{
 		{
-			name: "test set auth 1",
-			args: &input.Auth{
-				Common:   input.Common{Key: "test-set-auth-1"},
-				Login:    "login1",
-				Password: "password1",
+			name: "test Bin",
+			dataItem: &bin.Model{
+				Common: model.Common{Key: "test-set-Bin-1"},
+				Data: &bin.Data{
+					Bin: []byte("SOME BYTE SLICE"),
+				},
 			},
-			wantErr: false,
+			args: args{
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
+		},
+		{
+			name: "test bin",
+			dataItem: &bin.Model{
+				Common: model.Common{Key: "test-set-Bin-1"},
+				Data: &bin.Data{
+					Bin: []byte("SOME BYTE SLICE"),
+				},
+			},
+			args: args{
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
+		},
+		{
+			name: "test text",
+			dataItem: &text.Model{
+				Common: model.Common{Key: "test-set-Bin-1"},
+				Data: &text.Data{
+					Text: "some text\ntext some\nmultiline",
+				},
+			},
+			args: args{
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := suite.srv.Set(tt.args); (err != nil) != tt.wantErr {
-				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+		if tt.dataItem != nil {
+			t.Run(tt.name+" save", func(t *testing.T) {
+				err := suite.srv.Save(tt.dataItem)
+				assert.Equal(t, tt.wantErr.save, (err != nil),
+					fmt.Sprintf("Save() error = %v, wantErr %v", err, tt.wantErr.save))
+			})
+		}
+
+		if tt.args.list != nil {
+			t.Run(tt.name+" list", func(t *testing.T) {
+				gotData, err := suite.srv.List(*tt.args.list)
+				if (err != nil) != tt.wantErr.list {
+					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr.list)
+					return
+				}
+				if tt.dataItem != nil {
+					assert.Greater(t, gotData.Total, 0)
+					exist := false
+					for _, i := range gotData.Items {
+						if i.Key == tt.dataItem.GetKey() {
+							exist = true
+							break
+						}
+					}
+					assert.True(t, exist, tt.dataItem.GetKey()+" not exist in list ", gotData)
+				}
+			})
+		}
+
+		if tt.dataItem != nil {
+			t.Run(tt.name+" get saved", func(t *testing.T) {
+				gotItemData, err := suite.srv.Get(tt.dataItem.GetKey())
+
+				assert.Equal(t, tt.wantErr.get, (err != nil),
+					fmt.Sprintf("Get() error = %v, wantErr %v", err, tt.wantErr.get))
+
+				assert.NotNil(t, gotItemData)
+
+				assert.Equal(t, gotItemData.Key, tt.dataItem.GetKey())
+				assert.Equal(t, gotItemData.Description, tt.dataItem.GetDescription())
+
+				if !reflect.DeepEqual(gotItemData.Data.GetData(), tt.dataItem.GetData()) {
+					t.Errorf("Get() gotData = %v, want %v", gotItemData.Data, tt.dataItem.GetData())
+				}
+			})
+		}
+
+		if tt.args.del {
+			t.Run(tt.name+" delete", func(t *testing.T) {
+				err := suite.srv.Delete(tt.dataItem.GetKey())
+
+				assert.Equal(t, tt.wantErr.del, (err != nil),
+					fmt.Sprintf("Delete() error = %v, wantErr %v", err, tt.wantErr.del))
+
+				_, err = suite.srv.Get(tt.dataItem.GetKey())
+				if err == nil || !errors.Is(err, sql.ErrNoRows) {
+					t.Errorf("Delete failed.  %s steel alife, error: %v ", tt.dataItem.GetKey(), err)
+				}
+			})
+		}
 	}
 }

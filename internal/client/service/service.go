@@ -2,17 +2,23 @@ package service
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
-	"gophKeeper/internal/client/model/input"
+	"gophKeeper/internal/client/model"
+
+	"time"
+
+	cfg "gophKeeper/internal/client/config"
+	"gophKeeper/internal/client/crypt"
+	errs "gophKeeper/internal/client/errors"
 	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/storage"
-	"time"
 )
 
 type Service interface {
-	List(query input.ListQuery) (data out.List, err error)
+	List(query model.ListQuery) (data out.List, err error)
 	Get(key string) (data out.Item, err error)
-	Set(data input.Model) (err error)
+	Save(data model.Model) (err error)
 	Delete(key string) (err error)
 }
 
@@ -24,7 +30,7 @@ func NewService(r *storage.Storage) *service {
 	return &service{r: r}
 }
 
-func (s *service) List(query input.ListQuery) (data out.List, err error) {
+func (s *service) List(query model.ListQuery) (data out.List, err error) {
 	if err = query.Validate(); err != nil {
 		return
 	}
@@ -41,21 +47,33 @@ func (s *service) List(query input.ListQuery) (data out.List, err error) {
 }
 
 func (s *service) Get(key string) (data out.Item, err error) {
-	var r storage.DBRecord
+	var (
+		r storage.DBRecord
+	)
 	if r, err = s.r.DB.Get(key); err != nil {
 		return
 	}
-	if data.Data, err = s.r.File.Get(r.Filename); err != nil {
-		return
+	if len(r.Blob) == 0 && r.Filename != nil {
+		if r.Blob, err = s.r.File.Get(*r.Filename); err != nil {
+			return
+		}
 	}
 	data.DBItem = r.DBItem
-
-	// todo: decrypt here
-
+	var (
+		deCrypted []byte
+		// todo : service for get and cache unpacked encryption_key
+		token = cfg.User.GetString("encryption_key")
+	)
+	deCrypted, err = crypt.Decode(r.Blob, token)
+	if err != nil {
+		err = errs.ErrDecode
+		return
+	}
+	err = json.Unmarshal(deCrypted, &data)
 	return
 }
 
-func (s *service) Set(data model.Model) (err error) {
+func (s *service) Save(data model.Model) (err error) {
 	if err = data.Validate(); err != nil {
 		return
 	}
@@ -66,22 +84,34 @@ func (s *service) Set(data model.Model) (err error) {
 	}
 	if r.Key == "" {
 		r.Key = data.GetKey()
-		r.Filename = time.Now().Format("20060102150405") + "-" + r.Key
 	}
 	r.Description = data.GetDescription()
-	b := data.Bytes()
 
-	if b, err = data.Bytes(); err != nil {
+	var blob []byte
+	blob, err = data.Bytes()
+	if err != nil {
+		return
+	}
+	// todo: service for get and cache unpacked encryption_key
+	token := cfg.User.GetString("encryption_key")
+
+	if blob, err = crypt.Encode(blob, token); err != nil {
 		return
 	}
 
-	// todo: crypt here ??
-
-	if err = s.r.File.Save(r.Filename, b); err != nil {
-		return
+	if len(blob) > cfg.MaxBlobSize {
+		fileName := time.Now().Format("20060102150405") + "-" + r.Key
+		err = s.r.File.Save(fileName, blob)
+		if err != nil {
+			return
+		}
+		r.Filename = &fileName
+	} else {
+		r.Blob = blob
 	}
 
-	err = s.r.DB.Set(r)
+	err = s.r.DB.Save(r)
+
 	return
 }
 
@@ -90,8 +120,10 @@ func (s *service) Delete(key string) (err error) {
 	if r, err = s.r.DB.Get(key); err != nil {
 		return
 	}
-	if err = s.r.File.Delete(r.Filename); err != nil {
-		return
+	if r.Filename != nil && *r.Filename != "" {
+		if err = s.r.File.Delete(*r.Filename); err != nil {
+			return
+		}
 	}
 	err = s.r.DB.Delete(key)
 	return
