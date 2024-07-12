@@ -6,7 +6,8 @@ create table storage
  description TEXT,
  created_at  integer DEFAULT CURRENT_TIMESTAMP,
  updated_at  integer DEFAULT CURRENT_TIMESTAMP,
- filename    text
+ filename    text,
+ blob        BLOB
 );
 
 PRAGMA case_sensitive_like=OFF;

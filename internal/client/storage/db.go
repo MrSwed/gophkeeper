@@ -77,19 +77,20 @@ func (s *dbStore) Count(query model.ListQuery) (n int, err error) {
 
 func (s *dbStore) Get(key string) (data DBRecord, err error) {
 	err = s.db.Get(&data,
-		`SELECT key, description, created_at, updated_at, filename FROM storage where key = ?`,
+		`SELECT key, description, created_at, updated_at, filename, blob FROM storage where key = ?`,
 		key)
 	return
 }
-func (s *dbStore) Set(data DBRecord) (err error) {
+func (s *dbStore) Save(data DBRecord) (err error) {
 	_, err = s.db.Exec(`insert into storage 
- (key, description, created_at, updated_at, filename)
- values(?,?,DATETIME('now'),DATETIME('now'),?)
+ (key, description, created_at, updated_at, filename, blob)
+ values(?,?,DATETIME('now'),DATETIME('now'),?,?)
  on conflict (key) do update 
   set description=excluded.description,
       updated_at=excluded.updated_at,
-      filename=excluded.filename`,
-		data.Key, data.Description, data.Filename)
+      filename=excluded.filename,
+      blob=excluded.blob`,
+		data.Key, data.Description, data.Filename, data.Blob)
 	return
 }
 
