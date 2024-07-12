@@ -7,8 +7,8 @@ type Item struct {
 	Data any `json:"data"`
 }
 
-func (i *Item) FromDBItem(r storage.DBItem) {
-	i.Data = r
+func (i *Item) FromDBItem(dbItem storage.DBItem) {
+	i.DBItem = dbItem
 }
 
 type Auth struct {

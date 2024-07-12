@@ -304,3 +304,40 @@ func containStrInErr(err error, str ...string) bool {
 	}
 	return c == len(str)
 }
+
+func TestModel_GetNewModel(t *testing.T) {
+	tests := []struct {
+		name    string
+		m       model.Model
+		wantErr bool
+	}{
+		{
+			name: "test auth",
+			m:    &auth.Model{},
+		},
+		{
+			name: "test text",
+			m:    &text.Model{},
+		},
+		{
+			name: "test card",
+			m:    &card.Model{},
+		},
+		{
+			name: "test bin",
+			m:    &bin.Model{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := model.GetNewModel(tt.m.Type())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetNewModel() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.m) {
+				t.Errorf("Type() got = %v, want %v", got, tt.m)
+			}
+		})
+	}
+}

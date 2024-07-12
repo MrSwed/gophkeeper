@@ -27,3 +27,7 @@ func (m *Model) Bytes() (b []byte, err error) {
 func (m *Model) Type() string {
 	return model.GetName(m)
 }
+
+func init() {
+	model.RegisterModel(&Model{})
+}

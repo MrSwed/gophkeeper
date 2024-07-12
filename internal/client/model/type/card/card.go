@@ -39,6 +39,7 @@ func (m *Model) Type() string {
 }
 
 func init() {
+	model.RegisterModel(&Model{})
 	validators := map[string]string{
 		"credit_card_exp_date": expDateRegexp,
 		"credit_card_cvv":      cvvRegexp,
