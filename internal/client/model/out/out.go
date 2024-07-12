@@ -20,7 +20,7 @@ type dRaw struct {
 
 type Item struct {
 	storage.DBItem
-	Data any `json:"data"`
+	Data model.Data `json:"data"`
 }
 
 func (i *Item) UnmarshalJSON(b []byte) (err error) {

@@ -14,6 +14,7 @@ type Model interface {
 	GetKey() string
 	GetDescription() *string
 	GetFileName() string
+	Data
 }
 
 type Data interface {
@@ -25,10 +26,10 @@ func RegisterModel(model Data) {
 	models[model.Type()] = model
 }
 
-func GetNewModel(name string) (any, error) {
+func GetNewModel(name string) (Data, error) {
 	if model, ok := models[name]; ok {
 		v := reflect.New(reflect.TypeOf(model).Elem()).Interface()
-		return v, nil
+		return v.(Data), nil
 	}
 	return nil, fmt.Errorf("model %s not found", name)
 }
