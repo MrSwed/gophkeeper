@@ -1,8 +1,6 @@
 package model
 
 import (
-	"encoding/json"
-
 	"github.com/go-playground/validator/v10"
 )
 
@@ -10,18 +8,6 @@ var Validator = validator.New(validator.WithRequiredStructEnabled())
 
 type Validate interface {
 	Validate() error
-}
-
-type Packed struct {
-	Type string `json:"type"`
-	Data any    `json:"data"`
-}
-
-func NewPackedBytes(t string, d any) ([]byte, error) {
-	return json.Marshal(Packed{
-		Type: t,
-		Data: d,
-	})
 }
 
 type ListQuery struct {

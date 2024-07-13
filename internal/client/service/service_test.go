@@ -4,6 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"testing"
+
 	"gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/model"
@@ -12,10 +17,6 @@ import (
 	"gophKeeper/internal/client/model/type/card"
 	"gophKeeper/internal/client/model/type/text"
 	"gophKeeper/internal/client/storage"
-	"os"
-	"path/filepath"
-	"reflect"
-	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/mattn/go-sqlite3"
@@ -53,35 +54,8 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	r := storage.NewStorage(suite.db, storePath)
 	suite.srv = NewService(r)
 
-	// _, err = suite.db.Exec(testSQLdata)
 	require.NoError(suite.T(), err)
 
-	/** /
-		token := "someKeyPhraseSecret"
-		config.User.SaveStore("encryption_key", token)
-
-		testKeyForGet := input.Text{Text: "some sext1"}
-		/ *	testKeyForGetCard := input.Card{
-				Common: input.Common{},
-				Exp:    "",
-				Number: "",
-				Name:   "",
-				CVV:    "",
-			}
-		* /
-		for f, d := range map[string][]byte{
-			"20240706200220-KeyForDelete":  []byte("somebinarydata-no matter what"),
-			"20240706200039-testKeyForGet": testKeyForGet.Bytes(),
-			"20240706200220-testKey2":      []byte("some sext1"),
-			"20240706200221-testKey3":      []byte("some sext1"),
-		} {
-
-			d, err = crypt.AES256CBCEncode(d, token)
-			require.NoError(suite.T(), err)
-			err = r.File.SaveStore(f, d)
-			require.NoError(suite.T(), err)
-		}
-	/**/
 }
 
 func (suite *serviceStoreTestSuite) TearDownSuite() {

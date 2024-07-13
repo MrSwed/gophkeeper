@@ -8,6 +8,10 @@ import (
 
 var models = map[string]any{}
 
+type GetFile interface {
+	GetFile() error
+}
+
 type Data interface {
 	GetData() any
 }
@@ -25,23 +29,6 @@ type Model interface {
 	Data
 }
 
-type Common struct {
-	Key         string  `json:"key" validate:"required"`
-	Description *string `json:"description"`
-	FileName    string  `json:"fileName"`
-}
-
-func (c Common) GetKey() string {
-	return c.Key
-}
-
-func (c Common) GetDescription() *string {
-	return c.Description
-}
-func (c Common) GetFileName() string {
-	return c.FileName
-}
-
 func RegisterModel(model Data) {
 	models[GetName(model)] = model
 }
@@ -51,7 +38,7 @@ func GetNewModel(name string) (Data, error) {
 		v := reflect.New(reflect.TypeOf(model).Elem()).Interface()
 		return v.(Data), nil
 	}
-	return nil, fmt.Errorf("model %s not found", name)
+	return nil, fmt.Errorf("model not found: %s", name)
 }
 
 func GetName(m any) string {
