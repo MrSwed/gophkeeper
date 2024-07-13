@@ -17,11 +17,11 @@ func NewFileStore(path string) *fileStore {
 	}
 }
 
-func (s *fileStore) Get(fileName string) (b []byte, err error) {
+func (s *fileStore) GetStored(fileName string) (b []byte, err error) {
 	return os.ReadFile(filepath.Join(s.path, fileName))
 }
 
-func (s *fileStore) Save(fileName string, b []byte) (err error) {
+func (s *fileStore) SaveStore(fileName string, b []byte) (err error) {
 	if err = os.Mkdir(s.path, os.ModePerm); err != nil && !os.IsExist(err) {
 		return
 	}
@@ -30,4 +30,11 @@ func (s *fileStore) Save(fileName string, b []byte) (err error) {
 
 func (s *fileStore) Delete(fileName string) (err error) {
 	return os.Remove(filepath.Join(s.path, fileName))
+}
+
+func (s *fileStore) GetOrigin(filePath string) (b []byte, err error) {
+	return os.ReadFile(filePath)
+}
+func (s *fileStore) SaveOrigin(filePath string, b []byte) (err error) {
+	return os.WriteFile(filePath, b, os.ModePerm)
 }

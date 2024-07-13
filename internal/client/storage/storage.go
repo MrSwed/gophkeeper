@@ -15,9 +15,11 @@ type DB interface {
 }
 
 type File interface {
-	Get(fileName string) (b []byte, err error)
-	Save(fileName string, b []byte) (err error)
+	GetStored(fileName string) (b []byte, err error)
+	SaveStore(fileName string, b []byte) (err error)
 	Delete(fileName string) (err error)
+	GetOrigin(filePath string) (b []byte, err error)
+	SaveOrigin(filePath string, b []byte) (err error)
 }
 
 type Storage struct {

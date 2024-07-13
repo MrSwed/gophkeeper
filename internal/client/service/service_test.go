@@ -58,7 +58,7 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 
 	/** /
 		token := "someKeyPhraseSecret"
-		config.User.Save("encryption_key", token)
+		config.User.SaveStore("encryption_key", token)
 
 		testKeyForGet := input.Text{Text: "some sext1"}
 		/ *	testKeyForGetCard := input.Card{
@@ -78,7 +78,7 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 
 			d, err = crypt.AES256CBCEncode(d, token)
 			require.NoError(suite.T(), err)
-			err = r.File.Save(f, d)
+			err = r.File.SaveStore(f, d)
 			require.NoError(suite.T(), err)
 		}
 	/**/
@@ -190,7 +190,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 			t.Run(tt.name+" save", func(t *testing.T) {
 				err := suite.srv.Save(tt.dataItem)
 				assert.Equal(t, tt.wantErr.save, (err != nil),
-					fmt.Sprintf("Save() error = %v, wantErr %v", err, tt.wantErr.save))
+					fmt.Sprintf("SaveStore() error = %v, wantErr %v", err, tt.wantErr.save))
 			})
 		}
 
@@ -220,7 +220,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 				gotItemData, err := suite.srv.Get(tt.dataItem.GetKey())
 
 				assert.Equal(t, tt.wantErr.get, (err != nil),
-					fmt.Sprintf("Get() error = %v, wantErr %v", err, tt.wantErr.get))
+					fmt.Sprintf("GetStored() error = %v, wantErr %v", err, tt.wantErr.get))
 
 				assert.NotNil(t, gotItemData)
 
@@ -228,7 +228,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 				assert.Equal(t, gotItemData.Description, tt.dataItem.GetDescription())
 
 				if !reflect.DeepEqual(gotItemData.Data.GetData(), tt.dataItem.GetData()) {
-					t.Errorf("Get() gotData = %v, want %v", gotItemData.Data, tt.dataItem.GetData())
+					t.Errorf("GetStored() gotData = %v, want %v", gotItemData.Data, tt.dataItem.GetData())
 				}
 			})
 		}

@@ -54,7 +54,7 @@ func (s *service) Get(key string) (data out.Item, err error) {
 		return
 	}
 	if len(r.Blob) == 0 && r.Filename != nil {
-		if r.Blob, err = s.r.File.Get(*r.Filename); err != nil {
+		if r.Blob, err = s.r.File.GetStored(*r.Filename); err != nil {
 			return
 		}
 	}
@@ -101,7 +101,7 @@ func (s *service) Save(data model.Model) (err error) {
 
 	if len(blob) > cfg.MaxBlobSize {
 		fileName := time.Now().Format("20060102150405") + "-" + r.Key
-		err = s.r.File.Save(fileName, blob)
+		err = s.r.File.SaveStore(fileName, blob)
 		if err != nil {
 			return
 		}
