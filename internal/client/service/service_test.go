@@ -33,6 +33,8 @@ type serviceStoreTestSuite struct {
 	srv Service
 }
 
+var testDataPath string = filepath.Join("..", "..", "..", "testdata")
+
 func (suite *serviceStoreTestSuite) SetupSuite() {
 	storePath := filepath.Join(suite.T().TempDir(), config.AppName)
 	err := os.MkdirAll(storePath, os.ModePerm)
@@ -76,24 +78,24 @@ func (suite *serviceStoreTestSuite) Test_service() {
 	}
 	type args struct {
 		list *model.ListQuery
+		save model.Model
 		del  bool
 	}
 	tests := []struct {
-		name     string
-		dataItem model.Model
-		args     args
-		wantErr  wantErr
+		name    string
+		args    args
+		wantErr wantErr
 	}{
 		{
 			name: "test auth",
-			dataItem: &auth.Model{
-				Common: model.Common{Key: "test-set-auth-1"},
-				Data: &auth.Data{
-					Login:    "login1",
-					Password: "password1",
-				},
-			},
 			args: args{
+				save: &auth.Model{
+					Common: model.Common{Key: "test-set-auth-1"},
+					Data: &auth.Data{
+						Login:    "login1",
+						Password: "password1",
+					},
+				},
 				list: &model.ListQuery{},
 				del:  true,
 			},
@@ -101,16 +103,16 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		},
 		{
 			name: "test card",
-			dataItem: &card.Model{
-				Common: model.Common{Key: "test-set-card-1"},
-				Data: &card.Data{
-					Exp:    "11/05",
-					Number: "0000000000000000",
-					Name:   "CardHolder Name",
-					CVV:    "000",
-				},
-			},
 			args: args{
+				save: &card.Model{
+					Common: model.Common{Key: "test-set-card-1"},
+					Data: &card.Data{
+						Exp:    "11/05",
+						Number: "0000000000000000",
+						Name:   "CardHolder Name",
+						CVV:    "000",
+					},
+				},
 				list: &model.ListQuery{},
 				del:  true,
 			},
@@ -118,13 +120,39 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		},
 		{
 			name: "test Bin",
-			dataItem: &bin.Model{
-				Common: model.Common{Key: "test-set-Bin-1"},
-				Data: &bin.Data{
-					Bin: []byte("SOME BYTE SLICE"),
+			args: args{
+				save: &bin.Model{
+					Common: model.Common{Key: "test-set-Bin-1"},
+					Data: &bin.Data{
+						Bin: []byte("SOME BYTE SLICE"),
+					},
+				},
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
+		},
+		{
+			name:    "test Bin File wrong path",
+			wantErr: wantErr{save: true, get: true, del: true},
+			args: args{
+				save: &bin.Model{
+					Common: model.Common{
+						Key:      "test-set-Bin-2",
+						FileName: filepath.Join("some-wrong-path", "SomeFile.pdf"),
+					},
 				},
 			},
+		},
+		{
+			name: "test Bin File",
 			args: args{
+				save: &bin.Model{
+					Common: model.Common{
+						Key:      "test-set-Bin-3",
+						FileName: filepath.Join(testDataPath, "SomeFile.pdf"),
+					},
+				},
 				list: &model.ListQuery{},
 				del:  true,
 			},
@@ -132,13 +160,13 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		},
 		{
 			name: "test bin",
-			dataItem: &bin.Model{
-				Common: model.Common{Key: "test-set-Bin-1"},
-				Data: &bin.Data{
-					Bin: []byte("SOME BYTE SLICE"),
-				},
-			},
 			args: args{
+				save: &bin.Model{
+					Common: model.Common{Key: "test-set-Bin-1"},
+					Data: &bin.Data{
+						Bin: []byte("SOME BYTE SLICE"),
+					},
+				},
 				list: &model.ListQuery{},
 				del:  true,
 			},
@@ -146,13 +174,13 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		},
 		{
 			name: "test text",
-			dataItem: &text.Model{
-				Common: model.Common{Key: "test-set-Bin-1"},
-				Data: &text.Data{
-					Text: "some text\ntext some\nmultiline",
-				},
-			},
 			args: args{
+				save: &text.Model{
+					Common: model.Common{Key: "test-set-Bin-1"},
+					Data: &text.Data{
+						Text: "some text\ntext some\nmultiline",
+					},
+				},
 				list: &model.ListQuery{},
 				del:  true,
 			},
@@ -160,65 +188,70 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		},
 	}
 	for _, tt := range tests {
-		if tt.dataItem != nil {
-			t.Run(tt.name+" save", func(t *testing.T) {
-				err := suite.srv.Save(tt.dataItem)
-				assert.Equal(t, tt.wantErr.save, (err != nil),
-					fmt.Sprintf("SaveStore() error = %v, wantErr %v", err, tt.wantErr.save))
-			})
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.args.save != nil {
+				t.Run(tt.name+" save", func(t *testing.T) {
+					err := suite.srv.Save(tt.args.save)
+					require.Equal(t, tt.wantErr.save, (err != nil),
+						fmt.Sprintf("SaveStore() error = %v, wantErr %v", err, tt.wantErr.save))
+				})
+			}
 
-		if tt.args.list != nil {
-			t.Run(tt.name+" list", func(t *testing.T) {
-				gotData, err := suite.srv.List(*tt.args.list)
-				if (err != nil) != tt.wantErr.list {
-					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr.list)
-					return
-				}
-				if tt.dataItem != nil {
-					assert.Greater(t, gotData.Total, 0)
-					exist := false
-					for _, i := range gotData.Items {
-						if i.Key == tt.dataItem.GetKey() {
-							exist = true
-							break
+			if tt.args.list != nil {
+				t.Run(tt.name+" list", func(t *testing.T) {
+					gotData, err := suite.srv.List(*tt.args.list)
+					if (err != nil) != tt.wantErr.list {
+						t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr.list)
+						return
+					}
+					if tt.args.save != nil {
+						assert.Greater(t, gotData.Total, 0)
+						exist := false
+						for _, i := range gotData.Items {
+							if i.Key == tt.args.save.GetKey() {
+								exist = true
+								break
+							}
+						}
+						assert.True(t, exist, tt.args.save.GetKey()+" not exist in list ", gotData)
+					}
+				})
+			}
+
+			if tt.args.save != nil {
+				t.Run(tt.name+" get saved", func(t *testing.T) {
+					gotItemData, err := suite.srv.Get(tt.args.save.GetKey())
+
+					assert.Equal(t, tt.wantErr.get, (err != nil),
+						fmt.Sprintf("GetStored() error = %v, wantErr %v", err, tt.wantErr.get))
+
+					if !tt.wantErr.get {
+						assert.NotNil(t, gotItemData)
+
+						assert.Equal(t, gotItemData.Key, tt.args.save.GetKey())
+						assert.Equal(t, gotItemData.Description, tt.args.save.GetDescription())
+
+						if !reflect.DeepEqual(gotItemData.Data.GetData(), tt.args.save.GetData()) {
+							t.Errorf("GetStored() gotData = %v, want %v", gotItemData.Data, tt.args.save.GetData())
 						}
 					}
-					assert.True(t, exist, tt.dataItem.GetKey()+" not exist in list ", gotData)
-				}
-			})
-		}
+				})
+			}
 
-		if tt.dataItem != nil {
-			t.Run(tt.name+" get saved", func(t *testing.T) {
-				gotItemData, err := suite.srv.Get(tt.dataItem.GetKey())
+			if tt.args.del {
+				t.Run(tt.name+" delete", func(t *testing.T) {
+					err := suite.srv.Delete(tt.args.save.GetKey())
 
-				assert.Equal(t, tt.wantErr.get, (err != nil),
-					fmt.Sprintf("GetStored() error = %v, wantErr %v", err, tt.wantErr.get))
+					assert.Equal(t, tt.wantErr.del, (err != nil),
+						fmt.Sprintf("Delete() error = %v, wantErr %v", err, tt.wantErr.del))
 
-				assert.NotNil(t, gotItemData)
-
-				assert.Equal(t, gotItemData.Key, tt.dataItem.GetKey())
-				assert.Equal(t, gotItemData.Description, tt.dataItem.GetDescription())
-
-				if !reflect.DeepEqual(gotItemData.Data.GetData(), tt.dataItem.GetData()) {
-					t.Errorf("GetStored() gotData = %v, want %v", gotItemData.Data, tt.dataItem.GetData())
-				}
-			})
-		}
-
-		if tt.args.del {
-			t.Run(tt.name+" delete", func(t *testing.T) {
-				err := suite.srv.Delete(tt.dataItem.GetKey())
-
-				assert.Equal(t, tt.wantErr.del, (err != nil),
-					fmt.Sprintf("Delete() error = %v, wantErr %v", err, tt.wantErr.del))
-
-				_, err = suite.srv.Get(tt.dataItem.GetKey())
-				if err == nil || !errors.Is(err, sql.ErrNoRows) {
-					t.Errorf("Delete failed.  %s steel alife, error: %v ", tt.dataItem.GetKey(), err)
-				}
-			})
-		}
+					_, err = suite.srv.Get(tt.args.save.GetKey())
+					if err == nil || !errors.Is(err, sql.ErrNoRows) {
+						t.Errorf("Delete failed.  %s steel alife, error: %v ", tt.args.save.GetKey(), err)
+					}
+				})
+			}
+		})
 	}
+
 }
