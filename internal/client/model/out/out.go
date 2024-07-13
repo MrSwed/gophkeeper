@@ -40,3 +40,15 @@ func (i *Item) UnmarshalJSON(b []byte) (err error) {
 func (i *Item) FromDBItem(dbItem storage.DBItem) {
 	i.DBItem = dbItem
 }
+
+type List struct {
+	Items []Item `json:"items"`
+	Total int    `json:"total"`
+}
+
+func (l *List) FromDBItems(r ...storage.DBItem) {
+	l.Items = make([]Item, len(r))
+	for idx, item := range r {
+		l.Items[idx].FromDBItem(item)
+	}
+}

@@ -4,20 +4,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gophKeeper/internal/client/config"
+	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
 	"gophKeeper/internal/client/model/type/bin"
 	"gophKeeper/internal/client/model/type/card"
 	"gophKeeper/internal/client/model/type/text"
+	"gophKeeper/internal/client/storage"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
-	"time"
-
-	"gophKeeper/internal/client/config"
-	clMigrate "gophKeeper/internal/client/migrate"
-	"gophKeeper/internal/client/storage"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/mattn/go-sqlite3"
@@ -32,13 +30,6 @@ type serviceStoreTestSuite struct {
 	suite.Suite
 	db  *sqlx.DB
 	srv Service
-}
-
-func parseTime(t *testing.T, s string) (tm time.Time) {
-	var e error
-	tm, e = time.Parse(time.DateTime, s)
-	require.NoError(t, e)
-	return
 }
 
 func (suite *serviceStoreTestSuite) SetupSuite() {

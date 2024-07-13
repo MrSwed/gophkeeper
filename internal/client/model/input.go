@@ -12,27 +12,9 @@ type Validate interface {
 	Validate() error
 }
 
-type Common struct {
-	Key         string  `json:"key" validate:"required"`
-	Description *string `json:"description"`
-	FileName    string  `json:"fileName"`
-}
-
 type Packed struct {
 	Type string `json:"type"`
 	Data any    `json:"data"`
-}
-
-func (c Common) GetKey() string {
-	return c.Key
-}
-
-func (c Common) GetDescription() *string {
-	return c.Description
-}
-
-func (c Common) GetFileName() string {
-	return c.FileName
 }
 
 func NewPackedBytes(t string, d any) ([]byte, error) {
@@ -40,4 +22,17 @@ func NewPackedBytes(t string, d any) ([]byte, error) {
 		Type: t,
 		Data: d,
 	})
+}
+
+type ListQuery struct {
+	Key         string `json:"key" validate:"omitempty,max=100"`
+	Description string `json:"description" validate:"omitempty,max=5000"`
+	CreatedAt   string `json:"created_at" validate:"omitempty,datetime"`
+	UpdatedAt   string `json:"updated_at" validate:"omitempty,datetime"`
+	Limit       uint64 `json:"limit" validate:"omitempty" default:"10"`
+	Offset      uint64 `json:"offset" validate:"omitempty"`
+}
+
+func (m *ListQuery) Validate() (err error) {
+	return Validator.Struct(m)
 }

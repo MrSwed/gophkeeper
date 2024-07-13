@@ -8,17 +8,38 @@ import (
 
 var models = map[string]any{}
 
-type Model interface {
-	Validate
-	Bytes() (b []byte, err error)
+type Data interface {
+	GetData() any
+}
+
+type Base interface {
 	GetKey() string
 	GetDescription() *string
 	GetFileName() string
+}
+
+type Model interface {
+	Validate
+	Base
+	Bytes() (b []byte, err error)
 	Data
 }
 
-type Data interface {
-	GetData() any
+type Common struct {
+	Key         string  `json:"key" validate:"required"`
+	Description *string `json:"description"`
+	FileName    string  `json:"fileName"`
+}
+
+func (c Common) GetKey() string {
+	return c.Key
+}
+
+func (c Common) GetDescription() *string {
+	return c.Description
+}
+func (c Common) GetFileName() string {
+	return c.FileName
 }
 
 func RegisterModel(model Data) {
