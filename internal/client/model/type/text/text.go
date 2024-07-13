@@ -16,13 +16,13 @@ type Model struct {
 }
 
 func (m *Model) GetFile() (err error) {
-	if m.GetFileName() != "" && m.Data.Text == "" {
+	if m.FileName != "" {
 		if m.Data == nil {
 			m.Data = &Data{}
 		}
 
 		var b []byte
-		b, err = os.ReadFile(m.GetFileName())
+		b, err = os.ReadFile(m.FileName)
 		m.Data.Text = string(b)
 		return
 	}

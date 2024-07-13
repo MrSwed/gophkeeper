@@ -159,12 +159,12 @@ func (suite *serviceStoreTestSuite) Test_service() {
 			wantErr: wantErr{},
 		},
 		{
-			name: "test bin",
+			name: "test text",
 			args: args{
-				save: &bin.Model{
-					Common: model.Common{Key: "test-set-Bin-1"},
-					Data: &bin.Data{
-						Bin: []byte("SOME BYTE SLICE"),
+				save: &text.Model{
+					Common: model.Common{Key: "test-set-text-1"},
+					Data: &text.Data{
+						Text: "some text\ntext some\nmultiline",
 					},
 				},
 				list: &model.ListQuery{},
@@ -173,12 +173,12 @@ func (suite *serviceStoreTestSuite) Test_service() {
 			wantErr: wantErr{},
 		},
 		{
-			name: "test text",
+			name: "test text File",
 			args: args{
 				save: &text.Model{
-					Common: model.Common{Key: "test-set-Bin-1"},
-					Data: &text.Data{
-						Text: "some text\ntext some\nmultiline",
+					Common: model.Common{
+						Key:      "test-set-text-3",
+						FileName: filepath.Join(testDataPath, "SomeFile.txt"),
 					},
 				},
 				list: &model.ListQuery{},
