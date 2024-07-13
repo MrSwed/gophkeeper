@@ -21,7 +21,7 @@ type Data struct {
 
 type Model struct {
 	model.Common
-	Data model.Data `json:"data" validate:"required"`
+	Data *Data `json:"data" validate:"required"`
 }
 
 var (
@@ -34,7 +34,7 @@ func (m *Model) Validate() error {
 }
 
 func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(model.GetName(m), m.Data)
+	return model.NewPackedBytes(m)
 }
 
 func (m *Model) GetData() any {

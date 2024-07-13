@@ -2,6 +2,7 @@ package text
 
 import (
 	"gophKeeper/internal/client/model"
+	"os"
 )
 
 var (
@@ -11,7 +12,21 @@ var (
 
 type Model struct {
 	model.Common
-	Data model.Data `json:"data"`
+	Data *Data `json:"data"`
+}
+
+func (m *Model) GetFile() (err error) {
+	if m.GetFileName() != "" && m.Data.Text == "" {
+		if m.Data == nil {
+			m.Data = &Data{}
+		}
+
+		var b []byte
+		b, err = os.ReadFile(m.GetFileName())
+		m.Data.Text = string(b)
+		return
+	}
+	return
 }
 
 func (m *Model) Validate() error {
@@ -19,7 +34,7 @@ func (m *Model) Validate() error {
 }
 
 func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(model.GetName(m), m.Data)
+	return model.NewPackedBytes(m)
 }
 
 func (m *Model) GetData() any {
