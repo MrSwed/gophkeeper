@@ -18,12 +18,11 @@ type Model interface {
 }
 
 type Data interface {
-	Type() string
 	GetData() any
 }
 
 func RegisterModel(model Data) {
-	models[model.Type()] = model
+	models[GetName(model)] = model
 }
 
 func GetNewModel(name string) (Data, error) {

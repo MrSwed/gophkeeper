@@ -19,11 +19,7 @@ func (m *Model) Validate() error {
 }
 
 func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(m.Data.Type(), m.Data)
-}
-
-func (m *Model) Type() string {
-	return model.GetName(m)
+	return model.NewPackedBytes(model.GetName(m), m.Data)
 }
 
 func (m *Model) GetData() any {
@@ -32,10 +28,6 @@ func (m *Model) GetData() any {
 
 type Data struct {
 	Text string `json:"text"`
-}
-
-func (m *Data) Type() string {
-	return model.GetName(m)
 }
 
 func (m *Data) GetData() any {

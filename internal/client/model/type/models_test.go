@@ -11,44 +11,6 @@ import (
 	"testing"
 )
 
-func TestModel_Type(t *testing.T) {
-	tests := []struct {
-		name    string
-		m       model.Data
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "test auth",
-			m:    &auth.Data{},
-			want: "auth",
-		},
-		{
-			name: "test text",
-			m:    &text.Data{},
-			want: "text",
-		},
-		{
-			name: "test card",
-			m:    &card.Data{},
-			want: "card",
-		},
-		{
-			name: "test bin",
-			m:    &bin.Data{},
-			want: "bin",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := tt.m.Type()
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Type() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestModel_Bytes(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -335,7 +297,7 @@ func TestModel_GetNewModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := model.GetNewModel(tt.m.Type())
+			got, err := model.GetNewModel(model.GetName(tt.m))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetNewModel() error = %v, wantErr %v", err, tt.wantErr)
 				return
