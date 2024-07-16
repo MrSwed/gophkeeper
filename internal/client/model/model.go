@@ -25,15 +25,15 @@ type Base interface {
 type Model interface {
 	Validate
 	Base
-	Bytes() (b []byte, err error)
 	Data
+	Bytes() (b []byte, err error)
 }
 
 func RegisterModel(model Data) {
 	models[GetName(model)] = model
 }
 
-func GetNewModel(name string) (Data, error) {
+func GetNewDataModel(name string) (Data, error) {
 	if model, ok := models[name]; ok {
 		v := reflect.New(reflect.TypeOf(model).Elem()).Interface()
 		return v.(Data), nil

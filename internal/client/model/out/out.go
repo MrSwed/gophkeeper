@@ -28,7 +28,7 @@ func (i *Item) UnmarshalJSON(b []byte) (err error) {
 	if err = json.Unmarshal(b, &t); err != nil {
 		return
 	}
-	i.Data, err = model.GetNewModel(t.Type)
+	i.Data, err = model.GetNewDataModel(t.Type)
 	if err != nil {
 		return
 	}

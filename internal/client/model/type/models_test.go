@@ -272,7 +272,7 @@ func containStrInErr(err error, str ...string) bool {
 	return c == len(str)
 }
 
-func TestModel_GetNewModel(t *testing.T) {
+func TestModel_GetNewDataModel(t *testing.T) {
 	tests := []struct {
 		name    string
 		m       model.Data
@@ -297,9 +297,9 @@ func TestModel_GetNewModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := model.GetNewModel(model.GetName(tt.m))
+			got, err := model.GetNewDataModel(model.GetName(tt.m))
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetNewModel() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.m) {
