@@ -1,11 +1,13 @@
 package service
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"gophKeeper/internal/client/model"
-
 	"time"
 
 	cfg "gophKeeper/internal/client/config"
@@ -13,6 +15,8 @@ import (
 	errs "gophKeeper/internal/client/errors"
 	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/storage"
+
+	"golang.org/x/term"
 )
 
 type Service interface {
@@ -28,6 +32,72 @@ type service struct {
 
 func NewService(r *storage.Storage) *service {
 	return &service{r: r}
+}
+
+func (s *service) getRawPass(new bool) (pass string, err error) {
+	var b []byte
+	if new {
+		fmt.Print("Please enter new password: ")
+	} else {
+		fmt.Print("Please enter password: ")
+	}
+	b, err = term.ReadPassword(0)
+	if err == nil {
+		if new {
+			fmt.Print("Please confirm you password: ")
+		RepeatPass:
+			b2, err2 := term.ReadPassword(0)
+			if err2 != nil || string(b) != string(b2) {
+				err = errors.New("password confirm error")
+				fmt.Println("password confirm error")
+				goto RepeatPass
+			}
+		}
+		pass = string(b)
+	}
+	return
+}
+
+func (s *service) getToken() (token string, err error) {
+	token = cfg.User.GetString("encryption_key")
+	if token == "" {
+		packed := cfg.User.GetString("packed_key")
+		userName := cfg.User.GetString("name")
+		var passRaw string
+		passRaw, err = s.getRawPass(packed == "")
+		if err != nil {
+			return
+		}
+		var (
+			packedBytes, tokenBytes []byte
+		)
+		if packed == "" {
+			// fmt.Println("Creating new token... ")
+			tokenBytes = make([]byte, 128)
+			_, err = rand.Read(tokenBytes)
+			if err != nil {
+				err = errors.Join(errors.New("error create new token"), err)
+				return
+			}
+			tokenStr := hex.EncodeToString(tokenBytes)
+
+			packedBytes, err = crypt.Encode([]byte(tokenStr), userName+passRaw)
+			if err != nil {
+				return
+			}
+			cfg.User.Set("packed_key", packedBytes)
+		} else {
+			tokenBytes, err = crypt.Decode([]byte(packed), userName+passRaw)
+			if err != nil {
+				err = errors.Join(errors.New("error decode token"), err)
+				return
+			}
+		}
+		token = string(tokenBytes)
+		// cache token in config, ot must be excluded from saving
+		cfg.User.Set("encryption_key", token)
+	}
+	return
 }
 
 func (s *service) List(query model.ListQuery) (data out.List, err error) {
@@ -61,9 +131,12 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	data.DBItem = r.DBItem
 	var (
 		deCrypted []byte
-		// todo : service for get and cache unpacked encryption_key
-		token = cfg.User.GetString("encryption_key")
+		token     string
 	)
+	token, err = s.getToken()
+	if err != nil {
+		return
+	}
 	deCrypted, err = crypt.Decode(r.Blob, token)
 	if err != nil {
 		err = errs.ErrDecode
@@ -92,8 +165,11 @@ func (s *service) Save(data model.Model) (err error) {
 	if err != nil {
 		return
 	}
-	// todo: service for get and cache unpacked encryption_key
-	token := cfg.User.GetString("encryption_key")
+	var token string
+	token, err = s.getToken()
+	if err != nil {
+		return
+	}
 
 	if blob, err = crypt.Encode(blob, token); err != nil {
 		return
