@@ -6,17 +6,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/client/input"
 	"time"
 
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/crypt"
 	errs "gophKeeper/internal/client/errors"
+	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/storage"
-
-	"golang.org/x/term"
 )
 
 type Service interface {
@@ -24,7 +22,10 @@ type Service interface {
 	Get(key string) (data out.Item, err error)
 	Save(data model.Model) (err error)
 	Delete(key string) (err error)
+	GetToken() (token string, err error)
 }
+
+var _ Service = (*service)(nil)
 
 type service struct {
 	r *storage.Storage
@@ -34,37 +35,13 @@ func NewService(r *storage.Storage) *service {
 	return &service{r: r}
 }
 
-func (s *service) getRawPass(new bool) (pass string, err error) {
-	var b []byte
-	if new {
-		fmt.Print("Please enter new password: ")
-	} else {
-		fmt.Print("Please enter password: ")
-	}
-	b, err = term.ReadPassword(0)
-	if err == nil {
-		if new {
-			fmt.Print("Please confirm you password: ")
-		RepeatPass:
-			b2, err2 := term.ReadPassword(0)
-			if err2 != nil || string(b) != string(b2) {
-				err = errors.New("password confirm error")
-				fmt.Println("password confirm error")
-				goto RepeatPass
-			}
-		}
-		pass = string(b)
-	}
-	return
-}
-
-func (s *service) getToken() (token string, err error) {
+func (s *service) GetToken() (token string, err error) {
 	token = cfg.User.GetString("encryption_key")
 	if token == "" {
 		packed := cfg.User.GetString("packed_key")
 		userName := cfg.User.GetString("name")
 		var passRaw string
-		passRaw, err = s.getRawPass(packed == "")
+		passRaw, err = input.GetRawPass(packed == "")
 		if err != nil {
 			return
 		}
@@ -133,7 +110,7 @@ func (s *service) Get(key string) (data out.Item, err error) {
 		deCrypted []byte
 		token     string
 	)
-	token, err = s.getToken()
+	token, err = s.GetToken()
 	if err != nil {
 		return
 	}
@@ -166,7 +143,7 @@ func (s *service) Save(data model.Model) (err error) {
 		return
 	}
 	var token string
-	token, err = s.getToken()
+	token, err = s.GetToken()
 	if err != nil {
 		return
 	}

@@ -29,8 +29,9 @@ import (
 
 type serviceStoreTestSuite struct {
 	suite.Suite
-	db  *sqlx.DB
-	srv Service
+	db       *sqlx.DB
+	srv      Service
+	oldStdin *os.File
 }
 
 var testDataPath string = filepath.Join("..", "..", "..", "testdata")
@@ -41,7 +42,7 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err)
 	dbFile := filepath.Join(storePath, "store.db")
 
-	config.User.Set("encryption_key", "SomePhraseEncryptionKey")
+	// config.User.Set("encryption_key", "SomePhraseEncryptionKey")
 
 	suite.db, err = sqlx.Open("sqlite3", dbFile)
 	require.NoError(suite.T(), err)
@@ -57,13 +58,24 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	suite.srv = NewService(r)
 
 	require.NoError(suite.T(), err)
-
+	suite.oldStdin = os.Stdin
+	input := []byte("SomeUserPassword\nSomeUserPassword\n")
+	rp, wp, err := os.Pipe()
+	require.NoError(suite.T(), err)
+	_, err = wp.Write(input)
+	require.NoError(suite.T(), err)
+	err = wp.Close()
+	require.NoError(suite.T(), err)
+	os.Stdin = rp
+	_, err = suite.srv.GetToken()
+	require.NoError(suite.T(), err)
 }
 
 func (suite *serviceStoreTestSuite) TearDownSuite() {
 	err := suite.db.Close()
 	require.NoError(suite.T(), err)
 	require.NoError(suite.T(), os.RemoveAll(suite.T().TempDir()))
+	os.Stdin = suite.oldStdin
 }
 
 func TestHandlersFileStoreTest(t *testing.T) {
