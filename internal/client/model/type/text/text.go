@@ -29,7 +29,7 @@ func (m *Model) GetFile() (err error) {
 	return
 }
 
-func (m *Model) Validate() error {
+func (m *Model) Validate(fields ...string) error {
 	return model.Validator.Struct(m)
 }
 

@@ -92,6 +92,7 @@ func TestModel_Validate(t *testing.T) {
 	tests := []struct {
 		name        string
 		m           model.Model
+		fields      []string
 		wantErrKeys []string
 	}{
 		{
@@ -144,7 +145,7 @@ func TestModel_Validate(t *testing.T) {
 		{
 			name: "not valid card",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 2"},
 				Data: &card.Data{
 					Exp:    "05/25",
 					Number: "0000000000000001",
@@ -157,7 +158,7 @@ func TestModel_Validate(t *testing.T) {
 		{
 			name: "valid data",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 3"},
 				Data: &card.Data{
 					Exp:    "05/25",
 					Number: "4012888888881881",
@@ -167,9 +168,28 @@ func TestModel_Validate(t *testing.T) {
 			},
 		},
 		{
+			name:   "card validate num only",
+			fields: []string{"Number"},
+			m: &card.Model{
+				Common: model.Common{Key: "some bank card 2"},
+				Data: &card.Data{
+					Number: "4012888888881881",
+				},
+			},
+		},
+		{
+			name:   "bad card num",
+			fields: []string{"Data.Number"},
+			m: &card.Model{
+				Common: model.Common{Key: "some bank card 2"},
+				Data:   &card.Data{},
+			},
+			wantErrKeys: []string{"Data.Number"},
+		},
+		{
 			name: "bad cvv 1",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 4"},
 				Data: &card.Data{
 					Exp:    "05/25",
 					Number: "4012888888881881",
@@ -182,7 +202,7 @@ func TestModel_Validate(t *testing.T) {
 		{
 			name: "bad cvv 2",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 5"},
 				Data: &card.Data{
 					Exp:    "05/25",
 					Number: "4012888888881881",
@@ -193,9 +213,20 @@ func TestModel_Validate(t *testing.T) {
 			wantErrKeys: []string{"CVV"},
 		},
 		{
+			name:   "bad cvv 3, partial validate",
+			fields: []string{"Data.CVV"},
+			m: &card.Model{
+				Common: model.Common{Key: "some bank card 6"},
+				Data: &card.Data{
+					CVV: "99",
+				},
+			},
+			wantErrKeys: []string{"Data.CVV"},
+		},
+		{
 			name: "can be no cvv",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 7"},
 				Data: &card.Data{
 					Exp:    "05/25",
 					Number: "4012888888881881",
@@ -205,7 +236,7 @@ func TestModel_Validate(t *testing.T) {
 		{
 			name: "bad exp",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 8"},
 				Data: &card.Data{
 					Exp:    "48/25",
 					Number: "4012888888881881",
@@ -228,7 +259,7 @@ func TestModel_Validate(t *testing.T) {
 		{
 			name: "can no exp",
 			m: &card.Model{
-				Common: model.Common{Key: "some bank card 1"},
+				Common: model.Common{Key: "some bank card 9"},
 				Data: &card.Data{
 					Number: "4012888888881881",
 					Name:   "Some Name",
@@ -251,7 +282,7 @@ func TestModel_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.m.Validate()
+			err := tt.m.Validate(tt.fields...)
 			if (err != nil) != (tt.wantErrKeys != nil) || (tt.wantErrKeys != nil) != containStrInErr(err, tt.wantErrKeys...) {
 				t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.wantErrKeys)
 			}

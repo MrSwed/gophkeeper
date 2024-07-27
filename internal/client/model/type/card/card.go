@@ -29,8 +29,12 @@ var (
 	_ model.Data  = (*Data)(nil)
 )
 
-func (m *Model) Validate() error {
-	return model.Validator.Struct(m)
+func (m *Model) Validate(fields ...string) error {
+	if len(fields) == 0 {
+		return model.Validator.Struct(m)
+	} else {
+		return model.Validator.StructPartial(m, fields...)
+	}
 }
 
 func (m *Model) Bytes() (b []byte, err error) {

@@ -7,7 +7,7 @@ import (
 var Validator = validator.New(validator.WithRequiredStructEnabled())
 
 type Validate interface {
-	Validate() error
+	Validate(fields ...string) error
 }
 
 type ListQuery struct {
