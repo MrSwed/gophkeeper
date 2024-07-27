@@ -2,23 +2,28 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
+	"time"
 )
 
 type Common struct {
-	Key         string  `json:"key" validate:"required"`
-	Description *string `json:"description"`
-	FileName    string  `json:"fileName"`
+	Key         string `json:"key" validate:"required"`
+	Description string `json:"description"`
+	FileName    string `json:"fileName"`
 }
 
-func (c Common) GetKey() string {
+func (c *Common) GetKey() string {
+	if c.Key == "" {
+		c.Key = fmt.Sprintf("Key-%s", time.Now().Format("2006-01-02-15-04-05"))
+	}
 	return c.Key
 }
 
-func (c Common) GetDescription() *string {
+func (c *Common) GetDescription() string {
 	return c.Description
 }
-func (c Common) GetFileName() string {
+func (c *Common) GetFileName() string {
 	return c.FileName
 }
 

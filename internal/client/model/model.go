@@ -18,7 +18,7 @@ type Data interface {
 
 type Base interface {
 	GetKey() string
-	GetDescription() *string
+	GetDescription() string
 	GetFileName() string
 }
 
