@@ -15,8 +15,8 @@ const (
 type Data struct {
 	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
 	Number string `json:"number" validate:"required,credit_card"`
-	Name   string `json:"name,omitempty" validate:"omitempty"`
 	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
+	Name   string `json:"name,omitempty" validate:"omitempty"`
 }
 
 type Model struct {
