@@ -12,42 +12,10 @@ const (
 	cvvRegexp     = `^\d{3}$`
 )
 
-type Data struct {
-	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
-	Number string `json:"number" validate:"required,credit_card"`
-	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
-	Name   string `json:"name,omitempty" validate:"omitempty"`
-}
-
-type Model struct {
-	model.Common
-	Data *Data `json:"data" validate:"required"`
-}
-
 var (
 	_ model.Model = (*Model)(nil)
 	_ model.Data  = (*Data)(nil)
 )
-
-func (m *Model) Validate(fields ...string) error {
-	if len(fields) == 0 {
-		return model.Validator.Struct(m)
-	} else {
-		return model.Validator.StructPartial(m, fields...)
-	}
-}
-
-func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(m)
-}
-
-func (m *Model) GetData() any {
-	return m.Data.GetData()
-}
-
-func (m *Data) GetData() any {
-	return m
-}
 
 func init() {
 	model.RegisterModel(&Data{})
@@ -65,4 +33,36 @@ func init() {
 			panic(err)
 		}
 	}
+}
+
+type Model struct {
+	model.Common
+	Data *Data `json:"data" validate:"required"`
+}
+
+func (m *Model) Validate(fields ...string) error {
+	if len(fields) == 0 {
+		return model.Validator.Struct(m)
+	} else {
+		return model.Validator.StructPartial(m, fields...)
+	}
+}
+
+func (m *Model) Bytes() (b []byte, err error) {
+	return model.NewPackedBytes(m)
+}
+
+func (m *Model) GetData() any {
+	return m.Data.GetData()
+}
+
+type Data struct {
+	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
+	Number string `json:"number" validate:"required,credit_card"`
+	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
+	Name   string `json:"name,omitempty" validate:"omitempty"`
+}
+
+func (m *Data) GetData() any {
+	return m
 }

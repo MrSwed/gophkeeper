@@ -5,19 +5,19 @@ import (
 	"os"
 )
 
-type Data struct {
-	Bin []byte `json:"bin"`
+var (
+	_ model.Model = (*Model)(nil)
+	_ model.Data  = (*Data)(nil)
+)
+
+func init() {
+	model.RegisterModel(&Data{})
 }
 
 type Model struct {
 	model.Common
 	Data *Data `json:"data"`
 }
-
-var (
-	_ model.Model = (*Model)(nil)
-	_ model.Data  = (*Data)(nil)
-)
 
 func (m *Model) GetFile() (err error) {
 	if m.FileName != "" {
@@ -42,10 +42,10 @@ func (m *Model) GetData() any {
 	return m.Data.GetData()
 }
 
-func (m *Data) GetData() any {
-	return m
+type Data struct {
+	Bin []byte `json:"bin"`
 }
 
-func init() {
-	model.RegisterModel(&Data{})
+func (m *Data) GetData() any {
+	return m
 }

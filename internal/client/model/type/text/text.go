@@ -10,6 +10,10 @@ var (
 	_ model.Data  = (*Data)(nil)
 )
 
+func init() {
+	model.RegisterModel(&Data{})
+}
+
 type Model struct {
 	model.Common
 	Data *Data `json:"data"`
@@ -47,8 +51,4 @@ type Data struct {
 
 func (m *Data) GetData() any {
 	return m
-}
-
-func init() {
-	model.RegisterModel(&Data{})
 }

@@ -4,20 +4,19 @@ import (
 	"gophKeeper/internal/client/model"
 )
 
-type Data struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
+var (
+	_ model.Model = (*Model)(nil)
+	_ model.Data  = (*Data)(nil)
+)
 
 type Model struct {
 	model.Common
 	Data *Data `json:"data"`
 }
 
-var (
-	_ model.Model = (*Model)(nil)
-	_ model.Data  = (*Data)(nil)
-)
+func init() {
+	model.RegisterModel(&Data{})
+}
 
 func (m *Model) Validate(fields ...string) error {
 	if len(fields) == 0 {
@@ -35,10 +34,11 @@ func (m *Model) GetData() any {
 	return m.Data.GetData()
 }
 
-func (m *Data) GetData() any {
-	return m
+type Data struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
-func init() {
-	model.RegisterModel(&Data{})
+func (m *Data) GetData() any {
+	return m
 }
