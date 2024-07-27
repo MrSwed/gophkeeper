@@ -4,7 +4,10 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/client/model/type/card"
 
 	"github.com/spf13/cobra"
 )
@@ -79,17 +82,51 @@ func saveCardCmd() (cmd *cobra.Command) {
 		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
 		ValidArgs: []string{"-num", "-exp-mon", "-exp-year", "-cvv", "-name", "f", "k", "d"},
 		Long:      `Encrypts bank cards data`,
-		Example:   `  save card --num 2222-4444-5555-1111 --exp-mon 10 --exp-year 29 --cvv 123 --owner "Max Space"`,
+		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("save card called")
-			// todo here
+			var (
+				data = &card.Model{
+					Common: model.Common{},
+					Data:   &card.Data{},
+				}
+				flagLnk = map[string]*string{
+					"key":         &data.Key,
+					"file":        &data.FileName,
+					"description": &data.Description,
+					"num":         &data.Data.Number,
+					"exp":         &data.Data.Exp,
+					"cvv":         &data.Data.CVV,
+					"owner":       &data.Data.Name,
+				}
+				err error
+			)
+
+			for flag, dataValue := range flagLnk {
+				if cmd.Flags().Changed(flag) {
+					flagValue, er := cmd.Flags().GetString(flag)
+					if er == nil {
+						*dataValue = flagValue
+					} else {
+						err = errors.Join(err, er)
+					}
+				}
+			}
+			err = errors.Join(err,
+				data.Validate())
+
+			if err != nil {
+				fmt.Println("Validate: Error: ", err)
+			}
+
+			// err := srv.Save(data)
+			// todo is draft yet
+			fmt.Println(data.Data)
 		},
 	}
 	commonFlags(cmd)
 
 	cmd.Flags().StringP("num", "n", "", "long card number 0000-0000-0000-0000")
-	cmd.Flags().StringP("exp-mon", "m", "", "expiry month 00")
-	cmd.Flags().StringP("exp-year", "y", "", "expiry year 00")
+	cmd.Flags().StringP("exp", "e", "", "expiry           MM/YY")
 	cmd.Flags().StringP("cvv", "c", "", "cvv value        000")
 	cmd.Flags().StringP("owner", "o", "", "owner, card holder     Firstname Lastname")
 
