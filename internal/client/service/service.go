@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"gophKeeper/internal/client/input"
+	"gophKeeper/internal/client/input/password"
 	"time"
 
 	cfg "gophKeeper/internal/client/config"
@@ -41,7 +41,7 @@ func (s *service) GetToken() (token string, err error) {
 		packed := cfg.User.GetString("packed_key")
 		userName := cfg.User.GetString("name")
 		var passRaw string
-		passRaw, err = input.GetRawPass(packed == "")
+		passRaw, err = password.GetRawPass(packed == "")
 		if err != nil {
 			return
 		}
