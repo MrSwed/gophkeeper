@@ -45,3 +45,7 @@ func GetName(m any) string {
 	p := strings.Split(reflect.TypeOf(m).Elem().PkgPath(), "/")
 	return p[len(p)-1]
 }
+
+type Settable interface {
+	Set(s string)
+}

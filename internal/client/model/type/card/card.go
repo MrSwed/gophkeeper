@@ -3,6 +3,7 @@ package card
 import (
 	"gophKeeper/internal/client/model"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -57,12 +58,58 @@ func (m *Model) GetData() any {
 }
 
 type Data struct {
-	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
-	Number string `json:"number" validate:"required,credit_card"`
-	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
-	Name   string `json:"name,omitempty" validate:"omitempty"`
+	Number cardNumber `json:"number" validate:"required,credit_card"`
+	Exp    cardExo    `json:"exp" validate:"omitempty,credit_card_exp_date"`
+	CVV    string     `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
+	Name   string     `json:"name,omitempty" validate:"omitempty"`
 }
 
 func (m *Data) GetData() any {
 	return m
+}
+
+type cardNumber [16]byte
+
+func (c *cardNumber) Set(s string) {
+	s = strings.ReplaceAll(s, " ", "")
+	*c = cardNumber{}
+	for i := 0; i < len(s); i++ {
+		c[i] = s[i]
+	}
+}
+
+func (c *cardNumber) String() string {
+	b := make([]byte, 0, len(c))
+	for i := 0; i < len(c); i++ {
+		if c[i] != 0 {
+			b = append(b, c[i])
+			if i > 0 && (i+1)%4 == 0 {
+				b = append(b, ' ')
+			}
+		}
+	}
+
+	return strings.TrimSpace(string(b))
+}
+
+type cardExo [4]byte
+
+func (c *cardExo) Set(s string) {
+	s = strings.ReplaceAll(s, "/", "")
+	*c = cardExo{}
+	copy(c[:], s)
+}
+
+func (c *cardExo) String() string {
+	b := make([]byte, 0, len(c))
+	for i := 0; i < len(c); i++ {
+		if c[i] != 0 {
+			b = append(b, c[i])
+		}
+	}
+	if len(b) > 2 {
+		b = append([]byte{b[0], b[1], '/'}, b[2:]...)
+	}
+
+	return strings.TrimSpace(string(b))
 }
