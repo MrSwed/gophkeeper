@@ -89,7 +89,7 @@ func saveCardCmd() (cmd *cobra.Command) {
 					Common: model.Common{},
 					Data:   &card.Data{},
 				}
-				flagLnk = map[string]*string{
+				flagLnk = map[string]any{
 					"key":         &data.Key,
 					"file":        &data.FileName,
 					"description": &data.Description,
@@ -105,22 +105,29 @@ func saveCardCmd() (cmd *cobra.Command) {
 				if cmd.Flags().Changed(flag) {
 					flagValue, er := cmd.Flags().GetString(flag)
 					if er == nil {
-						*dataValue = flagValue
+						if dv, ok := dataValue.(*string); ok {
+							*dv = flagValue
+						}
+						switch db := dataValue.(type) {
+						case *string:
+							*db = flagValue
+						case model.Settable:
+							db.Set(flagValue)
+						}
 					} else {
 						err = errors.Join(err, er)
 					}
 				}
 			}
-			err = errors.Join(err,
-				data.Validate())
+			err = errors.Join(err, data.Validate())
 
 			if err != nil {
 				fmt.Println("Validate: Error: ", err)
 			}
 
-			// err := srv.Save(data)
 			// todo is draft yet
 			fmt.Println(data.Data)
+			// err := srv.Save(data)
 		},
 	}
 	commonFlags(cmd)
