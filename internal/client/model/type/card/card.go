@@ -72,8 +72,9 @@ type cardNumber [16]byte
 
 func (c *cardNumber) Set(s string) {
 	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, "-", "")
 	*c = cardNumber{}
-	for i := 0; i < len(s); i++ {
+	for i := 0; i < len(s) && i < len(c); i++ {
 		c[i] = s[i]
 	}
 }
