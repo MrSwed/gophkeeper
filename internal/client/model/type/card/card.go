@@ -58,14 +58,33 @@ func (m *Model) GetData() any {
 }
 
 type Data struct {
-	Number cardNumber `json:"number" validate:"required,credit_card"`
-	Exp    cardExo    `json:"exp" validate:"omitempty,credit_card_exp_date"`
-	CVV    string     `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
-	Name   string     `json:"name,omitempty" validate:"omitempty"`
+	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date"`
+	Number string `json:"number" validate:"required,credit_card"`
+	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv"`
+	Name   string `json:"name,omitempty" validate:"omitempty"`
+}
+
+type packedData struct {
+	Number cardNumber `json:"number"`
+	Exp    cardExo    `json:"exp"`
+	CVV    string     `json:"cvv,omitempty"`
+	Name   string     `json:"name,omitempty"`
 }
 
 func (m *Data) GetData() any {
-	return m
+	p := new(packedData)
+	p.CVV = m.CVV
+	p.Name = m.Name
+	p.Exp.Set(m.Exp)
+	p.Number.Set(m.Number)
+	return p
+}
+
+func (m *Data) Sanitize() {
+	if packed, _ := m.GetData().(*packedData); packed != nil {
+		m.Exp = packed.Exp.String()
+		m.Number = packed.Number.String()
+	}
 }
 
 type cardNumber [16]byte

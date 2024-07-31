@@ -49,3 +49,7 @@ func GetName(m any) string {
 type Settable interface {
 	Set(s string)
 }
+
+type Sanitisable interface {
+	Sanitize()
+}

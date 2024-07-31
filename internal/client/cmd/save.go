@@ -108,17 +108,12 @@ func saveCardCmd() (cmd *cobra.Command) {
 						if dv, ok := dataValue.(*string); ok {
 							*dv = flagValue
 						}
-						switch db := dataValue.(type) {
-						case *string:
-							*db = flagValue
-						case model.Settable:
-							db.Set(flagValue)
-						}
 					} else {
 						err = errors.Join(err, er)
 					}
 				}
 			}
+			data.Data.Sanitize()
 			err = errors.Join(err, data.Validate())
 
 			if err != nil {
