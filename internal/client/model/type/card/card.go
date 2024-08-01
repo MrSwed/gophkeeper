@@ -135,9 +135,9 @@ func (c *cardExo) String() string {
 	if len(b) > 2 {
 		b = append([]byte{b[0], b[1], '/'}, b[2:]...)
 	}
-
 	return strings.TrimSpace(string(b))
 }
+
 func (c *cardExo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(string((*c)[:]))
 }

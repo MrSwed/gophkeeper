@@ -120,6 +120,9 @@ func (s *service) Get(key string) (data out.Item, err error) {
 		return
 	}
 	err = json.Unmarshal(deCrypted, &data)
+	if dataSan, ok := data.Data.(model.Sanitisable); ok {
+		dataSan.Sanitize()
+	}
 	return
 }
 

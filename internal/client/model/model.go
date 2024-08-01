@@ -29,6 +29,14 @@ type Model interface {
 	Bytes() (b []byte, err error)
 }
 
+type Settable interface {
+	Set(s string)
+}
+
+type Sanitisable interface {
+	Sanitize()
+}
+
 func RegisterModel(model Data) {
 	models[GetName(model)] = model
 }
@@ -44,12 +52,4 @@ func GetNewDataModel(name string) (Data, error) {
 func GetName(m any) string {
 	p := strings.Split(reflect.TypeOf(m).Elem().PkgPath(), "/")
 	return p[len(p)-1]
-}
-
-type Settable interface {
-	Set(s string)
-}
-
-type Sanitisable interface {
-	Sanitize()
 }
