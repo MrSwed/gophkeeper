@@ -1,6 +1,7 @@
 package card
 
 import (
+	"encoding/json"
 	"gophKeeper/internal/client/model"
 	"regexp"
 	"strings"
@@ -112,6 +113,10 @@ func (c *cardNumber) String() string {
 	return strings.TrimSpace(string(b))
 }
 
+func (c *cardNumber) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string((*c)[:]))
+}
+
 type cardExo [4]byte
 
 func (c *cardExo) Set(s string) {
@@ -132,4 +137,7 @@ func (c *cardExo) String() string {
 	}
 
 	return strings.TrimSpace(string(b))
+}
+func (c *cardExo) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string((*c)[:]))
 }

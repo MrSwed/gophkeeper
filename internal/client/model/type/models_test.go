@@ -47,7 +47,7 @@ func TestModel_Bytes(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte(`{"type":"card","data":{"exp":"05/25","number":"0000000000000000","cvv":"999","name":"Some Name"}}`),
+			want:    []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999","name":"Some Name"}}`),
 			wantErr: false,
 		},
 		{
@@ -59,7 +59,7 @@ func TestModel_Bytes(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte(`{"type":"card","data":{"exp":"05/25","number":"0000000000000000","cvv":"999"}}`),
+			want:    []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999"}}`),
 			wantErr: false,
 		},
 		{
