@@ -6,12 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	// rootCmd.AddCommand(deleteCmd())
-}
-
-// listCmd represents the list command
-func deleteCmd() *cobra.Command {
+func (a *app) addDeleteCmd() *app {
 	cmd := &cobra.Command{
 		Use:   "delete [flags] record_key [...record_key]",
 		Short: "delete record",
@@ -24,5 +19,6 @@ func deleteCmd() *cobra.Command {
 	}
 	cmd.Flags().StringP("quite", "q", "", "do not show log")
 
-	return cmd
+	a.root.AddCommand(cmd)
+	return a
 }

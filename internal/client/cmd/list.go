@@ -6,12 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	// rootCmd.AddCommand(listCmd())
-}
-
 // listCmd represents the list command
-func listCmd() *cobra.Command {
+func (a *app) addListCmd() *app {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list kept data",
@@ -22,6 +18,6 @@ func listCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringP("filter", "f", "", "filter list of kept data")
-
-	return cmd
+	a.root.AddCommand(cmd)
+	return a
 }

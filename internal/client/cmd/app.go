@@ -55,8 +55,11 @@ func NewApp() (a *app) {
 	r := storage.NewStorage(a.db, storePath)
 	a.srv = service.NewService(r)
 
-	a.addRootCmd().addSaveCmd()
-	// todo add other cmd
+	a.addRootCmd().
+		addConfigCmd().
+		addSaveCmd().
+		addDeleteCmd().
+		addListCmd()
 	return
 }
 

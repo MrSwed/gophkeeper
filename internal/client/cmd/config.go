@@ -8,10 +8,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func init() {
-
-	// configCmd represents the cfg command
-	var configCmd = &cobra.Command{
+func (a *app) addConfigCmd() *app {
+	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Config action",
 		// Long: ``,
@@ -109,5 +107,6 @@ func init() {
 		},
 	)
 
-	// rootCmd.AddCommand(configCmd)
+	a.root.AddCommand(configCmd)
+	return a
 }

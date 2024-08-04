@@ -12,7 +12,7 @@ func init() {
 }
 
 // listCmd represents the list command
-func profileCmd() *cobra.Command {
+func (a *app) addProfileCmd() *app {
 	cmd := &cobra.Command{
 		Use:   "profile",
 		Short: "Profiles menu",
@@ -61,5 +61,7 @@ func profileCmd() *cobra.Command {
 			},
 		},
 	)
-	return cmd
+
+	a.root.AddCommand(cmd)
+	return a
 }
