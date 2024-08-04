@@ -59,7 +59,8 @@ func NewApp() (a *app) {
 		addConfigCmd().
 		addSaveCmd().
 		addDeleteCmd().
-		addListCmd()
+		addListCmd().
+		addProfileCmd()
 	return
 }
 

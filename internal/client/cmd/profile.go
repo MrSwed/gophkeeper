@@ -19,6 +19,7 @@ func (a *app) addProfileCmd() *app {
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Println("Current profile", cfg.Glob.Get("profile"))
 			// todo
+			_ = cmd.Usage()
 		},
 	}
 
