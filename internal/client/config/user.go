@@ -2,22 +2,46 @@ package config
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 )
 
-func UserLoad() (err error) {
-	var name, cfgDir string
-	if name = Glob.GetString("profile"); name == "" {
-		name = "default"
+func GetUserName() (userName string) {
+	userName = Glob.GetString("profile")
+	if userName == "" {
+		userName = "default"
+	}
+	return
+}
+
+func UsrCfgDir(userNames ...string) (p string, err error) {
+	var userName, cfgDir string
+	if len(userNames) > 0 {
+		userName = userNames[0]
+	} else {
+		userName = GetUserName()
 	}
 	cfgDir, err = os.UserConfigDir()
-	if err != nil {
+	p = filepath.Join(cfgDir, AppName, userName)
+	return
+}
+
+func UserLoad() (err error) {
+	var (
+		userName, usrCfgDir string
+	)
+	userName = GetUserName()
+
+	if usrCfgDir, err = UsrCfgDir(); err != nil {
 		return
 	}
-	usrCfgDir := filepath.Join(cfgDir, AppName, name)
+
+	if err = os.MkdirAll(usrCfgDir, os.ModePerm); err != nil {
+		return
+	}
 	profiles := Glob.GetStringMap("profiles")
 	ch := false
-	profile, ok := profiles[name].(map[string]any)
+	profile, ok := profiles[userName].(map[string]any)
 	if !ok {
 		profile = newGlobProfileItem(usrCfgDir)
 		ch = true
@@ -26,8 +50,14 @@ func UserLoad() (err error) {
 		profile["path"] = usrCfgDir
 		ch = true
 	}
-	if err = User.Load(AppName, profile["path"].(string), map[string]any{"name": name, "autosave": true}); err == nil && ch {
-		profiles[name] = profile
+
+	if err = User.Load(AppName, profile["path"].(string),
+		map[string]any{
+			"name":     userName,
+			"autosave": true,
+			"db_file":  path.Join(usrCfgDir, userName+".db"),
+		}); err == nil && ch {
+		profiles[userName] = profile
 		Glob.Set("profiles", profiles)
 	}
 	return

@@ -18,7 +18,7 @@ func commonFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("description", "d", "", "description, will be displayed in the list of entries list")
 }
 
-func saveAuthCmd() (cmd *cobra.Command) {
+func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:       "auth",
 		Short:     "Save auth data",
@@ -38,7 +38,7 @@ func saveAuthCmd() (cmd *cobra.Command) {
 	return
 }
 
-func saveTextCmd() (cmd *cobra.Command) {
+func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:       "text [flags]",
 		Short:     "Save text data",
@@ -58,7 +58,7 @@ func saveTextCmd() (cmd *cobra.Command) {
 	return
 }
 
-func saveBinCmd() (cmd *cobra.Command) {
+func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:       "bin [flags]",
 		Short:     "Save binary data",
@@ -75,7 +75,7 @@ func saveBinCmd() (cmd *cobra.Command) {
 	return
 }
 
-func saveCardCmd() (cmd *cobra.Command) {
+func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:       "card [flags]",
 		Short:     "Save card data",
@@ -122,7 +122,12 @@ func saveCardCmd() (cmd *cobra.Command) {
 
 			// todo is draft yet
 			fmt.Println(data.Data)
-			// err := srv.Save(data)
+
+			err = a.srv.Save(data)
+			if err != nil {
+				fmt.Println(err.Error())
+
+			}
 		},
 	}
 	commonFlags(cmd)
@@ -135,7 +140,7 @@ func saveCardCmd() (cmd *cobra.Command) {
 	return
 }
 
-func init() {
+func (a *app) addSaveCmd() *app {
 	var saveCmd = &cobra.Command{
 		Use:       "save [command]",
 		Short:     "Save data",
@@ -144,10 +149,8 @@ func init() {
 		Long:      `Encrypts and save data`,
 	}
 
-	// saveCmd.AddCommand(shell.New(saveCmd, nil))
+	saveCmd.AddCommand(a.saveAuthCmd(), a.saveTextCmd(), a.saveBinCmd(), a.saveCardCmd())
 
-	saveCmd.AddCommand(saveAuthCmd(), saveTextCmd(), saveBinCmd(), saveCardCmd())
-
-	rootCmd.AddCommand(saveCmd)
-
+	a.root.AddCommand(saveCmd)
+	return a
 }

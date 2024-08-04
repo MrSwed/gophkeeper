@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(deleteCmd())
+	// rootCmd.AddCommand(deleteCmd())
 }
 
 // listCmd represents the list command

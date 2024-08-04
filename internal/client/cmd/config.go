@@ -109,5 +109,5 @@ func init() {
 		},
 	)
 
-	rootCmd.AddCommand(configCmd)
+	// rootCmd.AddCommand(configCmd)
 }

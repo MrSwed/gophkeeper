@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(profileCmd())
+	// rootCmd.AddCommand(profileCmd())
 }
 
 // listCmd represents the list command

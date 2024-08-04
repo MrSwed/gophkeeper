@@ -36,7 +36,7 @@ func init() {
 		},
 	})
 
-	rootCmd.AddCommand(syncCmd)
+	// rootCmd.AddCommand(syncCmd)
 
 	// Here you will define your flags and configuration settings.
 
