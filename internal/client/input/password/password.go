@@ -56,8 +56,8 @@ func GetRawPass(confirm bool) (pass string, err error) {
 		RepeatPass:
 			b2, err2 := readPassword()
 			if err2 != nil || string(b) != string(b2) {
-				err = errors.New("password confirm error")
-				fmt.Println("password confirm error")
+				err = errors.Join(err2, errors.New("password confirm error"))
+				fmt.Println("\n", err.Error())
 				try++
 				if try > 3 {
 					return
@@ -65,6 +65,7 @@ func GetRawPass(confirm bool) (pass string, err error) {
 				goto RepeatPass
 			}
 		}
+		err = nil
 		pass = string(b)
 	}
 	return
