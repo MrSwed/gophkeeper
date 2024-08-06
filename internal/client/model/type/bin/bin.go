@@ -1,8 +1,10 @@
 package bin
 
 import (
+	"fmt"
 	"gophKeeper/internal/client/model"
 	"os"
+	"time"
 )
 
 var (
@@ -28,6 +30,13 @@ func (m *Model) GetFile() (err error) {
 		return
 	}
 	return
+}
+
+func (m *Model) GetKey() string {
+	if m.Key == "" {
+		m.Key = fmt.Sprintf("%s-%s", model.GetName(m), time.Now().Format("2006-01-02-15-04-05"))
+	}
+	return m.Key
 }
 
 func (m *Model) Validate(fields ...string) error {

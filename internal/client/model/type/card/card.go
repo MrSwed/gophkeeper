@@ -2,9 +2,11 @@ package card
 
 import (
 	"encoding/json"
+	"fmt"
 	"gophKeeper/internal/client/model"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -40,6 +42,13 @@ func init() {
 type Model struct {
 	model.Common
 	Data *Data `json:"data" validate:"required"`
+}
+
+func (m *Model) GetKey() string {
+	if m.Key == "" {
+		m.Key = fmt.Sprintf("%s-%s", model.GetName(m), time.Now().Format("2006-01-02-15-04-05"))
+	}
+	return m.Key
 }
 
 func (m *Model) Validate(fields ...string) error {
