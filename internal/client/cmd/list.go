@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"gophKeeper/internal/client/model"
 
 	"github.com/spf13/cobra"
@@ -14,14 +13,18 @@ func (a *app) addListCmd() *app {
 		Short: "list kept data",
 		Long:  `display list of kept data`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("list called")
+			cmd.Println("list called")
 			// todo
 			query := model.ListQuery{}
 			dataList, err := a.srv.List(query)
 			if err != nil {
-				fmt.Printf("Get list error: %s\n", err)
+				cmd.Printf("Get list error: %s\n", err)
 			}
-			fmt.Printf("List view: %v\n", dataList)
+			cmd.Printf("Total: %d\n", dataList.Total)
+			for _, item := range dataList.Items {
+				cmd.Printf("%s\t%s\t%s\n", item.Key, item.UpdatedAt, item.Description)
+			}
+
 		},
 	}
 	cmd.Flags().StringP("filter", "f", "", "filter list of kept data")
