@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"gophKeeper/internal/client/model"
 
 	"github.com/spf13/cobra"
@@ -31,12 +30,10 @@ func (a *app) addListCmd() *app {
 		},
 	}
 
-	var fs = new(flag.FlagSet)
-	err := GenerateFlags(&query, fs)
+	err := GenerateFlags(&query, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}
-	cmd.Flags().AddGoFlagSet(fs)
 
 	a.root.AddCommand(cmd)
 	return a
