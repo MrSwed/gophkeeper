@@ -101,6 +101,23 @@ func (a *app) Execute() {
 	}
 }
 
+func GenFlags(in interface{}) (flags []string, err error) {
+	rv := reflect.ValueOf(in)
+	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+		err = errors.New("not pointer-to-a-struct") // exit if not pointer-to-a-struct
+		return
+	}
+	rv = rv.Elem()
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		sf := rt.Field(i)
+		tagNames := [2]string{}
+		copy(tagNames[:], strings.SplitN(sf.Tag.Get(("flag")), ",", 2))
+		flags = append(flags, tagNames[0])
+	}
+	return
+}
+
 func GenerateFlags(in interface{}, fs *pflag.FlagSet) error {
 	// thanks https://stackoverflow.com/questions/72891199/procedurally-bind-struct-fields-to-command-line-flag-values-using-reflect
 	rv := reflect.ValueOf(in)

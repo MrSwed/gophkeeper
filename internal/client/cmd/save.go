@@ -79,12 +79,23 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Common: model.Common{},
 		Data:   &card.Data{},
 	}
+	validArgsCommom, err := GenFlags(&data.Common)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	validArgsData, err := GenFlags(data.Data)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
+	validArgs := append(validArgsCommom, validArgsData...)
 	cmd = &cobra.Command{
 		Use:       "card [flags]",
 		Short:     "Save card data",
 		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
-		ValidArgs: []string{"-num", "-exp-mon", "-exp-year", "-cvv", "-name", "f", "k", "d"},
+		ValidArgs: validArgs,
 		Long:      `Encrypts bank cards data`,
 		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -107,7 +118,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		},
 	}
 
-	err := GenerateFlags(&data.Common, cmd.Flags())
+	err = GenerateFlags(&data.Common, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}
