@@ -2,12 +2,16 @@ package cmd
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	cfg "gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/service"
 	"gophKeeper/internal/client/storage"
 	"os"
+	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jmoiron/sqlx"
@@ -95,4 +99,43 @@ func (a *app) Execute() {
 		}
 		fmt.Println(" ..Success")
 	}
+}
+
+func GenerateFlags(in interface{}, fs *flag.FlagSet) error {
+	// thanks https://stackoverflow.com/questions/72891199/procedurally-bind-struct-fields-to-command-line-flag-values-using-reflect
+	rv := reflect.ValueOf(in)
+	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
+		return errors.New("not pointer-to-a-struct") // exit if not pointer-to-a-struct
+	}
+
+	rv = rv.Elem()
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		sf := rt.Field(i)
+		fv := rv.Field(i)
+		tagNames := strings.SplitN(sf.Tag.Get(("flag")), ",", 2)
+		usage := sf.Tag.Get("usage")
+		defVal := sf.Tag.Get("default")
+
+		switch fv.Type() {
+		case reflect.TypeOf(string("")):
+			p := fv.Addr().Interface().(*string)
+			fs.StringVar(p, tagNames[0], defVal, usage)
+		case reflect.TypeOf(int(0)):
+			p := fv.Addr().Interface().(*int)
+			defVal, _ := strconv.Atoi(defVal)
+			fs.IntVar(p, tagNames[0], defVal, usage)
+		case reflect.TypeOf(float64(0)):
+			p := fv.Addr().Interface().(*float64)
+			defVal, _ := strconv.ParseFloat(defVal, 64)
+			fs.Float64Var(p, tagNames[0], defVal, usage)
+		case reflect.TypeOf(uint64(0)):
+			p := fv.Addr().Interface().(*uint64)
+			defVal, _ := strconv.ParseUint(defVal, 10, 64)
+			fs.Uint64Var(p, tagNames[0], defVal, usage)
+		default:
+			return GenerateFlags(fv.Interface(), fs)
+		}
+	}
+	return nil
 }

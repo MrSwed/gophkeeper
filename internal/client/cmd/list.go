@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"flag"
 	"gophKeeper/internal/client/model"
 
 	"github.com/spf13/cobra"
@@ -8,6 +9,8 @@ import (
 
 // listCmd represents the list command
 func (a *app) addListCmd() *app {
+	query := model.ListQuery{}
+
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list kept data",
@@ -15,7 +18,7 @@ func (a *app) addListCmd() *app {
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Println("list called")
 			// todo
-			query := model.ListQuery{}
+
 			dataList, err := a.srv.List(query)
 			if err != nil {
 				cmd.Printf("Get list error: %s\n", err)
@@ -27,7 +30,14 @@ func (a *app) addListCmd() *app {
 
 		},
 	}
-	cmd.Flags().StringP("filter", "f", "", "filter list of kept data")
+
+	var fs = new(flag.FlagSet)
+	err := GenerateFlags(&query, fs)
+	if err != nil {
+		cmd.Printf("GenerateFlags error: %s\n", err)
+	}
+	cmd.Flags().AddGoFlagSet(fs)
+
 	a.root.AddCommand(cmd)
 	return a
 }
