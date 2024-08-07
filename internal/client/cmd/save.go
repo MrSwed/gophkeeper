@@ -4,7 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/card"
@@ -76,6 +75,11 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 }
 
 func (a *app) saveCardCmd() (cmd *cobra.Command) {
+	data := &card.Model{
+		Common: model.Common{},
+		Data:   &card.Data{},
+	}
+
 	cmd = &cobra.Command{
 		Use:       "card [flags]",
 		Short:     "Save card data",
@@ -84,37 +88,9 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Long:      `Encrypts bank cards data`,
 		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			var (
-				data = &card.Model{
-					Common: model.Common{},
-					Data:   &card.Data{},
-				}
-				flagLnk = map[string]any{
-					"key":         &data.Key,
-					"file":        &data.FileName,
-					"description": &data.Description,
-					"num":         &data.Data.Number,
-					"exp":         &data.Data.Exp,
-					"cvv":         &data.Data.CVV,
-					"owner":       &data.Data.Name,
-				}
-				err error
-			)
 
-			for flag, dataValue := range flagLnk {
-				if cmd.Flags().Changed(flag) {
-					flagValue, er := cmd.Flags().GetString(flag)
-					if er == nil {
-						if dv, ok := dataValue.(*string); ok {
-							*dv = flagValue
-						}
-					} else {
-						err = errors.Join(err, er)
-					}
-				}
-			}
 			data.Data.Sanitize()
-			err = errors.Join(err, data.Validate())
+			err := data.Validate()
 
 			if err != nil {
 				fmt.Println("Validate: Error: ", err)
@@ -130,12 +106,15 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 			}
 		},
 	}
-	commonFlags(cmd)
 
-	cmd.Flags().StringP("num", "n", "", "long card number 0000-0000-0000-0000")
-	cmd.Flags().StringP("exp", "e", "", "expiry           MM/YY")
-	cmd.Flags().StringP("cvv", "c", "", "cvv value        000")
-	cmd.Flags().StringP("owner", "o", "", "owner, card holder     Firstname Lastname")
+	err := GenerateFlags(&data.Common, cmd.Flags())
+	if err != nil {
+		cmd.Printf("GenerateFlags error: %s\n", err)
+	}
+	err = GenerateFlags(data.Data, cmd.Flags())
+	if err != nil {
+		cmd.Printf("GenerateFlags error: %s\n", err)
+	}
 
 	return
 }

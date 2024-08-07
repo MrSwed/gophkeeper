@@ -8,9 +8,9 @@ import (
 )
 
 type Common struct {
-	Key         string `json:"key" validate:"required"`
-	Description string `json:"description"`
-	FileName    string `json:"fileName"`
+	Key         string `json:"key" validate:"required" flag:"key,k" usage:"set your entry key-identifier"`
+	Description string `json:"description" flag:"file,f" usage:"read from file"`
+	FileName    string `json:"fileName" flag:"description,d" usage:"description, will be displayed in the list of entries list"`
 }
 
 func (c *Common) GetKey() string {
