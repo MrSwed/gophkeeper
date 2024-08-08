@@ -101,8 +101,8 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			data.Data.Sanitize()
+			data.GetKey()
 			err := data.Validate()
-
 			if err != nil {
 				fmt.Println("Validate: Error: ", err)
 			}
