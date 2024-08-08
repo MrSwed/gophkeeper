@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/card"
 
 	"github.com/spf13/cobra"
@@ -76,10 +75,8 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 
 func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	debug := false
-	data := &card.Model{
-		Common: model.Common{},
-		Data:   &card.Data{},
-	}
+	data := card.New()
+
 	validArgsCommon, err := GenFlags(&data.Common)
 	if err != nil {
 		fmt.Println(err)
@@ -100,7 +97,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Long:      `Encrypts bank cards data`,
 		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
 		Run: func(cmd *cobra.Command, args []string) {
-
+			defer data.Reset()
 			data.Data.Sanitize()
 			data.GetKey()
 			err := data.Validate()
