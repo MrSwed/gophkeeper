@@ -44,6 +44,13 @@ type Model struct {
 	Data *Data `json:"data" validate:"required"`
 }
 
+func New() *Model {
+	return &Model{
+		Common: model.Common{},
+		Data:   &Data{},
+	}
+}
+
 func (m *Model) GetKey() string {
 	if m.Key == "" {
 		m.Key = fmt.Sprintf("%s-%s", model.GetName(m), time.Now().Format("2006-01-02-15-04-05"))

@@ -12,6 +12,13 @@ var (
 	_ model.Data  = (*Data)(nil)
 )
 
+func New() *Model {
+	return &Model{
+		Common: model.Common{},
+		Data:   &Data{},
+	}
+}
+
 func init() {
 	model.RegisterModel(&Data{})
 }

@@ -16,6 +16,13 @@ type Model struct {
 	Data *Data `json:"data"`
 }
 
+func New() *Model {
+	return &Model{
+		Common: model.Common{},
+		Data:   &Data{},
+	}
+}
+
 func init() {
 	model.RegisterModel(&Data{})
 }

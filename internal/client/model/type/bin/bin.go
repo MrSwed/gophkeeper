@@ -21,6 +21,13 @@ type Model struct {
 	Data *Data `json:"data"`
 }
 
+func New() *Model {
+	return &Model{
+		Common: model.Common{},
+		Data:   &Data{},
+	}
+}
+
 func (m *Model) GetFile() (err error) {
 	if m.FileName != "" {
 		if m.Data == nil {
