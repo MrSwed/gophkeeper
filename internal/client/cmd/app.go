@@ -5,8 +5,10 @@ import (
 	"fmt"
 	cfg "gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
+	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/service"
 	"gophKeeper/internal/client/storage"
+	"gophKeeper/internal/helper"
 	"os"
 	"reflect"
 	"strings"
@@ -21,9 +23,10 @@ type App interface {
 }
 
 type app struct {
-	db   *sqlx.DB
-	srv  service.Service
-	root *cobra.Command
+	db    *sqlx.DB
+	srv   service.Service
+	root  *cobra.Command
+	debug bool
 }
 
 func NewApp() (a *app) {
@@ -112,6 +115,19 @@ func GenFlags(in interface{}) (flags []string, err error) {
 		tagNames := [2]string{}
 		copy(tagNames[:], strings.SplitN(sf.Tag.Get(("flag")), ",", 2))
 		flags = append(flags, tagNames[0])
+	}
+	return
+}
+
+func modelGenerateFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
+	if debug != nil {
+		cmd.Flags().BoolVarP(debug, "debug", "", *debug, "debug flag")
+	}
+	if common, ok := dst.(model.Base); ok {
+		err = helper.GenerateFlags(common.GetBase(), cmd.Flags())
+	}
+	if data, ok := dst.(model.Data); ok {
+		err = errors.Join(err, helper.GenerateFlags(data.GetDst(), cmd.Flags()))
 	}
 	return
 }
