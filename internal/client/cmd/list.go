@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -30,7 +31,7 @@ func (a *app) addListCmd() *app {
 		},
 	}
 
-	err := GenerateFlags(&query, cmd.Flags())
+	err := helper.GenerateFlags(&query, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/card"
+	"gophKeeper/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -79,7 +80,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Common: model.Common{},
 		Data:   &card.Data{},
 	}
-	validArgsCommom, err := GenFlags(&data.Common)
+	validArgsCommon, err := GenFlags(&data.Common)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -90,7 +91,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		return
 	}
 
-	validArgs := append(validArgsCommom, validArgsData...)
+	validArgs := append(validArgsCommon, validArgsData...)
 	cmd = &cobra.Command{
 		Use:       "card [flags]",
 		Short:     "Save card data",
@@ -118,11 +119,11 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		},
 	}
 
-	err = GenerateFlags(&data.Common, cmd.Flags())
+	err = helper.GenerateFlags(&data.Common, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}
-	err = GenerateFlags(data.Data, cmd.Flags())
+	err = helper.GenerateFlags(data.Data, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}
