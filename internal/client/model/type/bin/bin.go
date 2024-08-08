@@ -28,6 +28,11 @@ func New() *Model {
 	}
 }
 
+func (m *Model) Reset() {
+	m.Common.Reset()
+	(*m).Data.Reset()
+}
+
 func (m *Model) GetFile() (err error) {
 	if m.FileName != "" {
 		if m.Data == nil {
@@ -72,4 +77,8 @@ func (m *Data) GetPacked() any {
 
 func (m *Data) GetDst() any {
 	return m
+}
+
+func (m *Data) Reset() {
+	(*m).Bin = (*m).Bin[0:0]
 }

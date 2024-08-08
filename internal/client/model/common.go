@@ -13,6 +13,12 @@ type Common struct {
 	FileName    string `json:"fileName" flag:"description,d" usage:"description, will be displayed in the list of entries list"`
 }
 
+func (c *Common) Reset() {
+	(*c).Key = ""
+	(*c).Description = ""
+	(*c).FileName = ""
+}
+
 func (c *Common) GetKey() string {
 	if c.Key == "" {
 		c.Key = fmt.Sprintf("Key-%s", time.Now().Format("2006-01-02-15-04-05"))

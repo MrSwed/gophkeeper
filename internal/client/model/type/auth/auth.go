@@ -27,6 +27,11 @@ func init() {
 	model.RegisterModel(&Data{})
 }
 
+func (m *Model) Reset() {
+	m.Common.Reset()
+	(*m).Data.Reset()
+}
+
 func (m *Model) GetKey() string {
 	if m.Key == "" {
 		m.Key = fmt.Sprintf("%s-%s", model.GetName(m), time.Now().Format("2006-01-02-15-04-05"))
@@ -65,4 +70,8 @@ func (m *Data) GetPacked() any {
 
 func (m *Data) GetDst() any {
 	return m
+}
+func (m *Data) Reset() {
+	(*m).Password = ""
+	(*m).Login = ""
 }

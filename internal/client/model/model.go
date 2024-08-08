@@ -22,6 +22,7 @@ type Base interface {
 	GetDescription() string
 	GetFileName() string
 	GetBase() *Common
+	Reset()
 }
 
 type Model interface {

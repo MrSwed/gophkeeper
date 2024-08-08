@@ -19,6 +19,11 @@ func New() *Model {
 	}
 }
 
+func (m *Model) Reset() {
+	m.Common.Reset()
+	(*m).Data.Reset()
+}
+
 func init() {
 	model.RegisterModel(&Data{})
 }
@@ -75,4 +80,8 @@ func (m *Data) GetPacked() any {
 
 func (m *Data) GetDst() any {
 	return m
+}
+
+func (m *Data) Reset() {
+	(*m).Text = ""
 }
