@@ -13,13 +13,15 @@ type GetFile interface {
 }
 
 type Data interface {
-	GetData() any
+	GetPacked() any
+	GetDst() any
 }
 
 type Base interface {
 	GetKey() string
 	GetDescription() string
 	GetFileName() string
+	GetBase() *Common
 }
 
 type Model interface {

@@ -50,14 +50,22 @@ func (m *Model) Bytes() (b []byte, err error) {
 	return model.NewPackedBytes(m)
 }
 
-func (m *Model) GetData() any {
-	return m.Data.GetData()
+func (m *Model) GetPacked() any {
+	return m.Data.GetPacked()
+}
+
+func (m *Model) GetDst() any {
+	return m.Data.GetDst()
 }
 
 type Data struct {
 	Text string `json:"text"`
 }
 
-func (m *Data) GetData() any {
+func (m *Data) GetPacked() any {
+	return m
+}
+
+func (m *Data) GetDst() any {
 	return m
 }

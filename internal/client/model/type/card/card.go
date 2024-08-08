@@ -63,8 +63,12 @@ func (m *Model) Bytes() (b []byte, err error) {
 	return model.NewPackedBytes(m)
 }
 
-func (m *Model) GetData() any {
-	return m.Data.GetData()
+func (m *Model) GetPacked() any {
+	return m.Data.GetPacked()
+}
+
+func (m *Model) GetDst() any {
+	return m.Data.GetDst()
 }
 
 type Data struct {
@@ -81,7 +85,7 @@ type packedData struct {
 	Name   string     `json:"name,omitempty"`
 }
 
-func (m *Data) GetData() any {
+func (m *Data) GetPacked() any {
 	p := new(packedData)
 	p.CVV = m.CVV
 	p.Name = m.Name
@@ -91,10 +95,14 @@ func (m *Data) GetData() any {
 }
 
 func (m *Data) Sanitize() {
-	if packed, _ := m.GetData().(*packedData); packed != nil {
+	if packed, _ := m.GetPacked().(*packedData); packed != nil {
 		m.Exp = packed.Exp.String()
 		m.Number = packed.Number.String()
 	}
+}
+
+func (m *Data) GetDst() any {
+	return m
 }
 
 type cardNumber [16]byte

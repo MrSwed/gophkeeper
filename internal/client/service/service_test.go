@@ -243,8 +243,8 @@ func (suite *serviceStoreTestSuite) Test_service() {
 						assert.Equal(t, gotItemData.Key, tt.args.save.GetKey())
 						assert.Equal(t, gotItemData.Description, tt.args.save.GetDescription())
 
-						if !reflect.DeepEqual(gotItemData.Data.GetData(), tt.args.save.GetData()) {
-							t.Errorf("GetStored() gotData = %v, want %v", gotItemData.Data, tt.args.save.GetData())
+						if !reflect.DeepEqual(gotItemData.Data.GetPacked(), tt.args.save.GetPacked()) {
+							t.Errorf("GetStored() gotData = %v, want %v", gotItemData.Data, tt.args.save.GetPacked())
 						}
 					}
 				})

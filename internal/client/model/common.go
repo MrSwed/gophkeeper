@@ -27,6 +27,10 @@ func (c *Common) GetFileName() string {
 	return c.FileName
 }
 
+func (c *Common) GetBase() *Common {
+	return c
+}
+
 type Packed struct {
 	Type     string `json:"type"`
 	Data     any    `json:"data"`
@@ -42,7 +46,7 @@ func NewPackedBytes(m Model) ([]byte, error) {
 	}
 	p := Packed{
 		Type: GetName(m),
-		Data: m.GetData(),
+		Data: m.GetPacked(),
 	}
 	if m.GetFileName() != "" {
 		p.FileName = filepath.Base(m.GetFileName())
