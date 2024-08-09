@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"gophKeeper/internal/client/config"
+	cfg "gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
@@ -32,17 +34,27 @@ type serviceStoreTestSuite struct {
 	db       *sqlx.DB
 	srv      Service
 	oldStdin *os.File
+	user     string
+	userBak  string
 }
 
 var testDataPath string = filepath.Join("..", "..", "..", "testdata")
 
 func (suite *serviceStoreTestSuite) SetupSuite() {
-	storePath := filepath.Join(suite.T().TempDir(), config.AppName)
+	suite.user = "test-" + time.Now().Format("20060102150405")
+
+	storePath := filepath.Join(suite.T().TempDir(), config.AppName, suite.user)
 	err := os.MkdirAll(storePath, os.ModePerm)
 	require.NoError(suite.T(), err)
 	dbFile := filepath.Join(storePath, "store.db")
+	profiles := cfg.Glob.GetStringMap("profiles")
+	profiles[suite.user] = cfg.NewGlobProfileItem(storePath)
+	cfg.Glob.Set("profiles", profiles)
 
-	// config.User.Set("encryption_key", "SomePhraseEncryptionKey")
+	suite.userBak = cfg.Glob.GetString("profile")
+	cfg.Glob.Set("profile", suite.user)
+	err = cfg.UserLoad()
+	require.NoError(suite.T(), err)
 
 	suite.db, err = sqlx.Open("sqlite3", dbFile)
 	require.NoError(suite.T(), err)
@@ -73,6 +85,11 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 
 func (suite *serviceStoreTestSuite) TearDownSuite() {
 	err := suite.db.Close()
+	profiles := cfg.Glob.GetStringMap("profiles")
+	delete(profiles, suite.user)
+	cfg.Glob.Set("profiles", profiles)
+	cfg.Glob.Set("profile", suite.userBak)
+
 	require.NoError(suite.T(), err)
 	require.NoError(suite.T(), os.RemoveAll(suite.T().TempDir()))
 	os.Stdin = suite.oldStdin

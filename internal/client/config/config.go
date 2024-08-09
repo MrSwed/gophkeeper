@@ -20,7 +20,7 @@ type config struct {
 }
 
 var (
-	User = config{Viper: viper.New()}
+	User config
 	Glob = config{Viper: viper.New()}
 )
 

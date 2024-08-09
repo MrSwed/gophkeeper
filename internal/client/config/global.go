@@ -9,9 +9,7 @@ const (
 	MaxBlobSize = 1024 * 64
 )
 
-type globProfileItem map[string]any
-
-func newGlobProfileItem(path string) globProfileItem {
+func NewGlobProfileItem(path string) map[string]any {
 	return map[string]any{
 		"path": path,
 	}

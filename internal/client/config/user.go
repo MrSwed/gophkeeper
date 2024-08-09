@@ -4,6 +4,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 func GetUserName() (userName string) {
@@ -14,19 +16,40 @@ func GetUserName() (userName string) {
 	return
 }
 
-func UsrCfgDir(userNames ...string) (p string, err error) {
-	var userName, cfgDir string
+func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
+	var (
+		userName, defDir string
+		ch               bool
+	)
 	if len(userNames) > 0 {
 		userName = userNames[0]
 	} else {
 		userName = GetUserName()
 	}
-	cfgDir, err = os.UserConfigDir()
-	p = filepath.Join(cfgDir, AppName, userName)
+	defDir, err = os.UserConfigDir()
+	usrCfgDir = filepath.Join(defDir, AppName, userName)
+	profiles := Glob.GetStringMap("profiles")
+	profile, ok := profiles[userName].(map[string]any)
+	if !ok {
+		profile = NewGlobProfileItem(usrCfgDir)
+		ch = true
+	}
+	if profilePath, ok := profile["path"].(string); !ok {
+		profile["path"] = usrCfgDir
+		ch = true
+	} else {
+		usrCfgDir = profilePath
+	}
+	if ch {
+		profiles[userName] = profile
+		Glob.Set("profiles", profiles)
+	}
 	return
 }
 
 func UserLoad() (err error) {
+	User = config{Viper: viper.New()}
+
 	var (
 		userName, usrCfgDir string
 	)
@@ -39,27 +62,13 @@ func UserLoad() (err error) {
 	if err = os.MkdirAll(usrCfgDir, os.ModePerm); err != nil {
 		return
 	}
-	profiles := Glob.GetStringMap("profiles")
-	ch := false
-	profile, ok := profiles[userName].(map[string]any)
-	if !ok {
-		profile = newGlobProfileItem(usrCfgDir)
-		ch = true
-	}
-	if _, ok = profile["path"].(string); !ok {
-		profile["path"] = usrCfgDir
-		ch = true
-	}
 
-	if err = User.Load(AppName, profile["path"].(string),
+	err = User.Load(AppName, usrCfgDir,
 		map[string]any{
 			"name":     userName,
 			"autosave": true,
 			"db_file":  path.Join(usrCfgDir, userName+".db"),
-		}); err == nil && ch {
-		profiles[userName] = profile
-		Glob.Set("profiles", profiles)
-	}
+		})
 	return
 }
 
