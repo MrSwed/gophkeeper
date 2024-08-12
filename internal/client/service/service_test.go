@@ -69,7 +69,6 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	r := storage.NewStorage(suite.db, storePath)
 	suite.srv = NewService(r)
 
-	require.NoError(suite.T(), err)
 	suite.oldStdin = os.Stdin
 	input := []byte("SomeUserPassword\nSomeUserPassword\n")
 	rp, wp, err := os.Pipe()

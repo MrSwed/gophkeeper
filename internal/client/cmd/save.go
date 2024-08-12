@@ -108,7 +108,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 			// todo is draft yet
 			fmt.Println(data.Data)
 
-			err = a.srv.Save(data)
+			err = a.Srv().Save(data)
 			if err != nil {
 				fmt.Println(err.Error())
 

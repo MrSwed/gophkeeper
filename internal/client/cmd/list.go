@@ -19,7 +19,7 @@ func (a *app) addListCmd() *app {
 			cmd.Println("list called")
 			// todo
 
-			dataList, err := a.srv.List(query)
+			dataList, err := a.Srv().List(query)
 			if err != nil {
 				cmd.Printf("Get list error: %s\n", err)
 			}

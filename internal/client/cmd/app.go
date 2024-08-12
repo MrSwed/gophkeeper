@@ -30,41 +30,7 @@ type app struct {
 }
 
 func NewApp() (a *app) {
-	var err error
 	a = &app{}
-	err = cfg.UserLoad()
-	if err != nil {
-		fmt.Printf("Error load current user profile: %s", err)
-		os.Exit(1)
-	}
-
-	dbFile := cfg.User.GetString("db_file")
-	if dbFile == "" {
-		err := errors.New("db_file not set")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	a.db, err = sqlx.Open("sqlite3", dbFile)
-	if err != nil {
-		fmt.Printf("open sqlite error %s dbFile %s\n", err.Error(), dbFile)
-		os.Exit(1)
-	}
-	_, err = clMigrate.Migrate(a.db.DB)
-	switch {
-	case errors.Is(err, migrate.ErrNoChange):
-	default:
-		if err != nil {
-			fmt.Printf("Migrate error: %s dbFile %s\n", err.Error(), dbFile)
-			os.Exit(1)
-		}
-	}
-	storePath, err := cfg.UsrCfgDir()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	r := storage.NewStorage(a.db, storePath)
-	a.srv = service.NewService(r)
 
 	a.addRootCmd().
 		addConfigCmd().
@@ -75,13 +41,54 @@ func NewApp() (a *app) {
 	return
 }
 
-func (a *app) Execute() {
-	defer func() {
-		err := a.db.Close()
+func (a *app) Srv() service.Service {
+	if a.srv == nil {
+		err := cfg.UserLoad()
 		if err != nil {
-			fmt.Printf("close db error: %s", err)
+			return service.NewServiceError(fmt.Errorf("error load current user profile: %v", err))
 		}
-	}()
+		fmt.Printf("User %s configuration loaded..\n", cfg.User.GetString("name"))
+
+		dbFile := cfg.User.GetString("db_file")
+		if dbFile == "" {
+			return service.NewServiceError(errors.New("error db_file - is not set"))
+		}
+		a.db, err = sqlx.Open("sqlite3", dbFile)
+		if err != nil {
+			return service.NewServiceError(fmt.Errorf("open sqlite error %s dbFile %s\n", err.Error(), dbFile))
+		}
+		_, err = clMigrate.Migrate(a.db.DB)
+		switch {
+		case errors.Is(err, migrate.ErrNoChange):
+		default:
+			if err != nil {
+				return service.NewServiceError(fmt.Errorf("db update error: %s dbFile %s\n", err.Error(), dbFile))
+			}
+		}
+		storePath, err := cfg.UsrCfgDir()
+		if err != nil {
+			return service.NewServiceError(fmt.Errorf("usrCfgDir error: %s \n", err))
+		}
+		a.srv = service.NewService(
+			storage.NewStorage(a.db, storePath))
+	}
+	return a.srv
+}
+
+func (a *app) Close() {
+	if a.db != nil {
+		defer func() {
+			err := a.db.Close()
+			if err != nil {
+				fmt.Printf("close db error: %s", err)
+			}
+		}()
+	}
+}
+
+func (a *app) Execute() {
+	defer a.Close()
+
 	err := a.root.Execute()
 	if err != nil {
 		fmt.Println(err)
@@ -119,7 +126,7 @@ func GenFlags(in interface{}) (flags []string, err error) {
 	for i := 0; i < rt.NumField(); i++ {
 		sf := rt.Field(i)
 		tagNames := [2]string{}
-		copy(tagNames[:], strings.SplitN(sf.Tag.Get(("flag")), ",", 2))
+		copy(tagNames[:], strings.SplitN(sf.Tag.Get("flag"), ",", 2))
 		flags = append(flags, tagNames[0])
 	}
 	return
