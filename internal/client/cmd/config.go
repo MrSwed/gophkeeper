@@ -26,13 +26,18 @@ func (a *app) addConfigCmd() *app {
 			if !isAction {
 				cmd.Println("Global configuration:")
 				cfg.Glob.Print()
-				if cfg.User.GetString("name") != "" {
-					cmd.Printf("User %s configuration:\n", cfg.User.GetString("name"))
-					cfg.User.Print()
+				cmd.Println("")
+
+				err := cfg.UserLoad()
+				if err != nil {
+					cmd.Printf("error load user configuration: %s\n", err)
+					return
 				}
+				cmd.Printf("User \"%s\" configuration:\n", cfg.User.GetString("name"))
+				cfg.User.Print()
 
 				cmd.Println()
-				err := cmd.Usage()
+				err = cmd.Usage()
 				if err != nil {
 					log.Fatal(err)
 				}
