@@ -71,10 +71,3 @@ func UserLoad() (err error) {
 		})
 	return
 }
-
-func init() {
-	err := UserLoad()
-	if err != nil {
-		panic(err)
-	}
-}

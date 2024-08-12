@@ -30,14 +30,20 @@ type app struct {
 }
 
 func NewApp() (a *app) {
+	var err error
 	a = &app{}
+	err = cfg.UserLoad()
+	if err != nil {
+		fmt.Printf("Error load current user profile: %s", err)
+		os.Exit(1)
+	}
+
 	dbFile := cfg.User.GetString("db_file")
 	if dbFile == "" {
 		err := errors.New("db_file not set")
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	var err error
 	a.db, err = sqlx.Open("sqlite3", dbFile)
 	if err != nil {
 		fmt.Printf("open sqlite error %s dbFile %s\n", err.Error(), dbFile)
