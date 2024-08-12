@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,6 +37,7 @@ type serviceStoreTestSuite struct {
 	oldStdin *os.File
 	user     string
 	userBak  string
+	pass     string
 }
 
 var testDataPath string = filepath.Join("..", "..", "..", "testdata")
@@ -44,8 +46,8 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	suite.user = "test-" + time.Now().Format("20060102150405")
 
 	storePath := filepath.Join(suite.T().TempDir(), config.AppName, suite.user)
-	err := os.MkdirAll(storePath, os.ModePerm)
-	require.NoError(suite.T(), err)
+	// err := os.MkdirAll(storePath, os.ModePerm)
+	// require.NoError(suite.T(), err)
 	dbFile := filepath.Join(storePath, "store.db")
 	profiles := cfg.Glob.GetStringMap("profiles")
 	profiles[suite.user] = cfg.NewGlobProfileItem(storePath)
@@ -53,7 +55,7 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 
 	suite.userBak = cfg.Glob.GetString("profile")
 	cfg.Glob.Set("profile", suite.user)
-	err = cfg.UserLoad()
+	err := cfg.UserLoad()
 	require.NoError(suite.T(), err)
 
 	suite.db, err = sqlx.Open("sqlite3", dbFile)
@@ -70,7 +72,8 @@ func (suite *serviceStoreTestSuite) SetupSuite() {
 	suite.srv = NewService(r)
 
 	suite.oldStdin = os.Stdin
-	input := []byte("SomeUserPassword\nSomeUserPassword\n")
+	suite.pass = "SomeUserPassword"
+	input := []byte(strings.Join([]string{suite.pass, suite.pass, ""}, "\n"))
 	rp, wp, err := os.Pipe()
 	require.NoError(suite.T(), err)
 	_, err = wp.Write(input)
@@ -282,4 +285,28 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		})
 	}
 
+}
+
+func (suite *serviceStoreTestSuite) Test_GetToken() {
+	t := suite.T()
+	t.Run("Test GetToken again", func(t *testing.T) {
+
+		token, err := suite.srv.GetToken()
+		require.NoError(t, err)
+
+		// clear stored encryption_key for initialize request password from user
+		cfg.User.Set("encryption_key", "")
+		input := []byte(strings.Join([]string{suite.pass, ""}, "\n"))
+
+		rp, wp, err := os.Pipe()
+		require.NoError(suite.T(), err)
+		_, err = wp.Write(input)
+		require.NoError(suite.T(), err)
+		err = wp.Close()
+		require.NoError(suite.T(), err)
+		os.Stdin = rp
+		token2, err := suite.srv.GetToken()
+		require.NoError(t, err)
+		require.Equal(t, token, token2)
+	})
 }

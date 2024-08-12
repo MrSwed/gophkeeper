@@ -3,7 +3,6 @@ package service
 import (
 	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"gophKeeper/internal/client/input/password"
@@ -47,6 +46,7 @@ func (s *service) GetToken() (token string, err error) {
 		}
 		var (
 			packedBytes, tokenBytes []byte
+			cryptKeyPass            = userName + string([]byte{9}) + passRaw
 		)
 		if packed == "" {
 			// fmt.Println("Creating new token... ")
@@ -56,15 +56,13 @@ func (s *service) GetToken() (token string, err error) {
 				err = errors.Join(errors.New("error create new token"), err)
 				return
 			}
-			tokenStr := hex.EncodeToString(tokenBytes)
-
-			packedBytes, err = crypt.Encode([]byte(tokenStr), userName+passRaw)
+			packedBytes, err = crypt.Encode(tokenBytes, cryptKeyPass)
 			if err != nil {
 				return
 			}
 			cfg.User.Set("packed_key", packedBytes)
 		} else {
-			tokenBytes, err = crypt.Decode([]byte(packed), userName+passRaw)
+			tokenBytes, err = crypt.Decode([]byte(packed), cryptKeyPass)
 			if err != nil {
 				err = errors.Join(errors.New("error decode token"), err)
 				return
