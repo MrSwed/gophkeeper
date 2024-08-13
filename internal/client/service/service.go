@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"gophKeeper/internal/client/input/password"
@@ -60,9 +61,15 @@ func (s *service) GetToken() (token string, err error) {
 			if err != nil {
 				return
 			}
-			cfg.User.Set("packed_key", packedBytes)
+
+			cfg.User.Set("packed_key", hex.EncodeToString(packedBytes))
 		} else {
-			tokenBytes, err = crypt.Decode([]byte(packed), cryptKeyPass)
+			packedBytes, err = hex.DecodeString(packed)
+			if err != nil {
+				err = errors.Join(errors.New("error hex.DecodeString"), err)
+				return
+			}
+			tokenBytes, err = crypt.Decode(packedBytes, cryptKeyPass)
 			if err != nil {
 				err = errors.Join(errors.New("error decode token"), err)
 				return
