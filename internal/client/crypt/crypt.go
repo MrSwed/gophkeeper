@@ -72,7 +72,7 @@ func Decode(cipherText []byte, key string) (plainText []byte, err error) {
 	}
 	iv := cipherText[:aes.BlockSize]
 	if len(cipherText[aes.BlockSize:])%aes.BlockSize != 0 {
-		err = errors.New("plainText has wrong block size")
+		err = errors.New("cipherText has wrong block size")
 		return
 	}
 	paddedText := make([]byte, len(cipherText)-aes.BlockSize)
