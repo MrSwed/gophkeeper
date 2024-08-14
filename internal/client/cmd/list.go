@@ -16,9 +16,6 @@ func (a *app) addListCmd() *app {
 		Short: "list kept data",
 		Long:  `display list of kept data`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Println("list called")
-			// todo
-
 			dataList, err := a.Srv().List(query)
 			if err != nil {
 				cmd.Printf("Get list error: %s\n", err)
@@ -27,7 +24,6 @@ func (a *app) addListCmd() *app {
 			for _, item := range dataList.Items {
 				cmd.Printf("%s\t%s\t%s\n", item.Key, item.UpdatedAt, item.Description)
 			}
-
 		},
 	}
 

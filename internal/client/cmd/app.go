@@ -23,10 +23,9 @@ type App interface {
 }
 
 type app struct {
-	db    *sqlx.DB
-	srv   service.Service
-	root  *cobra.Command
-	debug bool
+	db   *sqlx.DB
+	srv  service.Service
+	root *cobra.Command
 }
 
 func NewApp() (a *app) {
@@ -47,7 +46,7 @@ func (a *app) Srv() service.Service {
 		if err != nil {
 			return service.NewServiceError(fmt.Errorf("error load current user profile: %v", err))
 		}
-		fmt.Printf("User %s configuration loaded..\n", cfg.User.GetString("name"))
+		fmt.Printf("User %s configuration loaded\n", cfg.User.GetString("name"))
 
 		dbFile := cfg.User.GetString("db_file")
 		if dbFile == "" {
@@ -104,7 +103,7 @@ func (a *app) Execute() {
 		}
 		fmt.Println(" ..Success")
 	}
-	if cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.Get("changed_at") != nil {
+	if cfg.User.Viper != nil && cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.Get("changed_at") != nil {
 		fmt.Print("Saving user cfg files at exit..")
 		err = cfg.User.Save()
 		if err != nil {
@@ -127,7 +126,9 @@ func GenFlags(in interface{}) (flags []string, err error) {
 		sf := rt.Field(i)
 		tagNames := [2]string{}
 		copy(tagNames[:], strings.SplitN(sf.Tag.Get("flag"), ",", 2))
-		flags = append(flags, tagNames[0])
+		if tagNames[0] != "" {
+			flags = append(flags, tagNames[0])
+		}
 	}
 	return
 }

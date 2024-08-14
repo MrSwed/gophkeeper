@@ -60,8 +60,8 @@ func (m *Model) GetDst() any {
 }
 
 type Data struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	Login    string `json:"login" flag:"login,l" default:"" usage:"login field"`
+	Password string `json:"password" flag:"password,p" default:"" usage:"password field"`
 }
 
 func (m *Data) GetPacked() any {
