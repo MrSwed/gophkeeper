@@ -133,6 +133,21 @@ func (suite *serviceStoreTestSuite) Test_service() {
 			wantErr: wantErr{},
 		},
 		{
+			name: "test auth 2",
+			args: args{
+				save: &auth.Model{
+					Common: model.Common{Key: "test-set-auth-1", Description: "Some description"},
+					Data: &auth.Data{
+						Login:    "login1",
+						Password: "password1",
+					},
+				},
+				list: &model.ListQuery{},
+				del:  true,
+			},
+			wantErr: wantErr{},
+		},
+		{
 			name: "test card",
 			args: args{
 				save: &card.Model{
