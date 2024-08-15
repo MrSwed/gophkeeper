@@ -1,6 +1,7 @@
 package _type
 
 import (
+	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
 	"gophKeeper/internal/client/model/type/bin"
@@ -9,6 +10,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -290,7 +293,7 @@ func TestModel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			t.Run("Detect data model", func(t *testing.T) {
+			t.Run("Data model", func(t *testing.T) {
 				_, err := model.GetNewDataModel(model.GetName(tt.m))
 				if (err != nil) != tt.detectModelErr {
 					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
@@ -319,6 +322,11 @@ func TestModel(t *testing.T) {
 					}
 				})
 			}
+
+			t.Run("GetBase", func(t *testing.T) {
+				got := tt.m.GetBase()
+				assert.IsType(t, &model.Common{}, got, fmt.Errorf("GetBase() got = %v, for model %v", got, tt.m))
+			})
 
 		})
 	}
