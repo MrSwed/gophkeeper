@@ -21,7 +21,7 @@ var (
 
 type unkModel struct {
 	model.Common
-	data []byte
+	model.Data
 }
 
 func (m *unkModel) GetKey() string             { return "" }
@@ -29,8 +29,8 @@ func (m *unkModel) GetDescription() string     { return "" }
 func (m *unkModel) GetBase() *model.Common     { return &m.Common }
 func (m *unkModel) Reset()                     {}
 func (m *unkModel) Validate(_ ...string) error { return nil }
-func (m *unkModel) GetPacked() any             { return &m.data }
-func (m *unkModel) GetDst() any                { return &m.data }
+func (m *unkModel) GetPacked() any             { return m.Data.GetPacked() }
+func (m *unkModel) GetDst() any                { return m.Data.GetDst() }
 
 func TestModel(t *testing.T) {
 	tests := []struct {
@@ -293,14 +293,6 @@ func TestModel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			t.Run("Data model", func(t *testing.T) {
-				_, err := model.GetNewDataModel(model.GetName(tt.m))
-				if (err != nil) != tt.detectModelErr {
-					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
-					return
-				}
-			})
-
 			if tt.validate != nil {
 				t.Run("Validate", func(t *testing.T) {
 					err := tt.m.Validate(tt.validate...)
@@ -328,6 +320,47 @@ func TestModel(t *testing.T) {
 				assert.IsType(t, &model.Common{}, got, fmt.Errorf("GetBase() got = %v, for model %v", got, tt.m))
 			})
 
+		})
+	}
+}
+
+func TestGetNewDataModel(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    model.Data
+		wantErr bool
+	}{
+		{
+			name: "auth",
+			want: &auth.Data{},
+		},
+		{
+			name: "text",
+			want: &text.Data{},
+		},
+		{
+			name: "bin",
+			want: &bin.Data{},
+		},
+		{
+			name: "card",
+			want: &card.Data{},
+		},
+		{
+			name:    "unknown",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := model.GetNewDataModel(tt.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetNewDataModel() got = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
