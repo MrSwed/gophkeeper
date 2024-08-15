@@ -11,14 +11,33 @@ import (
 	"testing"
 )
 
+var (
+	_ model.Model = (*unkModel)(nil)
+	// _ model.Data  = (*Data)(nil)
+)
+
+type unkModel struct {
+	model.Common
+	data []byte
+}
+
+func (m *unkModel) GetKey() string               { return "" }
+func (m *unkModel) GetDescription() string       { return "" }
+func (m *unkModel) GetBase() *model.Common       { return &m.Common }
+func (m *unkModel) Reset()                       {}
+func (m *unkModel) Validate(_ ...string) error   { return nil }
+func (m *unkModel) Bytes() (b []byte, err error) { return }
+func (m *unkModel) GetPacked() any               { return &m.data }
+func (m *unkModel) GetDst() any                  { return &m.data }
+
 func TestModel(t *testing.T) {
 	tests := []struct {
-		name        string
-		m           model.Model
-		fields      []string
-		wantErrKeys []string
-		wantErr     bool
-		want        []byte
+		name                string
+		m                   model.Model
+		validate            []string
+		validateWantErrKeys []string
+		detectModelErr      bool
+		wantBytes           []byte
 	}{
 		{
 			name: "test auth",
@@ -27,7 +46,7 @@ func TestModel(t *testing.T) {
 					Login:    "test",
 					Password: "password"},
 			},
-			want: []byte(`{"type":"auth","data":{"login":"test","password":"password"}}`),
+			wantBytes: []byte(`{"type":"auth","data":{"login":"test","password":"password"}}`),
 		},
 		{
 			name: "test bin",
@@ -36,8 +55,7 @@ func TestModel(t *testing.T) {
 					Bin: []byte("test:test"),
 				},
 			},
-			want:    []byte(`{"type":"bin","data":{"bin":"dGVzdDp0ZXN0"}}`),
-			wantErr: false,
+			wantBytes: []byte(`{"type":"bin","data":{"bin":"dGVzdDp0ZXN0"}}`),
 		},
 		{
 			name: "test card 1",
@@ -49,8 +67,7 @@ func TestModel(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999","name":"Some Name"}}`),
-			wantErr: false,
+			wantBytes: []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999","name":"Some Name"}}`),
 		},
 		{
 			name: "test card 2",
@@ -61,8 +78,7 @@ func TestModel(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			want:    []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999"}}`),
-			wantErr: false,
+			wantBytes: []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999"}}`),
 		},
 		{
 			name: "test text ",
@@ -72,12 +88,18 @@ func TestModel(t *testing.T) {
 					Text: "some text here",
 				},
 			},
-			want:    []byte(`{"type":"text","data":{"text":"some text here"}}`),
-			wantErr: false,
+			wantBytes: []byte(`{"type":"text","data":{"text":"some text here"}}`),
 		},
 		{
-			name:   "test auth 1",
-			fields: []string{},
+			name: "unknown model",
+			m: &unkModel{
+				Common: model.Common{},
+			},
+			detectModelErr: true,
+		},
+		{
+			name:     "test auth 1",
+			validate: []string{},
 			m: &auth.Model{
 				Common: model.Common{
 					Key: "somesite.com",
@@ -89,20 +111,20 @@ func TestModel(t *testing.T) {
 			},
 		},
 		{
-			name:   "test auth 2, need key",
-			fields: []string{},
+			name:     "test auth 2, need key",
+			validate: []string{},
 			m: &auth.Model{
 				Data: &auth.Data{
 					Login:    "test",
 					Password: "password",
 				},
 			},
-			wantErrKeys: []string{"Key"},
+			validateWantErrKeys: []string{"Key"},
 		},
 
 		{
-			name:   "test bin",
-			fields: []string{},
+			name:     "test bin",
+			validate: []string{},
 			m: &bin.Model{
 				Common: model.Common{
 					Key: "some bin data",
@@ -114,8 +136,8 @@ func TestModel(t *testing.T) {
 		},
 
 		{
-			name:   "no card number",
-			fields: []string{},
+			name:     "no card number",
+			validate: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 1"},
 				Data: &card.Data{
@@ -124,11 +146,11 @@ func TestModel(t *testing.T) {
 					CVV:  "999",
 				},
 			},
-			wantErrKeys: []string{"Number"},
+			validateWantErrKeys: []string{"Number"},
 		},
 		{
-			name:   "not valid card",
-			fields: []string{},
+			name:     "not valid card",
+			validate: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 2"},
 				Data: &card.Data{
@@ -138,11 +160,11 @@ func TestModel(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			wantErrKeys: []string{"Number"},
+			validateWantErrKeys: []string{"Number"},
 		},
 		{
-			name:   "valid data",
-			fields: []string{},
+			name:     "valid data",
+			validate: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 3"},
 				Data: &card.Data{
@@ -154,8 +176,8 @@ func TestModel(t *testing.T) {
 			},
 		},
 		{
-			name:   "card validate num only",
-			fields: []string{"Number"},
+			name:     "card validate num only",
+			validate: []string{"Number"},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 2"},
 				Data: &card.Data{
@@ -164,13 +186,13 @@ func TestModel(t *testing.T) {
 			},
 		},
 		{
-			name:   "bad card num",
-			fields: []string{"Data.Number"},
+			name:     "bad card num",
+			validate: []string{"Data.Number"},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 2"},
 				Data:   &card.Data{},
 			},
-			wantErrKeys: []string{"Data.Number"},
+			validateWantErrKeys: []string{"Data.Number"},
 		},
 		{
 			name: "bad cvv 1",
@@ -183,7 +205,7 @@ func TestModel(t *testing.T) {
 					CVV:    "9992",
 				},
 			},
-			wantErrKeys: []string{"CVV"},
+			validateWantErrKeys: []string{"CVV"},
 		},
 		{
 			name: "bad cvv 2",
@@ -196,18 +218,18 @@ func TestModel(t *testing.T) {
 					CVV:    "99",
 				},
 			},
-			wantErrKeys: []string{"CVV"},
+			validateWantErrKeys: []string{"CVV"},
 		},
 		{
-			name:   "bad cvv 3, partial validate",
-			fields: []string{"Data.CVV"},
+			name:     "bad cvv 3, partial validate",
+			validate: []string{"Data.CVV"},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 6"},
 				Data: &card.Data{
 					CVV: "99",
 				},
 			},
-			wantErrKeys: []string{"Data.CVV"},
+			validateWantErrKeys: []string{"Data.CVV"},
 		},
 		{
 			name: "can be no cvv",
@@ -230,17 +252,17 @@ func TestModel(t *testing.T) {
 					CVV:    "999",
 				},
 			},
-			wantErrKeys: []string{"Exp"},
+			validateWantErrKeys: []string{"Exp"},
 		},
 		{
-			name:        "no data",
-			m:           card.New(),
-			wantErrKeys: []string{"Data", "Key"},
+			name:                "no data",
+			m:                   card.New(),
+			validateWantErrKeys: []string{"Data", "Key"},
 		},
 		{
-			name:        "bad data",
-			m:           &card.Model{Data: &card.Data{}},
-			wantErrKeys: []string{"Number", "Key"},
+			name:                "bad data",
+			m:                   &card.Model{Data: &card.Data{}},
+			validateWantErrKeys: []string{"Number", "Key"},
 		},
 		{
 			name: "can no exp",
@@ -268,30 +290,30 @@ func TestModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want != nil {
+			if tt.wantBytes != nil {
 				t.Run("Bytes", func(t *testing.T) {
 					got, err := tt.m.Bytes()
-					if (err != nil) != tt.wantErr {
-						t.Errorf("Bytes() error = %v, wantErr %v", err, tt.wantErr)
+					if (err != nil) != tt.detectModelErr {
+						t.Errorf("Bytes() error = %v, wantErr %v", err, tt.detectModelErr)
 						return
 					}
-					if !reflect.DeepEqual(got, tt.want) {
-						t.Errorf("Bytes() got = %v, want %v", got, tt.want)
+					if !reflect.DeepEqual(got, tt.wantBytes) {
+						t.Errorf("Bytes() got = %v, want %v", got, tt.wantBytes)
 					}
 				})
 			}
-			if tt.fields != nil {
+			if tt.validate != nil {
 				t.Run("Validate", func(t *testing.T) {
-					err := tt.m.Validate(tt.fields...)
-					if (err != nil) != (tt.wantErrKeys != nil) || (tt.wantErrKeys != nil) != containStrInErr(err, tt.wantErrKeys...) {
-						t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.wantErrKeys)
+					err := tt.m.Validate(tt.validate...)
+					if (err != nil) != (tt.validateWantErrKeys != nil) || (tt.validateWantErrKeys != nil) != containStrInErr(err, tt.validateWantErrKeys...) {
+						t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.validateWantErrKeys)
 					}
 				})
 			}
 			t.Run("Detect data model", func(t *testing.T) {
 				_, err := model.GetNewDataModel(model.GetName(tt.m))
-				if (err != nil) != tt.wantErr {
-					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
+				if (err != nil) != tt.detectModelErr {
+					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
 					return
 				}
 			})
