@@ -289,6 +289,24 @@ func TestModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			t.Run("Detect data model", func(t *testing.T) {
+				_, err := model.GetNewDataModel(model.GetName(tt.m))
+				if (err != nil) != tt.detectModelErr {
+					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
+					return
+				}
+			})
+
+			if tt.validate != nil {
+				t.Run("Validate", func(t *testing.T) {
+					err := tt.m.Validate(tt.validate...)
+					if (err != nil) != (tt.validateWantErrKeys != nil) || (tt.validateWantErrKeys != nil) != containStrInErr(err, tt.validateWantErrKeys...) {
+						t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.validateWantErrKeys)
+					}
+				})
+			}
+
 			if tt.wantBytes != nil {
 				t.Run("PackedBytes", func(t *testing.T) {
 					got, err := model.NewPackedBytes(tt.m)
@@ -301,21 +319,7 @@ func TestModel(t *testing.T) {
 					}
 				})
 			}
-			if tt.validate != nil {
-				t.Run("Validate", func(t *testing.T) {
-					err := tt.m.Validate(tt.validate...)
-					if (err != nil) != (tt.validateWantErrKeys != nil) || (tt.validateWantErrKeys != nil) != containStrInErr(err, tt.validateWantErrKeys...) {
-						t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.validateWantErrKeys)
-					}
-				})
-			}
-			t.Run("Detect data model", func(t *testing.T) {
-				_, err := model.GetNewDataModel(model.GetName(tt.m))
-				if (err != nil) != tt.detectModelErr {
-					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
-					return
-				}
-			})
+
 		})
 	}
 }
