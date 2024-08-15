@@ -11,12 +11,14 @@ import (
 	"testing"
 )
 
-func TestModel_Bytes(t *testing.T) {
+func TestModel(t *testing.T) {
 	tests := []struct {
-		name    string
-		m       model.Model
-		want    []byte
-		wantErr bool
+		name        string
+		m           model.Model
+		fields      []string
+		wantErrKeys []string
+		wantErr     bool
+		want        []byte
 	}{
 		{
 			name: "test auth",
@@ -73,30 +75,9 @@ func TestModel_Bytes(t *testing.T) {
 			want:    []byte(`{"type":"text","data":{"text":"some text here"}}`),
 			wantErr: false,
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.m.Bytes()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Bytes() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Bytes() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestModel_Validate(t *testing.T) {
-	tests := []struct {
-		name        string
-		m           model.Model
-		fields      []string
-		wantErrKeys []string
-	}{
 		{
-			name: "test auth 1",
+			name:   "test auth 1",
+			fields: []string{},
 			m: &auth.Model{
 				Common: model.Common{
 					Key: "somesite.com",
@@ -108,7 +89,8 @@ func TestModel_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "test auth 2, need key",
+			name:   "test auth 2, need key",
+			fields: []string{},
 			m: &auth.Model{
 				Data: &auth.Data{
 					Login:    "test",
@@ -119,7 +101,8 @@ func TestModel_Validate(t *testing.T) {
 		},
 
 		{
-			name: "test bin",
+			name:   "test bin",
+			fields: []string{},
 			m: &bin.Model{
 				Common: model.Common{
 					Key: "some bin data",
@@ -131,7 +114,8 @@ func TestModel_Validate(t *testing.T) {
 		},
 
 		{
-			name: "no card number",
+			name:   "no card number",
+			fields: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 1"},
 				Data: &card.Data{
@@ -143,7 +127,8 @@ func TestModel_Validate(t *testing.T) {
 			wantErrKeys: []string{"Number"},
 		},
 		{
-			name: "not valid card",
+			name:   "not valid card",
+			fields: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 2"},
 				Data: &card.Data{
@@ -156,7 +141,8 @@ func TestModel_Validate(t *testing.T) {
 			wantErrKeys: []string{"Number"},
 		},
 		{
-			name: "valid data",
+			name:   "valid data",
+			fields: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 3"},
 				Data: &card.Data{
@@ -248,7 +234,7 @@ func TestModel_Validate(t *testing.T) {
 		},
 		{
 			name:        "no data",
-			m:           &card.Model{},
+			m:           card.New(),
 			wantErrKeys: []string{"Data", "Key"},
 		},
 		{
@@ -282,10 +268,33 @@ func TestModel_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.m.Validate(tt.fields...)
-			if (err != nil) != (tt.wantErrKeys != nil) || (tt.wantErrKeys != nil) != containStrInErr(err, tt.wantErrKeys...) {
-				t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.wantErrKeys)
+			if tt.want != nil {
+				t.Run("Bytes", func(t *testing.T) {
+					got, err := tt.m.Bytes()
+					if (err != nil) != tt.wantErr {
+						t.Errorf("Bytes() error = %v, wantErr %v", err, tt.wantErr)
+						return
+					}
+					if !reflect.DeepEqual(got, tt.want) {
+						t.Errorf("Bytes() got = %v, want %v", got, tt.want)
+					}
+				})
 			}
+			if tt.fields != nil {
+				t.Run("Validate", func(t *testing.T) {
+					err := tt.m.Validate(tt.fields...)
+					if (err != nil) != (tt.wantErrKeys != nil) || (tt.wantErrKeys != nil) != containStrInErr(err, tt.wantErrKeys...) {
+						t.Errorf("Validate() error = %v, wantErrKeys %v", err, tt.wantErrKeys)
+					}
+				})
+			}
+			t.Run("Detect data model", func(t *testing.T) {
+				_, err := model.GetNewDataModel(model.GetName(tt.m))
+				if (err != nil) != tt.wantErr {
+					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+			})
 		})
 	}
 }
@@ -301,41 +310,4 @@ func containStrInErr(err error, str ...string) bool {
 		}
 	}
 	return c == len(str)
-}
-
-func TestModel_GetNewDataModel(t *testing.T) {
-	tests := []struct {
-		name    string
-		m       model.Data
-		wantErr bool
-	}{
-		{
-			name: "test auth",
-			m:    &auth.Data{},
-		},
-		{
-			name: "test text",
-			m:    &text.Data{},
-		},
-		{
-			name: "test card",
-			m:    &card.Data{},
-		},
-		{
-			name: "test bin",
-			m:    &bin.Data{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := model.GetNewDataModel(model.GetName(tt.m))
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.m) {
-				t.Errorf("Type() got = %v, want %v", got, tt.m)
-			}
-		})
-	}
 }

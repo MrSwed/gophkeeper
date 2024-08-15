@@ -71,6 +71,7 @@ func (m *Data) GetPacked() any {
 func (m *Data) GetDst() any {
 	return m
 }
+
 func (m *Data) Reset() {
 	(*m).Password = ""
 	(*m).Login = ""
