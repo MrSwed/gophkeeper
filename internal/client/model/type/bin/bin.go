@@ -55,10 +55,6 @@ func (m *Model) Validate(fields ...string) error {
 	return model.Validator.Struct(m)
 }
 
-func (m *Model) Bytes() (b []byte, err error) {
-	return model.NewPackedBytes(m)
-}
-
 func (m *Model) GetPacked() any {
 	return m.Data.GetPacked()
 }

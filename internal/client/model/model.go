@@ -29,7 +29,6 @@ type Model interface {
 	Validate
 	Base
 	Data
-	Bytes() (b []byte, err error)
 }
 
 type Settable interface {

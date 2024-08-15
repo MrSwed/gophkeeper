@@ -146,7 +146,7 @@ func (s *service) Save(data model.Model) (err error) {
 	r.Description = data.GetDescription()
 
 	var blob []byte
-	blob, err = data.Bytes()
+	blob, err = model.NewPackedBytes(data)
 	if err != nil {
 		return
 	}

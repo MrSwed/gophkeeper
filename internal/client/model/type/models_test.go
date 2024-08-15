@@ -21,14 +21,13 @@ type unkModel struct {
 	data []byte
 }
 
-func (m *unkModel) GetKey() string               { return "" }
-func (m *unkModel) GetDescription() string       { return "" }
-func (m *unkModel) GetBase() *model.Common       { return &m.Common }
-func (m *unkModel) Reset()                       {}
-func (m *unkModel) Validate(_ ...string) error   { return nil }
-func (m *unkModel) Bytes() (b []byte, err error) { return }
-func (m *unkModel) GetPacked() any               { return &m.data }
-func (m *unkModel) GetDst() any                  { return &m.data }
+func (m *unkModel) GetKey() string             { return "" }
+func (m *unkModel) GetDescription() string     { return "" }
+func (m *unkModel) GetBase() *model.Common     { return &m.Common }
+func (m *unkModel) Reset()                     {}
+func (m *unkModel) Validate(_ ...string) error { return nil }
+func (m *unkModel) GetPacked() any             { return &m.data }
+func (m *unkModel) GetDst() any                { return &m.data }
 
 func TestModel(t *testing.T) {
 	tests := []struct {
@@ -291,14 +290,14 @@ func TestModel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantBytes != nil {
-				t.Run("Bytes", func(t *testing.T) {
-					got, err := tt.m.Bytes()
+				t.Run("PackedBytes", func(t *testing.T) {
+					got, err := model.NewPackedBytes(tt.m)
 					if (err != nil) != tt.detectModelErr {
-						t.Errorf("Bytes() error = %v, wantErr %v", err, tt.detectModelErr)
+						t.Errorf("PackedBytes() error = %v, wantErr %v", err, tt.detectModelErr)
 						return
 					}
 					if !reflect.DeepEqual(got, tt.wantBytes) {
-						t.Errorf("Bytes() got = %v, want %v", got, tt.wantBytes)
+						t.Errorf("PackedBytes() got = %v, want %v", got, tt.wantBytes)
 					}
 				})
 			}
