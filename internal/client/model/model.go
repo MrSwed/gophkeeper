@@ -15,6 +15,7 @@ type GetFile interface {
 type Data interface {
 	GetPacked() any
 	GetDst() any
+	Reset()
 }
 
 type Base interface {
@@ -22,7 +23,6 @@ type Base interface {
 	GetDescription() string
 	GetFileName() string
 	GetBase() *Common
-	Reset()
 }
 
 type Model interface {

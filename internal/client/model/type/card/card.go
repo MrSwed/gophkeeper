@@ -53,7 +53,7 @@ func New() *Model {
 
 func (m *Model) Reset() {
 	m.Common.Reset()
-	(*m).Data.Reset()
+	m.Data.Reset()
 }
 
 func (m *Model) GetKey() string {

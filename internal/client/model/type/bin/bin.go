@@ -30,7 +30,7 @@ func New() *Model {
 
 func (m *Model) Reset() {
 	m.Common.Reset()
-	(*m).Data.Reset()
+	m.Data.Reset()
 }
 
 func (m *Model) GetFile() (err error) {
@@ -76,5 +76,6 @@ func (m *Data) GetDst() any {
 }
 
 func (m *Data) Reset() {
-	(*m).Bin = (*m).Bin[0:0]
+	(*m).Bin = nil
+	// (*m).Bin = []byte{}
 }

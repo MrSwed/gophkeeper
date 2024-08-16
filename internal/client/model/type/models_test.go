@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -24,10 +25,13 @@ type unkModel struct {
 	model.Data
 }
 
-func (m *unkModel) GetKey() string             { return "" }
-func (m *unkModel) GetDescription() string     { return "" }
-func (m *unkModel) GetBase() *model.Common     { return &m.Common }
-func (m *unkModel) Reset()                     {}
+func (m *unkModel) GetKey() string         { return "" }
+func (m *unkModel) GetDescription() string { return "" }
+func (m *unkModel) GetBase() *model.Common { return &m.Common }
+func (m *unkModel) Reset() {
+	m.Common.Reset()
+	m.Data.Reset()
+}
 func (m *unkModel) Validate(_ ...string) error { return nil }
 func (m *unkModel) GetPacked() any             { return m.Data.GetPacked() }
 func (m *unkModel) GetDst() any                { return m.Data.GetDst() }
@@ -39,10 +43,11 @@ func TestModel(t *testing.T) {
 		validate            []string
 		validateWantErrKeys []string
 		detectModelErr      bool
+		packedErr           bool
 		wantBytes           []byte
 	}{
 		{
-			name: "test auth",
+			name: "auth",
 			m: &auth.Model{
 				Data: &auth.Data{
 					Login:    "test",
@@ -51,7 +56,7 @@ func TestModel(t *testing.T) {
 			wantBytes: []byte(`{"type":"auth","data":{"login":"test","password":"password"}}`),
 		},
 		{
-			name: "test bin",
+			name: "bin",
 			m: &bin.Model{
 				Data: &bin.Data{
 					Bin: []byte("test:test"),
@@ -60,7 +65,7 @@ func TestModel(t *testing.T) {
 			wantBytes: []byte(`{"type":"bin","data":{"bin":"dGVzdDp0ZXN0"}}`),
 		},
 		{
-			name: "test card 1",
+			name: "card 1",
 			m: &card.Model{
 				Data: &card.Data{
 					Exp:    "05/25",
@@ -72,7 +77,7 @@ func TestModel(t *testing.T) {
 			wantBytes: []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999","name":"Some Name"}}`),
 		},
 		{
-			name: "test card 2",
+			name: "card 2",
 			m: &card.Model{
 				Data: &card.Data{
 					Exp:    "05/25",
@@ -83,7 +88,7 @@ func TestModel(t *testing.T) {
 			wantBytes: []byte(`{"type":"card","data":{"number":"0000000000000000","exp":"0525","cvv":"999"}}`),
 		},
 		{
-			name: "test text ",
+			name: "text",
 			m: &text.Model{
 				Common: model.Common{},
 				Data: &text.Data{
@@ -100,7 +105,7 @@ func TestModel(t *testing.T) {
 			detectModelErr: true,
 		},
 		{
-			name:     "test auth 1",
+			name:     "auth 1",
 			validate: []string{},
 			m: &auth.Model{
 				Common: model.Common{
@@ -113,7 +118,7 @@ func TestModel(t *testing.T) {
 			},
 		},
 		{
-			name:     "test auth 2, need key",
+			name:     "auth 2, need key",
 			validate: []string{},
 			m: &auth.Model{
 				Data: &auth.Data{
@@ -125,7 +130,7 @@ func TestModel(t *testing.T) {
 		},
 
 		{
-			name:     "test bin",
+			name:     "bin",
 			validate: []string{},
 			m: &bin.Model{
 				Common: model.Common{
@@ -267,7 +272,8 @@ func TestModel(t *testing.T) {
 			validateWantErrKeys: []string{"Number", "Key"},
 		},
 		{
-			name: "can no exp",
+			name:     "can no exp",
+			validate: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 9"},
 				Data: &card.Data{
@@ -277,12 +283,12 @@ func TestModel(t *testing.T) {
 				},
 			},
 		},
-
 		{
-			name: "text 1",
+			name:     "text 1",
+			validate: []string{},
 			m: &text.Model{
 				Common: model.Common{
-					Key: "some test record 1",
+					Key: "some record 1",
 				},
 				Data: &text.Data{
 					Text: "some text here",
@@ -292,6 +298,14 @@ func TestModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			t.Run("Data model", func(t *testing.T) {
+				_, err := model.GetNewDataModel(model.GetName(tt.m))
+				if (err != nil) != tt.detectModelErr {
+					t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.detectModelErr)
+					return
+				}
+			})
 
 			if tt.validate != nil {
 				t.Run("Validate", func(t *testing.T) {
@@ -305,7 +319,7 @@ func TestModel(t *testing.T) {
 			if tt.wantBytes != nil {
 				t.Run("PackedBytes", func(t *testing.T) {
 					got, err := model.NewPackedBytes(tt.m)
-					if (err != nil) != tt.detectModelErr {
+					if (err != nil) != tt.packedErr {
 						t.Errorf("PackedBytes() error = %v, wantErr %v", err, tt.detectModelErr)
 						return
 					}
@@ -320,6 +334,25 @@ func TestModel(t *testing.T) {
 				assert.IsType(t, &model.Common{}, got, fmt.Errorf("GetBase() got = %v, for model %v", got, tt.m))
 			})
 
+			if !tt.detectModelErr {
+				t.Run("Reset", func(t *testing.T) {
+
+					nModel := &unkModel{}
+
+					var err error
+					nModel.Data, err = model.GetNewDataModel(model.GetName(tt.m))
+					require.NoError(t, err)
+
+					tt.m.Reset()
+
+					require.Equal(t, true, reflect.DeepEqual(nModel.GetDst(), tt.m.GetDst()),
+						fmt.Errorf("not empty GetDst() :  new = %v, tt.m %v", nModel.GetDst(), tt.m.GetDst()))
+
+					require.Equal(t, true, reflect.DeepEqual(nModel.GetBase(), tt.m.GetBase()),
+						fmt.Errorf("not empty GetBase() :  new = %v, tt.m %v", nModel.GetBase(), tt.m.GetBase()))
+
+				})
+			}
 		})
 	}
 }
