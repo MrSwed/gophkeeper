@@ -1,6 +1,7 @@
 package _type
 
 import (
+	"errors"
 	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
@@ -361,7 +362,7 @@ func TestGetNewDataModel(t *testing.T) {
 	tests := []struct {
 		name    string
 		want    model.Data
-		wantErr bool
+		wantErr error
 	}{
 		{
 			name: "auth",
@@ -381,16 +382,18 @@ func TestGetNewDataModel(t *testing.T) {
 		},
 		{
 			name:    "unknown",
-			wantErr: true,
+			wantErr: fmt.Errorf("model not found: %s", "unknown"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := model.GetNewDataModel(tt.name)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			require.Equal(t, true,
+				(err == nil && tt.wantErr == nil) ||
+					errors.Is(err, tt.wantErr) ||
+					err.Error() == tt.wantErr.Error(),
+				tt.name,
+				fmt.Errorf("GetNewDataModel() error = %v, wantErr %v", err, tt.wantErr))
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetNewDataModel() got = %v, want %v", got, tt.want)
 			}
