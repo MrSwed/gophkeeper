@@ -67,7 +67,7 @@ func (m *Model) GetDst() any {
 }
 
 type Data struct {
-	Text string `json:"text"`
+	Text string `json:"text" validate:"required" flag:"text,t" default:"" usage:"text field"`
 }
 
 func (m *Data) GetPacked() any {

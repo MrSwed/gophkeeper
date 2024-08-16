@@ -31,6 +31,9 @@ func GenerateFlags(dst interface{}, fs *pflag.FlagSet) error {
 		fv := rv.Field(i)
 		tagNames := [2]string{}
 		copy(tagNames[:], strings.SplitN(sf.Tag.Get(("flag")), ",", 2))
+		if tagNames[0] == "" {
+			continue
+		}
 		usage := sf.Tag.Get("usage")
 		defVal := sf.Tag.Get("default")
 

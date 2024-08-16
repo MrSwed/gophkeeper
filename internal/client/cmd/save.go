@@ -7,15 +7,39 @@ import (
 	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
+	"gophKeeper/internal/client/model/type/bin"
 	"gophKeeper/internal/client/model/type/card"
+	"gophKeeper/internal/client/model/type/text"
 
 	"github.com/spf13/cobra"
 )
 
-func commonFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("file", "f", "", "read from file")
-	cmd.Flags().StringP("key", "k", "", "set your entry key-identifier")
-	cmd.Flags().StringP("description", "d", "", "description, will be displayed in the list of entries list")
+func saveDataRun(data model.Model, save func(data model.Model) (err error)) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
+		defer data.Reset()
+		data.GetKey()
+		if d, ok := data.GetDst().(model.Sanitisable); ok {
+			d.Sanitize()
+		}
+		if d, ok := data.(model.GetFile); ok {
+			err := d.GetFile()
+			if err != nil {
+				fmt.Println("GetFile: Error: ", err)
+			}
+		}
+		// err := data.Validate()
+		// if err != nil {
+		// 	fmt.Println("Validate: Error: ", err)
+		// }
+
+		// todo is draft yet
+		// fmt.Println(data.Data)
+
+		err := save(data)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
 }
 
 func validArgs(m model.Data) (validArgs []string) {
@@ -41,75 +65,60 @@ func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:       "auth",
 		Short:     "Save auth data",
-		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
 		ValidArgs: validArgs(&auth.Data{}),
 		Long:      `Encrypts login/password pairs.`,
 		Example: `  save auth -l login -p password
   save auth -l login -p password -d site.com
   save auth -l login -p password -k "my-key-name" -d site.com
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("save auth called")
-			defer data.Reset()
-			// data.Data.Sanitize()
-			data.GetKey()
-			err := data.Validate()
-			if err != nil {
-				fmt.Println("Validate: Error: ", err)
-			}
-
-			// todo is draft yet
-			fmt.Println(data.Data)
-
-			err = a.Srv().Save(data)
-			if err != nil {
-				fmt.Println(err.Error())
-
-			}
-		},
+		Run: saveDataRun(data, a.Srv().Save),
 	}
 	err := modelGenerateFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save auth modelGenerateFlags error: %s\n", err)
 	}
 
 	return
 }
 
 func (a *app) saveTextCmd() (cmd *cobra.Command) {
+	debug := false
+	data := text.New()
 	cmd = &cobra.Command{
-		Use:       "text [flags]",
-		Short:     "Save text data",
-		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
-		ValidArgs: []string{"s", "k", "f", "d"},
+		Use:   "text [flags]",
+		Short: "Save text data",
+		// Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
+		ValidArgs: validArgs(&text.Data{}),
 		Long:      `Encrypts text data`,
 		Example: `  save text -f filename
-  save text -k switch -d description -s
+  save text -k custom-key -d description -s
 `,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("save text called")
-			// todo here
-		},
+		Run: saveDataRun(data, a.Srv().Save),
 	}
-	commonFlags(cmd)
-	cmd.Flags().StringP("test", "t", "", "text data")
+	err := modelGenerateFlags(data, cmd, &debug)
+	if err != nil {
+		cmd.Printf("save text modelGenerateFlags error: %s\n", err)
+	}
+
 	return
 }
 
 func (a *app) saveBinCmd() (cmd *cobra.Command) {
+	debug := false
+	data := bin.New()
+
 	cmd = &cobra.Command{
 		Use:       "bin [flags]",
 		Short:     "Save binary data",
-		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
-		ValidArgs: []string{"k", "f", "d"},
+		ValidArgs: validArgs(&auth.Data{}),
 		Long:      `Encrypts bin data`,
 		Example:   `   save bin -f filename`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("save bin called")
-			// todo here
-		},
+		Run:       saveDataRun(data, a.Srv().Save),
 	}
-	commonFlags(cmd)
+	err := modelGenerateFlags(data, cmd, &debug)
+	if err != nil {
+		cmd.Printf("save bin modelGenerateFlags error: %s\n", err)
+	}
 	return
 }
 
@@ -124,28 +133,11 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		ValidArgs: validArgs(&card.Data{}),
 		Long:      `Encrypts bank cards data`,
 		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
-		Run: func(cmd *cobra.Command, args []string) {
-			defer data.Reset()
-			data.Data.Sanitize()
-			data.GetKey()
-			err := data.Validate()
-			if err != nil {
-				fmt.Println("Validate: Error: ", err)
-			}
-
-			// todo is draft yet
-			fmt.Println(data.Data)
-
-			err = a.Srv().Save(data)
-			if err != nil {
-				fmt.Println(err.Error())
-
-			}
-		},
+		Run:       saveDataRun(data, a.Srv().Save),
 	}
 	err := modelGenerateFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save card modelGenerateFlags error: %s\n", err)
 	}
 
 	return

@@ -64,7 +64,7 @@ func (m *Model) GetDst() any {
 }
 
 type Data struct {
-	Bin []byte `json:"bin"`
+	Bin []byte `json:"bin" validate:"required"`
 }
 
 func (m *Data) GetPacked() any {
@@ -77,5 +77,4 @@ func (m *Data) GetDst() any {
 
 func (m *Data) Reset() {
 	(*m).Bin = nil
-	// (*m).Bin = []byte{}
 }
