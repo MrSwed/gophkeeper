@@ -263,17 +263,31 @@ func TestModel(t *testing.T) {
 			validateWantErrKeys: []string{"Exp"},
 		},
 		{
-			name:                "no data",
+			name:                "new auth",
+			m:                   auth.New(),
+			validate:            []string{},
+			validateWantErrKeys: []string{"Key"},
+		},
+		{
+			name:                "no card",
 			m:                   card.New(),
-			validateWantErrKeys: []string{"Data", "Key"},
+			validate:            []string{},
+			validateWantErrKeys: []string{"Key"},
 		},
 		{
-			name:                "bad data",
-			m:                   &card.Model{Data: &card.Data{}},
-			validateWantErrKeys: []string{"Number", "Key"},
+			name:                "no text",
+			m:                   text.New(),
+			validate:            []string{},
+			validateWantErrKeys: []string{"Key"},
 		},
 		{
-			name:     "can no exp",
+			name:                "no bin",
+			m:                   bin.New(),
+			validate:            []string{},
+			validateWantErrKeys: []string{"Key"},
+		},
+		{
+			name:     "card can no exp",
 			validate: []string{},
 			m: &card.Model{
 				Common: model.Common{Key: "some bank card 9"},
@@ -336,6 +350,20 @@ func TestModel(t *testing.T) {
 			})
 
 			if !tt.detectModelErr {
+				t.Run("GetKey", func(t *testing.T) {
+					oldKey := tt.m.GetBase().Key
+					updatedKey := tt.m.GetKey()
+					require.Equal(t, true, updatedKey != "", "GetKey should not be empty")
+					if oldKey != "" {
+						require.Equal(t, oldKey, updatedKey, "GetKey key should not be changed if it not empty already")
+					}
+					require.Equal(t, true, tt.m.GetBase().GetKey() != "", "Base GetKey also should not be empty")
+				})
+
+				t.Run("GetDescription", func(t *testing.T) {
+					require.Equal(t, tt.m.GetBase().Description, tt.m.GetDescription(), "GetDescription should just get description")
+				})
+
 				t.Run("Reset", func(t *testing.T) {
 
 					nModel := &unkModel{}
@@ -352,6 +380,10 @@ func TestModel(t *testing.T) {
 					require.Equal(t, true, reflect.DeepEqual(nModel.GetBase(), tt.m.GetBase()),
 						fmt.Errorf("not empty GetBase() :  new = %v, tt.m %v", nModel.GetBase(), tt.m.GetBase()))
 
+				})
+			} else if tt.m.GetBase() != nil {
+				t.Run("GetKey", func(t *testing.T) {
+					require.Equal(t, true, tt.m.GetBase().GetKey() != "", "Base GetKey also should not be empty")
 				})
 			}
 		})

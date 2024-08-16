@@ -29,6 +29,7 @@ func (c *Common) GetKey() string {
 func (c *Common) GetDescription() string {
 	return c.Description
 }
+
 func (c *Common) GetFileName() string {
 	return c.FileName
 }
