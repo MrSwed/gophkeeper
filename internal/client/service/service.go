@@ -118,7 +118,7 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	token, err = s.GetToken()
 	if err != nil {
 		if !cfg.Glob.GetBool("debug") {
-			err = errors.New("wrong password")
+			err = errs.ErrPassword
 		}
 		return
 	}
