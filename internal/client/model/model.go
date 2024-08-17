@@ -8,8 +8,8 @@ import (
 
 var models = map[string]any{}
 
-type GetFile interface {
-	GetFile() error
+type FromFile interface {
+	DataFromFile() error
 }
 
 type Data interface {

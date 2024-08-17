@@ -33,7 +33,7 @@ type Model struct {
 	Data *Data `json:"data"`
 }
 
-func (m *Model) GetFile() (err error) {
+func (m *Model) DataFromFile() (err error) {
 	if m.FileName != "" {
 		if m.Data == nil {
 			m.Data = &Data{}

@@ -35,12 +35,6 @@ func saveDataRun(data model.Model, save func(data model.Model) (err error)) func
 		if d, ok := data.GetDst().(model.Sanitisable); ok {
 			d.Sanitize()
 		}
-		if d, ok := data.(model.GetFile); ok {
-			err := d.GetFile()
-			if err != nil {
-				cmd.Println("GetFile: Error: ", err)
-			}
-		}
 
 		err := save(data)
 		if err != nil {

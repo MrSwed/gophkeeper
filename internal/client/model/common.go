@@ -45,8 +45,8 @@ type Packed struct {
 }
 
 func NewPackedBytes(m Model) ([]byte, error) {
-	if m, ok := m.(GetFile); ok {
-		err := m.GetFile()
+	if m, ok := m.(FromFile); ok {
+		err := m.DataFromFile()
 		if err != nil {
 			return nil, err
 		}
