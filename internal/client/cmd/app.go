@@ -112,7 +112,7 @@ func (a *app) Execute() {
 	}
 }
 
-func GenFlags(in interface{}) (flags []string, err error) {
+func GenFlags(in any) (flags []string, err error) {
 	rv := reflect.ValueOf(in)
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
 		err = errors.New("not pointer-to-a-struct") // exit if not pointer-to-a-struct

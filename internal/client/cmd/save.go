@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
 	"gophKeeper/internal/client/model/type/bin"
@@ -52,7 +51,9 @@ func saveDataRun(data model.Model, save func(data model.Model) (err error)) func
 	}
 }
 
-func validArgs(m model.Data) (validArgs []string) {
+// todo; clean ?
+/** /
+func validSaveArgs(m model.Data) (validArgs []string) {
 	validArgsCommon, err := GenFlags(&model.Common{})
 	if err != nil {
 		fmt.Println(err)
@@ -67,16 +68,17 @@ func validArgs(m model.Data) (validArgs []string) {
 	validArgs = append(validArgsCommon, validArgsData...)
 	return
 }
+/**/
 
 func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	debug := false
 	data := auth.New()
 
 	cmd = &cobra.Command{
-		Use:       "auth",
-		Short:     "Save auth data",
-		ValidArgs: validArgs(&auth.Data{}),
-		Long:      `Encrypts login/password pairs.`,
+		Use:   "auth",
+		Short: "Save auth data",
+		// ValidArgs: validSaveArgs(&auth.Data{}),
+		Long: `Encrypts login/password pairs.`,
 		Example: `  save auth -l login -p password
   save auth -l login -p password -d site.com
   save auth -l login -p password -k "my-key-name" -d site.com
@@ -97,9 +99,9 @@ func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "text [flags]",
 		Short: "Save text data",
-		// Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
-		ValidArgs: validArgs(&text.Data{}),
-		Long:      `Encrypts text data`,
+		// // Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
+		// ValidArgs: validSaveArgs(&text.Data{}),
+		Long: `Encrypts text data`,
 		Example: `  save text -f filename
   save text -k custom-key -d description -s
 `,
@@ -118,12 +120,12 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	data := bin.New()
 
 	cmd = &cobra.Command{
-		Use:       "bin [flags]",
-		Short:     "Save binary data",
-		ValidArgs: validArgs(&auth.Data{}),
-		Long:      `Encrypts bin data`,
-		Example:   `   save bin -f filename`,
-		Run:       saveDataRun(data, a.Srv().Save),
+		Use:   "bin [flags]",
+		Short: "Save binary data",
+		// ValidArgs: validSaveArgs(&auth.Data{}),
+		Long:    `Encrypts bin data`,
+		Example: `   save bin -f filename`,
+		Run:     saveDataRun(data, a.Srv().Save),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
@@ -137,13 +139,13 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	data := card.New()
 
 	cmd = &cobra.Command{
-		Use:       "card [flags]",
-		Short:     "Save card data",
-		Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
-		ValidArgs: validArgs(&card.Data{}),
-		Long:      `Encrypts bank cards data`,
-		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
-		Run:       saveDataRun(data, a.Srv().Save),
+		Use:   "card [flags]",
+		Short: "Save card data",
+		// Args:      cobra.MatchAll(cobra.RangeArgs(0, 4), cobra.OnlyValidArgs),
+		// ValidArgs: validSaveArgs(&card.Data{}),
+		Long:    `Encrypts bank cards data`,
+		Example: `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
+		Run:     saveDataRun(data, a.Srv().Save),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
@@ -155,11 +157,11 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 
 func (a *app) addSaveCmd() *app {
 	var saveCmd = &cobra.Command{
-		Use:       "save [command]",
-		Short:     "Save data",
-		ValidArgs: []string{},
-		Args:      cobra.NoArgs,
-		Long:      `Encrypts and save data`,
+		Use:   "save [command]",
+		Short: "Save data",
+		// ValidArgs: []string{},
+		Args: cobra.NoArgs,
+		Long: `Encrypts and save data`,
 	}
 
 	saveCmd.AddCommand(a.saveAuthCmd(), a.saveTextCmd(), a.saveBinCmd(), a.saveCardCmd())
