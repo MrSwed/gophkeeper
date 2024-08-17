@@ -117,6 +117,9 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	)
 	token, err = s.GetToken()
 	if err != nil {
+		if !cfg.Glob.GetBool("debug") {
+			err = errors.New("wrong password")
+		}
 		return
 	}
 	deCrypted, err = crypt.Decode(r.Blob, token)
@@ -153,6 +156,9 @@ func (s *service) Save(data model.Model) (err error) {
 	var token string
 	token, err = s.GetToken()
 	if err != nil {
+		if !cfg.Glob.GetBool("debug") {
+			err = errors.New("wrong password")
+		}
 		return
 	}
 

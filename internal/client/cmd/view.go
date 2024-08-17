@@ -21,7 +21,7 @@ func (a *app) addViewCmd() *app {
 			data, err := a.srv.Get(args[0])
 
 			if err != nil {
-				cmd.Println("Data get error", err)
+				cmd.Println("Data get error:", err)
 				return
 			}
 			out, err := json.MarshalIndent(data, "", " ")
