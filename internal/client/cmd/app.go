@@ -5,10 +5,8 @@ import (
 	"fmt"
 	cfg "gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
-	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/service"
 	"gophKeeper/internal/client/storage"
-	"gophKeeper/internal/helper"
 	"os"
 	"reflect"
 	"strings"
@@ -129,19 +127,6 @@ func GenFlags(in interface{}) (flags []string, err error) {
 		if tagNames[0] != "" {
 			flags = append(flags, tagNames[0])
 		}
-	}
-	return
-}
-
-func modelGenerateFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
-	if debug != nil {
-		cmd.Flags().BoolVarP(debug, "debug", "", *debug, "debug flag")
-	}
-	if common, ok := dst.(model.Base); ok {
-		err = helper.GenerateFlags(common.GetBase(), cmd.Flags())
-	}
-	if data, ok := dst.(model.Data); ok {
-		err = errors.Join(err, helper.GenerateFlags(data.GetDst(), cmd.Flags()))
 	}
 	return
 }

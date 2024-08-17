@@ -4,15 +4,30 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
 	"gophKeeper/internal/client/model/type/bin"
 	"gophKeeper/internal/client/model/type/card"
 	"gophKeeper/internal/client/model/type/text"
+	"gophKeeper/internal/helper"
 
 	"github.com/spf13/cobra"
 )
+
+func generateSaveFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
+	if debug != nil {
+		cmd.Flags().BoolVarP(debug, "debug", "", *debug, "debug flag")
+	}
+	if common, ok := dst.(model.Base); ok {
+		err = helper.GenerateFlags(common.GetBase(), cmd.Flags())
+	}
+	if data, ok := dst.(model.Data); ok {
+		err = errors.Join(err, helper.GenerateFlags(data.GetDst(), cmd.Flags()))
+	}
+	return
+}
 
 func saveDataRun(data model.Model, save func(data model.Model) (err error)) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
@@ -24,21 +39,16 @@ func saveDataRun(data model.Model, save func(data model.Model) (err error)) func
 		if d, ok := data.(model.GetFile); ok {
 			err := d.GetFile()
 			if err != nil {
-				fmt.Println("GetFile: Error: ", err)
+				cmd.Println("GetFile: Error: ", err)
 			}
 		}
-		// err := data.Validate()
-		// if err != nil {
-		// 	fmt.Println("Validate: Error: ", err)
-		// }
-
-		// todo is draft yet
-		// fmt.Println(data.Data)
 
 		err := save(data)
 		if err != nil {
-			fmt.Println(err.Error())
+			cmd.Println(err.Error())
+			return
 		}
+		cmd.Println("Data saved successfully")
 	}
 }
 
@@ -73,9 +83,9 @@ func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 `,
 		Run: saveDataRun(data, a.Srv().Save),
 	}
-	err := modelGenerateFlags(data, cmd, &debug)
+	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("save auth modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save auth generateSaveFlags error: %s\n", err)
 	}
 
 	return
@@ -95,9 +105,9 @@ func (a *app) saveTextCmd() (cmd *cobra.Command) {
 `,
 		Run: saveDataRun(data, a.Srv().Save),
 	}
-	err := modelGenerateFlags(data, cmd, &debug)
+	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("save text modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save text generateSaveFlags error: %s\n", err)
 	}
 
 	return
@@ -115,9 +125,9 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 		Example:   `   save bin -f filename`,
 		Run:       saveDataRun(data, a.Srv().Save),
 	}
-	err := modelGenerateFlags(data, cmd, &debug)
+	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("save bin modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save bin generateSaveFlags error: %s\n", err)
 	}
 	return
 }
@@ -135,9 +145,9 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		Example:   `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
 		Run:       saveDataRun(data, a.Srv().Save),
 	}
-	err := modelGenerateFlags(data, cmd, &debug)
+	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
-		cmd.Printf("save card modelGenerateFlags error: %s\n", err)
+		cmd.Printf("save card generateSaveFlags error: %s\n", err)
 	}
 
 	return
