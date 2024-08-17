@@ -83,7 +83,7 @@ func Decode(cipherText []byte, key string) (plainText []byte, err error) {
 	compressed, err = pkcs7pad.Unpad(paddedText)
 
 	if err != nil {
-		err = fmt.Errorf("unpad error %w", err)
+		err = fmt.Errorf("unpad error: %w", err)
 		return
 	}
 
@@ -91,17 +91,17 @@ func Decode(cipherText []byte, key string) (plainText []byte, err error) {
 	b := bytes.NewBuffer(compressed)
 	r, err = gzip.NewReader(b)
 	if err != nil {
-		err = fmt.Errorf("ungzip newReader error %w", err)
+		err = fmt.Errorf("ungzip newReader error: %w", err)
 		return
 	}
 	plainText, err = io.ReadAll(r)
 	if err != nil {
-		err = fmt.Errorf("ungzip readAll error %w", err)
+		err = fmt.Errorf("ungzip readAll error: %w", err)
 		return
 	}
 	err = r.Close()
 	if err != nil {
-		err = fmt.Errorf("ungzip close error %w", err)
+		err = fmt.Errorf("ungzip close error: %w", err)
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	errs "gophKeeper/internal/client/errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -324,4 +325,53 @@ func (suite *serviceStoreTestSuite) Test_GetToken() {
 		require.NoError(t, err)
 		require.Equal(t, token, token2)
 	})
+
 }
+
+/**/
+func (suite *serviceStoreTestSuite) Test_WrongPass() {
+	t := suite.T()
+	t.Run("Test wrong pass", func(t *testing.T) {
+		token, err := suite.srv.GetToken()
+		defer cfg.User.Set("encryption_key", token)
+		require.NoError(t, err, "check current token error ")
+		testKey := "testKeyForWrongPass"
+		err = suite.srv.Save(
+			&text.Model{
+				Common: model.Common{
+					Key: testKey,
+				},
+				Data: &text.Data{
+					Text: "some text here",
+				},
+			},
+		)
+		require.NoError(t, err, "save test data error ")
+
+		_, err = suite.srv.Get(testKey)
+		require.NoError(t, err, "Get test data error ")
+
+		// clear stored encryption_key for initialize request password from user
+		cfg.User.Set("encryption_key", "")
+		input := []byte(strings.Join([]string{"someWrongPass", ""}, "\n"))
+
+		rp, wp, err := os.Pipe()
+		require.NoError(suite.T(), err)
+		_, err = wp.Write(input)
+		require.NoError(suite.T(), err)
+		defer wp.Close()
+		os.Stdin = rp
+
+		cfg.Glob.Set("debug", false)
+		_, err = suite.srv.Get(testKey)
+		require.Equal(t, true, errors.Is(err, errs.ErrPassword), fmt.Sprintf("Actual: %v. Expected: %v", err, errs.ErrPassword))
+		cfg.Glob.Set("debug", true)
+
+		_, err = wp.Write(input)
+		require.NoError(suite.T(), err)
+		_, err = suite.srv.Get(testKey)
+		require.Contains(t, err.Error(), `unpad error`)
+	})
+}
+
+/**/
