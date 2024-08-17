@@ -32,6 +32,7 @@ func NewApp() (a *app) {
 	a.addRootCmd().
 		addConfigCmd().
 		addSaveCmd().
+		addViewCmd().
 		addDeleteCmd().
 		addListCmd().
 		addProfileCmd()
