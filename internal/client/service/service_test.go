@@ -33,77 +33,84 @@ import (
 
 type serviceStoreTestSuite struct {
 	suite.Suite
-	db       *sqlx.DB
-	srv      Service
-	oldStdin *os.File
-	user     string
-	userBak  string
-	pass     string
+	db                         *sqlx.DB
+	srv                        Service
+	oldStdin, stdin, stdinPipe *os.File
+	user                       string
+	userBak                    string
+	pass                       string
 }
 
 var testDataPath string = filepath.Join("..", "..", "..", "testdata")
 
-func (suite *serviceStoreTestSuite) SetupSuite() {
-	suite.user = "test-" + time.Now().Format("20060102150405")
+func (s *serviceStoreTestSuite) SetupSuite() {
+	s.user = "test-" + time.Now().Format("20060102150405")
 
-	storePath := filepath.Join(suite.T().TempDir(), config.AppName, suite.user)
-	// err := os.MkdirAll(storePath, os.ModePerm)
-	// require.NoError(suite.T(), err)
+	storePath := filepath.Join(s.T().TempDir(), config.AppName, s.user)
 	dbFile := filepath.Join(storePath, "store.db")
 	profiles := cfg.Glob.GetStringMap("profiles")
-	profiles[suite.user] = cfg.NewGlobProfileItem(storePath)
+	profiles[s.user] = cfg.NewGlobProfileItem(storePath)
 	cfg.Glob.Set("profiles", profiles)
 
-	suite.userBak = cfg.Glob.GetString("profile")
-	cfg.Glob.Set("profile", suite.user)
+	s.userBak = cfg.Glob.GetString("profile")
+	cfg.Glob.Set("profile", s.user)
 	err := cfg.UserLoad()
-	require.NoError(suite.T(), err)
+	require.NoError(s.T(), err)
 
-	suite.db, err = sqlx.Open("sqlite3", dbFile)
-	require.NoError(suite.T(), err)
+	s.db, err = sqlx.Open("sqlite3", dbFile)
+	require.NoError(s.T(), err)
 
-	_, err = clMigrate.Migrate(suite.db.DB)
+	_, err = clMigrate.Migrate(s.db.DB)
 	switch {
 	case errors.Is(err, migrate.ErrNoChange):
 	default:
-		require.NoError(suite.T(), err)
+		require.NoError(s.T(), err)
 	}
 
-	r := storage.NewStorage(suite.db, storePath)
-	suite.srv = NewService(r)
+	r := storage.NewStorage(s.db, storePath)
+	s.srv = NewService(r)
 
-	suite.oldStdin = os.Stdin
-	suite.pass = "SomeUserPassword"
-	input := []byte(strings.Join([]string{suite.pass, suite.pass, ""}, "\n"))
-	rp, wp, err := os.Pipe()
-	require.NoError(suite.T(), err)
-	_, err = wp.Write(input)
-	require.NoError(suite.T(), err)
-	err = wp.Close()
-	require.NoError(suite.T(), err)
-	os.Stdin = rp
-	_, err = suite.srv.GetToken()
-	require.NoError(suite.T(), err)
+	s.stdin, s.stdinPipe, err = os.Pipe()
+	require.NoError(s.T(), err)
+	s.oldStdin, os.Stdin = os.Stdin, s.stdin
+	s.pass = "SomeUserPassword"
+	s.input(s.pass, s.pass)
+	_, err = s.srv.GetToken()
+	require.NoError(s.T(), err)
 }
 
-func (suite *serviceStoreTestSuite) TearDownSuite() {
-	err := suite.db.Close()
-	profiles := cfg.Glob.GetStringMap("profiles")
-	delete(profiles, suite.user)
-	cfg.Glob.Set("profiles", profiles)
-	cfg.Glob.Set("profile", suite.userBak)
+func (s *serviceStoreTestSuite) input(str ...string) {
+	input := []byte(strings.Join(str, "\n") + "\n")
+	_, err := s.stdinPipe.Write(input)
+	require.NoError(s.T(), err)
+}
 
-	require.NoError(suite.T(), err)
-	require.NoError(suite.T(), os.RemoveAll(suite.T().TempDir()))
-	os.Stdin = suite.oldStdin
+func (s *serviceStoreTestSuite) TearDownSuite() {
+	err := s.db.Close()
+	require.NoError(s.T(), err)
+	// restore config
+	profiles := cfg.Glob.GetStringMap("profiles")
+	delete(profiles, s.user)
+	cfg.Glob.Set("profiles", profiles)
+	cfg.Glob.Set("profile", s.userBak)
+
+	require.NoError(s.T(), os.RemoveAll(s.T().TempDir()))
+
+	// restore stdin
+	os.Stdin = s.oldStdin
+	err = s.stdinPipe.Close()
+	require.NoError(s.T(), err)
+	err = s.stdin.Close()
+	require.NoError(s.T(), err)
 }
 
 func TestHandlersFileStoreTest(t *testing.T) {
 	suite.Run(t, new(serviceStoreTestSuite))
 }
 
-func (suite *serviceStoreTestSuite) Test_service() {
-	t := suite.T()
+func (s *serviceStoreTestSuite) Test_service() {
+	t := s.T()
+	s.input(s.pass, s.pass)
 
 	type wantErr struct {
 		save, get, list, del bool
@@ -238,7 +245,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.args.save != nil {
 				t.Run(tt.name+" save", func(t *testing.T) {
-					err := suite.srv.Save(tt.args.save)
+					err := s.srv.Save(tt.args.save)
 					require.Equal(t, tt.wantErr.save, (err != nil),
 						fmt.Sprintf("SaveStore() error = %v, wantErr %v", err, tt.wantErr.save))
 				})
@@ -246,7 +253,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 
 			if tt.args.list != nil {
 				t.Run(tt.name+" list", func(t *testing.T) {
-					gotData, err := suite.srv.List(*tt.args.list)
+					gotData, err := s.srv.List(*tt.args.list)
 					if (err != nil) != tt.wantErr.list {
 						t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr.list)
 						return
@@ -267,7 +274,7 @@ func (suite *serviceStoreTestSuite) Test_service() {
 
 			if tt.args.save != nil {
 				t.Run(tt.name+" get saved", func(t *testing.T) {
-					gotItemData, err := suite.srv.Get(tt.args.save.GetKey())
+					gotItemData, err := s.srv.Get(tt.args.save.GetKey())
 
 					assert.Equal(t, tt.wantErr.get, (err != nil),
 						fmt.Sprintf("GetStored() error = %v, wantErr %v", err, tt.wantErr.get))
@@ -287,12 +294,12 @@ func (suite *serviceStoreTestSuite) Test_service() {
 
 			if tt.args.del {
 				t.Run(tt.name+" delete", func(t *testing.T) {
-					err := suite.srv.Delete(tt.args.save.GetKey())
+					err := s.srv.Delete(tt.args.save.GetKey())
 
 					assert.Equal(t, tt.wantErr.del, (err != nil),
 						fmt.Sprintf("Delete() error = %v, wantErr %v", err, tt.wantErr.del))
 
-					_, err = suite.srv.Get(tt.args.save.GetKey())
+					_, err = s.srv.Get(tt.args.save.GetKey())
 					if err == nil || !errors.Is(err, sql.ErrNoRows) {
 						t.Errorf("Delete failed.  %s steel alife, error: %v ", tt.args.save.GetKey(), err)
 					}
@@ -303,40 +310,32 @@ func (suite *serviceStoreTestSuite) Test_service() {
 
 }
 
-func (suite *serviceStoreTestSuite) Test_GetToken() {
-	t := suite.T()
+func (s *serviceStoreTestSuite) Test_GetToken() {
+	t := s.T()
 	t.Run("Test GetToken again", func(t *testing.T) {
 
-		token, err := suite.srv.GetToken()
+		token, err := s.srv.GetToken()
 		require.NoError(t, err)
 
 		// clear stored encryption_key for initialize request password from user
 		cfg.User.Set("encryption_key", "")
-		input := []byte(strings.Join([]string{suite.pass, ""}, "\n"))
-
-		rp, wp, err := os.Pipe()
-		require.NoError(suite.T(), err)
-		_, err = wp.Write(input)
-		require.NoError(suite.T(), err)
-		err = wp.Close()
-		require.NoError(suite.T(), err)
-		os.Stdin = rp
-		token2, err := suite.srv.GetToken()
+		// auth again
+		s.input(s.pass)
+		token2, err := s.srv.GetToken()
 		require.NoError(t, err)
 		require.Equal(t, token, token2)
 	})
 
 }
 
-/**/
-func (suite *serviceStoreTestSuite) Test_WrongPass() {
-	t := suite.T()
+func (s *serviceStoreTestSuite) Test_WrongPass() {
+	t := s.T()
 	t.Run("Test wrong pass", func(t *testing.T) {
-		token, err := suite.srv.GetToken()
+		token, err := s.srv.GetToken()
 		defer cfg.User.Set("encryption_key", token)
 		require.NoError(t, err, "check current token error ")
 		testKey := "testKeyForWrongPass"
-		err = suite.srv.Save(
+		err = s.srv.Save(
 			&text.Model{
 				Common: model.Common{
 					Key: testKey,
@@ -348,7 +347,7 @@ func (suite *serviceStoreTestSuite) Test_WrongPass() {
 		)
 		require.NoError(t, err, "save test data error ")
 
-		_, err = suite.srv.Get(testKey)
+		_, err = s.srv.Get(testKey)
 		require.NoError(t, err, "Get test data error ")
 
 		// clear stored encryption_key for initialize request password from user
@@ -356,22 +355,20 @@ func (suite *serviceStoreTestSuite) Test_WrongPass() {
 		input := []byte(strings.Join([]string{"someWrongPass", ""}, "\n"))
 
 		rp, wp, err := os.Pipe()
-		require.NoError(suite.T(), err)
+		require.NoError(s.T(), err)
 		_, err = wp.Write(input)
-		require.NoError(suite.T(), err)
+		require.NoError(s.T(), err)
 		defer wp.Close()
 		os.Stdin = rp
 
 		cfg.Glob.Set("debug", false)
-		_, err = suite.srv.Get(testKey)
+		_, err = s.srv.Get(testKey)
 		require.Equal(t, true, errors.Is(err, errs.ErrPassword), fmt.Sprintf("Actual: %v. Expected: %v", err, errs.ErrPassword))
 		cfg.Glob.Set("debug", true)
 
 		_, err = wp.Write(input)
-		require.NoError(suite.T(), err)
-		_, err = suite.srv.Get(testKey)
+		require.NoError(s.T(), err)
+		_, err = s.srv.Get(testKey)
 		require.Contains(t, err.Error(), `unpad error`)
 	})
 }
-
-/**/
