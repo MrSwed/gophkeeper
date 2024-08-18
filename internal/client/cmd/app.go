@@ -39,9 +39,15 @@ func NewApp() (a *app) {
 	return
 }
 
+// Srv
+// initialize the service with the configured store if it is not early
 func (a *app) Srv() service.Service {
 	if a.srv == nil {
-		err := cfg.UserLoad()
+		err := cfg.GlobalLoad()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = cfg.UserLoad()
 		if err != nil {
 			return service.NewServiceError(fmt.Errorf("error load current user profile: %v", err))
 		}

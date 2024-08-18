@@ -9,16 +9,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
+func (a *app) syncCmd() *cobra.Command {
 
 	// syncCmd represents the sync command
-	var syncCmd = &cobra.Command{
+	var cmd = &cobra.Command{
 		Use:   "sync",
 		Short: "Synchronize action",
 		// Long: ``,
 	}
 
-	syncCmd.AddCommand(&cobra.Command{
+	cmd.AddCommand(&cobra.Command{
 		Use:   "status [command]",
 		Short: "Sync status",
 		Long:  `show info about last sync`,
@@ -36,15 +36,7 @@ func init() {
 		},
 	})
 
-	// rootCmd.AddCommand(syncCmd)
+	a.root.AddCommand(cmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.generateSaveFlags.:
-	// syncCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.generateSaveFlags.:
-	// syncCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	return cmd
 }

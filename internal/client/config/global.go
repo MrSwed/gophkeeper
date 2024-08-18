@@ -27,10 +27,3 @@ func GlobalLoad() (err error) {
 	})
 	return
 }
-func init() {
-	err := GlobalLoad()
-	if err != nil {
-		panic(err)
-	}
-
-}

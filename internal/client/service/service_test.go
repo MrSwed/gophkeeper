@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"gophKeeper/internal/client/config"
 	cfg "gophKeeper/internal/client/config"
 	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/model"
@@ -46,7 +45,7 @@ var testDataPath string = filepath.Join("..", "..", "..", "testdata")
 func (s *serviceStoreTestSuite) SetupSuite() {
 	s.user = "test-" + time.Now().Format("20060102150405")
 
-	storePath := filepath.Join(s.T().TempDir(), config.AppName, s.user)
+	storePath := filepath.Join(s.T().TempDir(), cfg.AppName, s.user)
 	dbFile := filepath.Join(storePath, "store.db")
 	profiles := cfg.Glob.GetStringMap("profiles")
 	profiles[s.user] = cfg.NewGlobProfileItem(storePath)

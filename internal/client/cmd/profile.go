@@ -7,10 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	// rootCmd.AddCommand(profileCmd())
-}
-
 // listCmd represents the list command
 func (a *app) addProfileCmd() *app {
 	cmd := &cobra.Command{
