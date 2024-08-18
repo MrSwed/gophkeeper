@@ -352,23 +352,32 @@ func (s *serviceStoreTestSuite) Test_WrongPass() {
 
 		// clear stored encryption_key for initialize request password from user
 		cfg.User.Set("encryption_key", "")
-		input := []byte(strings.Join([]string{"someWrongPass", ""}, "\n"))
-
-		rp, wp, err := os.Pipe()
-		require.NoError(s.T(), err)
-		_, err = wp.Write(input)
-		require.NoError(s.T(), err)
-		defer wp.Close()
-		os.Stdin = rp
+		s.input("someWrongPass")
 
 		cfg.Glob.Set("debug", false)
 		_, err = s.srv.Get(testKey)
 		require.Equal(t, true, errors.Is(err, errs.ErrPassword), fmt.Sprintf("Actual: %v. Expected: %v", err, errs.ErrPassword))
-		cfg.Glob.Set("debug", true)
 
-		_, err = wp.Write(input)
-		require.NoError(s.T(), err)
+		cfg.Glob.Set("debug", true)
+		s.input("someWrongPass")
 		_, err = s.srv.Get(testKey)
 		require.Contains(t, err.Error(), `unpad error`)
+	})
+}
+
+func (s *serviceStoreTestSuite) Test_WrongPassConfirm() {
+	t := s.T()
+	t.Run("Test wrong pass confirm", func(t *testing.T) {
+		token := cfg.User.GetString("packed_key")
+		defer cfg.User.Set("encryption_key", token)
+		packed := cfg.User.GetString("packed_key")
+		defer cfg.User.Set("packed_key", packed)
+
+		cfg.User.Set("packed_key", "")
+		cfg.User.Set("encryption_key", "")
+		// auth again
+		s.input(s.pass, "wrongConfirm", "", "", "")
+		_, err := s.srv.GetToken()
+		require.Equal(s.T(), true, errors.Is(err, errs.ErrPasswordConfirm))
 	})
 }

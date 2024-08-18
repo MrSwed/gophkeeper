@@ -3,6 +3,7 @@ package password
 import (
 	"errors"
 	"fmt"
+	errs "gophKeeper/internal/client/errors"
 	"io"
 	"os"
 
@@ -57,7 +58,7 @@ func GetRawPass(confirm bool) (pass string, err error) {
 			b2, err2 := readPassword()
 			fmt.Println()
 			if err2 != nil || string(b) != string(b2) {
-				err = errors.Join(err2, errors.New("password confirm error"))
+				err = errors.Join(err2, errs.ErrPasswordConfirm)
 				fmt.Println("\n", err.Error())
 				try++
 				if try > 3 {
