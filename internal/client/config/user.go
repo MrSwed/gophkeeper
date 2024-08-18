@@ -18,7 +18,7 @@ func GetUserName() (userName string) {
 
 func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 	var (
-		userName, defDir string
+		userName, cfgDir string
 		ch               bool
 	)
 	if len(userNames) > 0 {
@@ -26,8 +26,12 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 	} else {
 		userName = GetUserName()
 	}
-	defDir, err = os.UserConfigDir()
-	usrCfgDir = filepath.Join(defDir, AppName, userName)
+	if cfgDir = Glob.GetString("config_path"); cfgDir == "" {
+		if cfgDir, err = os.UserConfigDir(); err != nil {
+			return
+		}
+	}
+	usrCfgDir = filepath.Join(cfgDir, AppName, userName)
 	profiles := Glob.GetStringMap("profiles")
 	profile, ok := profiles[userName].(map[string]any)
 	if !ok {
@@ -49,7 +53,6 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 
 func UserLoad() (err error) {
 	User = config{Viper: viper.New()}
-
 	var (
 		userName, usrCfgDir string
 	)

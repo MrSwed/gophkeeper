@@ -38,7 +38,7 @@ func (c *config) Save() error {
 	if c.Get("loaded_at") != nil {
 		isNew = false
 	}
-	excluded := append([]string{"loaded_at", "changed_at", "encryption_key"}, c.excluded...)
+	excluded := append([]string{"config_path", "loaded_at", "changed_at", "encryption_key"}, c.excluded...)
 	for _, k := range excluded {
 		c.Viper.Set(k, nil)
 	}
