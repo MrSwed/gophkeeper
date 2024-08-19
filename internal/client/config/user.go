@@ -12,6 +12,7 @@ func GetUserName() (userName string) {
 	userName = Glob.GetString("profile")
 	if userName == "" {
 		userName = "default"
+		Glob.Set("profile", userName)
 	}
 	return
 }

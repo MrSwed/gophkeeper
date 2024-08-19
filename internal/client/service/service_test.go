@@ -103,7 +103,7 @@ func (s *serviceStoreTestSuite) TearDownSuite() {
 	require.NoError(s.T(), err)
 }
 
-func TestHandlersFileStoreTest(t *testing.T) {
+func TestService(t *testing.T) {
 	suite.Run(t, new(serviceStoreTestSuite))
 }
 

@@ -94,7 +94,7 @@ func (a *app) addConfigCmd() *app {
 				}
 
 				cmd.Print("Saving user config.. ")
-				if cfg.User.GetString("user") != "" {
+				if cfg.User.GetString("name") != "" {
 					if cfg.User.IsChanged() {
 						err := cfg.User.Save()
 						if err != nil {
