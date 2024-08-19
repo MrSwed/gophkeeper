@@ -4,8 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +21,7 @@ func (a *app) syncCmd() *cobra.Command {
 		Short: "Sync status",
 		Long:  `show info about last sync`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("sync status called")
+			cmd.Println("sync status called")
 			// todo
 		},
 	}, &cobra.Command{
@@ -31,7 +29,7 @@ func (a *app) syncCmd() *cobra.Command {
 		Short: "Sync now",
 		Long:  `synchronize now with server`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("sync now called")
+			cmd.Println("sync now called")
 			// todo
 		},
 	})

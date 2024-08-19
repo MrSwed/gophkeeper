@@ -45,13 +45,13 @@ func (a *app) Srv() service.Service {
 	if a.srv == nil {
 		err := cfg.GlobalLoad()
 		if err != nil {
-			fmt.Println(err)
+			a.root.Println(err)
 		}
 		err = cfg.UserLoad()
 		if err != nil {
 			return service.NewServiceError(fmt.Errorf("error load current user profile: %v", err))
 		}
-		fmt.Printf("User %s configuration loaded\n", cfg.User.GetString("name"))
+		a.root.Printf("User %s configuration loaded\n", cfg.User.GetString("name"))
 
 		dbFile := cfg.User.GetString("db_file")
 		if dbFile == "" {
@@ -73,8 +73,7 @@ func (a *app) Srv() service.Service {
 		if err != nil {
 			return service.NewServiceError(fmt.Errorf("usrCfgDir error: %s \n", err))
 		}
-		a.srv = service.NewService(
-			storage.NewStorage(a.db, storePath))
+		a.srv = service.NewService(storage.NewStorage(a.db, storePath))
 	}
 	return a.srv
 }
@@ -84,7 +83,7 @@ func (a *app) Close() {
 		defer func() {
 			err := a.db.Close()
 			if err != nil {
-				fmt.Printf("close db error: %s", err)
+				a.root.Printf("close db error: %s", err)
 			}
 		}()
 	}
@@ -95,27 +94,27 @@ func (a *app) Execute() {
 
 	err := a.root.Execute()
 	if err != nil {
-		fmt.Println(err)
+		a.root.Println(err)
 		os.Exit(1)
 	}
 
 	if cfg.Glob.GetBool("autosave") && cfg.Glob.Get("changed_at") != nil {
-		fmt.Print("Saving global cfg files at exit..")
+		a.root.Print("Saving global cfg files at exit..")
 		err = cfg.Glob.Save()
 		if err != nil {
-			fmt.Println(err)
+			a.root.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println(" ..Success")
+		a.root.Println(" ..Success")
 	}
 	if cfg.User.Viper != nil && cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.Get("changed_at") != nil {
-		fmt.Print("Saving user cfg files at exit..")
+		a.root.Print("Saving user cfg files at exit..")
 		err = cfg.User.Save()
 		if err != nil {
-			fmt.Println(err)
+			a.root.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println(" ..Success")
+		a.root.Println(" ..Success")
 	}
 }
 

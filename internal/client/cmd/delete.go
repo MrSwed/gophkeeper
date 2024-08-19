@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +11,7 @@ func (a *app) addDeleteCmd() *app {
 		Long:  `delete record by it key (ID)`,
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("delete called")
+			cmd.Println("delete called")
 			// todo
 		},
 	}
