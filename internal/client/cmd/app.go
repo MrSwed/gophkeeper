@@ -7,9 +7,6 @@ import (
 	clMigrate "gophKeeper/internal/client/migrate"
 	"gophKeeper/internal/client/service"
 	"gophKeeper/internal/client/storage"
-	"os"
-	"reflect"
-	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jmoiron/sqlx"
@@ -89,35 +86,38 @@ func (a *app) Close() {
 	}
 }
 
-func (a *app) Execute() {
+func (a *app) Execute() (err error) {
 	defer a.Close()
 
-	err := a.root.Execute()
+	err = a.root.Execute()
 	if err != nil {
 		a.root.Println(err)
-		os.Exit(1)
+		return
 	}
 
-	if cfg.Glob.GetBool("autosave") && cfg.Glob.Get("changed_at") != nil {
+	if cfg.Glob.GetBool("autosave") && cfg.Glob.IsChanged() {
 		a.root.Print("Saving global cfg files at exit..")
 		err = cfg.Glob.Save()
 		if err != nil {
 			a.root.Println(err)
-			os.Exit(1)
+			return
 		}
 		a.root.Println(" ..Success")
 	}
-	if cfg.User.Viper != nil && cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.Get("changed_at") != nil {
+	if cfg.User.Viper != nil && cfg.User.Get("name") != nil && cfg.User.GetBool("autosave") && cfg.User.IsChanged() {
 		a.root.Print("Saving user cfg files at exit..")
 		err = cfg.User.Save()
 		if err != nil {
 			a.root.Println(err)
-			os.Exit(1)
+			return
 		}
 		a.root.Println(" ..Success")
 	}
+	return
 }
 
+/*
+// todo: not used yet
 func GenFlags(in any) (flags []string, err error) {
 	rv := reflect.ValueOf(in)
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
@@ -136,3 +136,4 @@ func GenFlags(in any) (flags []string, err error) {
 	}
 	return
 }
+*/

@@ -2,8 +2,11 @@ package main
 
 import (
 	"gophKeeper/internal/client/cmd"
+	"os"
 )
 
 func main() {
-	cmd.NewApp().Execute()
+	if err := cmd.NewApp().Execute(); err != nil {
+		os.Exit(1)
+	}
 }
