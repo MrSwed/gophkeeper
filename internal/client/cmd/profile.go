@@ -2,7 +2,6 @@ package cmd
 
 import (
 	cfg "gophKeeper/internal/client/config"
-	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +24,7 @@ func (a *app) addProfileCmd() *app {
 			Short: "list of profiles",
 			Run: func(cmd *cobra.Command, args []string) {
 				cmd.Println(cmd.Short)
-				prs := cfg.Glob.Get("profiles").(map[string]any)
+				prs := cfg.Glob.GetStringMap("profiles")
 				cmd.Println("Available profiles: ")
 				for profile := range prs {
 					if profile == cfg.Glob.Get("profile") {
@@ -38,7 +37,7 @@ func (a *app) addProfileCmd() *app {
 				cmd.Println()
 				err := cmd.Usage()
 				if err != nil {
-					log.Fatal(err)
+					cmd.PrintErr(err)
 				}
 			},
 		},
