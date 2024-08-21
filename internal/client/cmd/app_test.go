@@ -68,36 +68,36 @@ func TestApp(t *testing.T) {
 func (s *appTestSuite) Test_App() {
 	t := s.T()
 	tests := []struct {
-		name     string
-		commands [][]string
-		outStr   [][]string
-		inputs   [][]string
+		name       string
+		commands   [][]string
+		wantStrOut [][]string
+		inputs     [][]string
 	}{
 		{
 			name:     "no args",
 			commands: [][]string{{""}},
 		}, {
-			name:     "help",
-			commands: [][]string{{"--help"}},
-			outStr:   [][]string{{"Available Commands"}},
+			name:       "help",
+			commands:   [][]string{{"--help"}},
+			wantStrOut: [][]string{{"Available Commands"}},
 		}, {
-			name:     "profile",
-			commands: [][]string{{"profile"}},
-			outStr:   [][]string{{"Current profile"}},
+			name:       "profile",
+			commands:   [][]string{{"profile"}},
+			wantStrOut: [][]string{{"Current profile"}},
 		}, {
 			name:     "profile --help",
 			commands: [][]string{{"profile", "--help"}},
-			outStr: [][]string{{"Available Commands",
+			wantStrOut: [][]string{{"Available Commands",
 				"list        list of profiles",
 				"use         switch to another profile"}},
 		}, {
-			name:     "profile list",
-			commands: [][]string{{"profile", "list"}},
-			outStr:   [][]string{{"Available profiles", "- default"}},
+			name:       "profile list",
+			commands:   [][]string{{"profile", "list"}},
+			wantStrOut: [][]string{{"Available profiles", "- default"}},
 		}, {
-			name:     "profile use",
-			commands: [][]string{{"profile", "use"}},
-			outStr:   [][]string{{"Error: accepts 1 arg(s), received 0"}},
+			name:       "profile use",
+			commands:   [][]string{{"profile", "use"}},
+			wantStrOut: [][]string{{"Error: accepts 1 arg(s), received 0"}},
 		}, {
 			name: "profile use test, save, list and view",
 			commands: [][]string{
@@ -105,12 +105,14 @@ func (s *appTestSuite) Test_App() {
 				{"save", "text", "-t", "some text data", "-d", "some description", "-k", "text-key-1"},
 				{"list"},
 				{"view", "text-key-1"},
+				{"list"},
 			},
-			outStr: [][]string{
+			wantStrOut: [][]string{
 				{"Switching to profile..  " + "testName"},
 				{"Data saved successfully"},
 				{"text-key-1", "some description", "Total:"},
 				{"text-key-1", "some description", "some text data"},
+				{},
 			},
 			inputs: [][]string{
 				{},
@@ -127,7 +129,7 @@ func (s *appTestSuite) Test_App() {
 				{"list"},
 				{"view", "card-key-1"},
 			},
-			outStr: [][]string{
+			wantStrOut: [][]string{
 				{"Switching to profile..  ", "default"},
 				{"Error:Field validation for 'Number'"},
 				{"Data saved successfully"},
@@ -146,7 +148,7 @@ func (s *appTestSuite) Test_App() {
 				{"profile", "use", "test2"},
 				{"config", "save"},
 			},
-			outStr: [][]string{
+			wantStrOut: [][]string{
 				{"Switching to profile..  ", "test2"},
 				{"Saving global config.. success", "Saving user config.. not changed"},
 			},
@@ -165,8 +167,8 @@ func (s *appTestSuite) Test_App() {
 				consoleOutput, _ := s.executeCommand(cmd...)
 				// fmt.Println(consoleOutput)
 				// require.NoError(t, err)
-				if i < len(tt.outStr) {
-					for _, wantOut := range tt.outStr[i] {
+				if i < len(tt.wantStrOut) {
+					for _, wantOut := range tt.wantStrOut[i] {
 						require.Contains(t, consoleOutput, wantOut)
 					}
 				}
