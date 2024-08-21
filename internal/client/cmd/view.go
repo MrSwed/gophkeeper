@@ -18,7 +18,7 @@ func (a *app) addViewCmd() *app {
 				return
 			}
 
-			data, err := a.srv.Get(args[0])
+			data, err := a.Srv().Get(args[0])
 
 			if err != nil {
 				cmd.Println("Data get error:", err)
