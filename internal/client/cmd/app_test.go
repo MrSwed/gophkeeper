@@ -93,7 +93,19 @@ func (s *appTestSuite) Test_App() {
 		}, {
 			name:       "profile list",
 			commands:   [][]string{{"profile", "list"}},
-			wantStrOut: [][]string{{"Available profiles", "- default"}},
+			wantStrOut: [][]string{{"No profiles yet"}},
+			// }, {
+			// 	name: "profile list after use",
+			// 	commands: [][]string{
+			// 		{"save", "text", "-t", "some text data", "-d", "some description", "-k", "text-key-1"},
+			// 		{"profile", "list"}},
+			// 	wantStrOut: [][]string{
+			// 		{"Data saved successfully"},
+			// 		{"Available profiles", "- default"},
+			// 	},
+			// 	inputs: [][]string{
+			// 		{"someDefaultPass", "someDefaultPass"},
+			// 	},
 		}, {
 			name:       "profile use",
 			commands:   [][]string{{"profile", "use"}},
@@ -106,6 +118,7 @@ func (s *appTestSuite) Test_App() {
 				{"list"},
 				{"view", "text-key-1"},
 				{"list"},
+				{"profile", "list"},
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  " + "testName"},
@@ -113,6 +126,7 @@ func (s *appTestSuite) Test_App() {
 				{"text-key-1", "some description", "Total:"},
 				{"text-key-1", "some description", "some text data"},
 				{},
+				{"Available profiles", "- testName"},
 			},
 			inputs: [][]string{
 				{},

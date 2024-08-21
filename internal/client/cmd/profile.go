@@ -12,7 +12,7 @@ func (a *app) addProfileCmd() *app {
 		Use:   "profile",
 		Short: "Profiles menu",
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Println("Current profile", cfg.Glob.Get("profile"))
+			cmd.Println("Current profile", cfg.GetUserName())
 			// todo
 			_ = cmd.Usage()
 		},
@@ -23,22 +23,36 @@ func (a *app) addProfileCmd() *app {
 			Use:   "list",
 			Short: "list of profiles",
 			Run: func(cmd *cobra.Command, args []string) {
-				cmd.Println(cmd.Short)
+				err := cfg.GlobalLoad()
+				if err != nil {
+					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+					return
+				}
 				prs := cfg.Glob.GetStringMap("profiles")
+				if len(prs) == 0 {
+					cmd.Println(`No profiles yet. New default profile will be created, after first save data 
+or config key.
+
+also yoy can create new profile by command
+    profile use <new_name>`)
+				}
 				cmd.Println("Available profiles: ")
-				for profile := range prs {
-					if profile == cfg.Glob.Get("profile") {
-						cmd.Println(" -", profile, "*")
+				for name, profile := range prs {
+					p, ok := profile.(map[string]any)
+					if !ok {
+						continue
+					}
+					if n, ok := p["name"]; ok {
+						name = n.(string)
+					}
+					if name == cfg.GetUserName() {
+						cmd.Println(" -", name, "*")
 					} else {
-						cmd.Println(" -", profile)
+						cmd.Println(" -", name)
 					}
 				}
 				// cmd.Println(" -", strings.Join(maps.Keys(prs), "\n - "))
 				cmd.Println()
-				err := cmd.Usage()
-				if err != nil {
-					cmd.PrintErr(err)
-				}
 			},
 		},
 		&cobra.Command{
@@ -47,10 +61,15 @@ func (a *app) addProfileCmd() *app {
 			Long:  "if it not exist, it will be created",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				cmd.Println("Current profile", cfg.Glob.Get("profile"))
+				err := cfg.GlobalLoad()
+				if err != nil {
+					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+					return
+				}
+				cmd.Println("Current profile", cfg.GetUserName())
 				cmd.Println("Switching to profile.. ", args[0])
 				cfg.Glob.Set("profile", args[0])
-				err := cfg.UserLoad()
+				err = cfg.UserLoad()
 				if err != nil {
 					cmd.PrintErrf("failed to load user profile: %v\n", err)
 				}

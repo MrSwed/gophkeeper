@@ -16,7 +16,7 @@ const (
 type config struct {
 	*viper.Viper
 	path     string
-	excluded []string
+	excluded map[string]any
 }
 
 var (
@@ -38,10 +38,22 @@ func (c *config) Save() error {
 	if c.Get("loaded_at") != nil {
 		isNew = false
 	}
-	excluded := append([]string{"config_path", "loaded_at", "changed_at", "encryption_key"}, c.excluded...)
+	excluded := []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
+	if c.excluded == nil {
+		c.excluded = make(map[string]any)
+	}
 	for _, k := range excluded {
+		c.excluded[k] = c.Viper.Get(k)
 		c.Viper.Set(k, nil)
 	}
+	defer func() {
+		// restore excluded fields
+		// todo: check viper for excluded from save
+		for k, v := range c.excluded {
+			c.Viper.Set(k, v)
+		}
+	}()
+
 	c.Viper.Set("updated_at", time.Now())
 	_ = os.MkdirAll(c.path, 0755)
 
@@ -72,5 +84,4 @@ func (c *config) Load(name, path string, defaults map[string]any) error {
 	}
 	c.Viper.Set("loaded_at", time.Now())
 	return err
-
 }

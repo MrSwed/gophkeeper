@@ -28,7 +28,7 @@ func generateSaveFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
 	return
 }
 
-func saveDataRun(data model.Model, save func(data model.Model) (err error)) func(cmd *cobra.Command, args []string) {
+func (a *app) saveDataRun(data model.Model) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		defer data.Reset()
 		data.GetKey()
@@ -36,7 +36,7 @@ func saveDataRun(data model.Model, save func(data model.Model) (err error)) func
 			d.Sanitize()
 		}
 
-		err := save(data)
+		err := a.Srv().Save(data)
 		if err != nil {
 			cmd.Println(err.Error())
 			return
@@ -77,7 +77,7 @@ func (a *app) saveAuthCmd() (cmd *cobra.Command) {
   save auth -l login -p password -d site.com
   save auth -l login -p password -k "my-key-name" -d site.com
 `,
-		Run: saveDataRun(data, a.Srv().Save),
+		Run: a.saveDataRun(data),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
@@ -99,7 +99,7 @@ func (a *app) saveTextCmd() (cmd *cobra.Command) {
 		Example: `  save text -f filename
   save text -k custom-key -d description -s
 `,
-		Run: saveDataRun(data, a.Srv().Save),
+		Run: a.saveDataRun(data),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
@@ -119,7 +119,7 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 		// ValidArgs: validSaveArgs(&auth.Data{}),
 		Long:    `Encrypts bin data`,
 		Example: `   save bin -f filename`,
-		Run:     saveDataRun(data, a.Srv().Save),
+		Run:     a.saveDataRun(data),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {
@@ -139,7 +139,7 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 		// ValidArgs: validSaveArgs(&card.Data{}),
 		Long:    `Encrypts bank cards data`,
 		Example: `  save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"`,
-		Run:     saveDataRun(data, a.Srv().Save),
+		Run:     a.saveDataRun(data),
 	}
 	err := generateSaveFlags(data, cmd, &debug)
 	if err != nil {

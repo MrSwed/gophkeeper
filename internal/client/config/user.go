@@ -39,6 +39,9 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 		profile = NewGlobProfileItem(usrCfgDir)
 		ch = true
 	}
+	if _, ok = profile["name"].(string); !ok {
+		profile["name"] = userName
+	}
 	if profilePath, ok := profile["path"].(string); !ok {
 		profile["path"] = usrCfgDir
 		ch = true

@@ -42,7 +42,7 @@ func (a *app) Srv() service.Service {
 	if a.srv == nil {
 		err := cfg.GlobalLoad()
 		if err != nil {
-			a.root.Println(err)
+			return service.NewServiceError(fmt.Errorf("error load global config: %v", err))
 		}
 		err = cfg.UserLoad()
 		if err != nil {
@@ -82,6 +82,7 @@ func (a *app) Close() {
 			if err != nil {
 				a.root.Printf("close db error: %s", err)
 			}
+			a.srv = nil
 		}()
 	}
 }
