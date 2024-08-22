@@ -33,6 +33,7 @@ func (c *config) Save() error {
 	if c.Get("loaded_at") != nil {
 		isNew = false
 	}
+	clearAfterSave := []string{"changed_at"}
 	excluded := []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
 	if c.excluded == nil {
 		c.excluded = make(map[string]any)
@@ -41,13 +42,20 @@ func (c *config) Save() error {
 		if x := c.Viper.Get(k); x != nil {
 			c.excluded[k] = x
 			c.Viper.Set(k, nil)
+			for _, clr := range clearAfterSave {
+				if clr == k {
+					c.excluded[k] = nil
+				}
+			}
 		}
 	}
 	defer func() {
 		// restore excluded fields
 		// todo: check viper for excluded from save instead
 		for k, v := range c.excluded {
-			c.Viper.Set(k, v)
+			if v != nil {
+				c.Viper.Set(k, v)
+			}
 		}
 	}()
 

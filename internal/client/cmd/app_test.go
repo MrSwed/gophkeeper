@@ -150,10 +150,12 @@ func (s *appTestSuite) Test_App() {
 			commands: [][]string{
 				{"profile", "use", "test2"},
 				{"config", "save"},
+				{"config", "user", "-e", "some@email.net"},
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "test2"},
-				{"Saving global config.. success", "Saving user config.. not changed"},
+				{"Saving global config.. not changed", "Saving user config.. not changed"},
+				{"some@email.net", "User configuration: set", "Success autosave config"},
 			},
 			inputs: [][]string{
 				{},
@@ -173,9 +175,9 @@ func (s *appTestSuite) Test_App() {
 				{"Switching to profile..  ", "newNameConfig"},
 				{"Saving global config.. success", "Saving user config.. not changed"},
 				{"Global configuration:", `"autosave"`, `"config_path"`, `"loaded_at"`, `"profile"`, `newNameConfig`},
-				{"User params:", `"db_file"`, `"name"`, `newNameConfig`},
+				{"User configuration:", `"db_file"`, `"name"`, `newNameConfig`},
 				{"Data saved successfully"},
-				{"User params:", `"db_file"`, `"loaded_at"`, `"name"`, `newNameConfig`, `packed_key`},
+				{"User configuration:", `"db_file"`, `"loaded_at"`, `"name"`, `newNameConfig`, `packed_key`},
 			},
 			wantNoStrOut: [][]string{
 				{},

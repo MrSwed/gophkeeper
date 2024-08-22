@@ -69,22 +69,42 @@ func (a *app) addConfigCmd() *app {
 				cmd.Println("You should auth before your can edit your settings")
 				return
 			}
-			cmd.Println("User params:")
-			out, err := json.MarshalIndent(cfg.User.AllSettings(), "", " ")
-			if err != nil {
-				cmd.Printf("Data format out err %s %v", err, cfg.User.AllSettings())
-				return
-			}
-			cmd.Println(string(out))
 
-			// todo handle flags
+			isAction := false
+			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+				if flag.Changed {
+					isAction = true
+					cfg.User.Set(flag.Name, flag.Value)
+					cmd.Printf("User configuration: set `%s` = `%s`\n", flag.Name, flag.Value)
+				}
+			})
+
+			if !isAction {
+				cmd.Println("User configuration:")
+				out, err := json.MarshalIndent(cfg.User.AllSettings(), "", " ")
+				if err != nil {
+					cmd.Printf("Data format out err %s %v", err, cfg.User.AllSettings())
+					return
+				}
+				cmd.Println(string(out))
+				cmd.Println()
+			} else {
+				if cfg.User.Get("autosave") == nil || cfg.User.GetBool("autosave") {
+					if err := cfg.User.Save(); err != nil {
+						cmd.Println("Error autosave config", err)
+					} else {
+						cmd.Println("Success autosave config")
+					}
+				}
+			}
 		},
 	}
 	// updUserCmd.Flags().StringP("mode", "m", "", "remote mode")
 	updUserCmd.Flags().StringP("server", "s", "", "server address")
 	updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("sync_interval", "i", "", "synchronisation interval ")
-	updUserCmd.Flags().BoolP("autosave", "a", true, "User: auto save config")
+	updUserCmd.Flags().BoolP("autosave", "a", true, "Auto save user config")
+	updUserCmd.Flags().StringP("email", "e", "", "User email")
 
 	configCmd.AddCommand(updUserCmd,
 		&cobra.Command{
