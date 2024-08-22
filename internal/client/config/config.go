@@ -38,8 +38,10 @@ func (c *config) Save() error {
 		c.excluded = make(map[string]any)
 	}
 	for _, k := range excluded {
-		c.excluded[k] = c.Viper.Get(k)
-		c.Viper.Set(k, nil)
+		if x := c.Viper.Get(k); x != nil {
+			c.excluded[k] = x
+			c.Viper.Set(k, nil)
+		}
 	}
 	defer func() {
 		// restore excluded fields

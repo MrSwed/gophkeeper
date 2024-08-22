@@ -68,10 +68,11 @@ func TestApp(t *testing.T) {
 func (s *appTestSuite) Test_App() {
 	t := s.T()
 	tests := []struct {
-		name       string
-		commands   [][]string
-		wantStrOut [][]string
-		inputs     [][]string
+		name         string
+		commands     [][]string
+		wantStrOut   [][]string
+		wantNoStrOut [][]string
+		inputs       [][]string
 	}{
 		{
 			name:     "no args",
@@ -94,18 +95,6 @@ func (s *appTestSuite) Test_App() {
 			name:       "profile list",
 			commands:   [][]string{{"profile", "list"}},
 			wantStrOut: [][]string{{"No profiles yet"}},
-			// }, {
-			// 	name: "profile list after use",
-			// 	commands: [][]string{
-			// 		{"save", "text", "-t", "some text data", "-d", "some description", "-k", "text-key-1"},
-			// 		{"profile", "list"}},
-			// 	wantStrOut: [][]string{
-			// 		{"Data saved successfully"},
-			// 		{"Available profiles", "- default"},
-			// 	},
-			// 	inputs: [][]string{
-			// 		{"someDefaultPass", "someDefaultPass"},
-			// 	},
 		}, {
 			name:       "profile use",
 			commands:   [][]string{{"profile", "use"}},
@@ -170,6 +159,37 @@ func (s *appTestSuite) Test_App() {
 				{},
 				{"somePass", "somePass"},
 			},
+		}, {
+			name: "test configs",
+			commands: [][]string{
+				{"profile", "use", "newNameConfig"},
+				{"config", "save"},
+				{"config"},
+				{"config", "user"},
+				{"save", "text", "-t", "Some text data save", "-k", "Test-key-1"},
+				{"config", "user"},
+			},
+			wantStrOut: [][]string{
+				{"Switching to profile..  ", "newNameConfig"},
+				{"Saving global config.. success", "Saving user config.. not changed"},
+				{"Global configuration:", `"autosave"`, `"config_path"`, `"loaded_at"`, `"profile"`, `newNameConfig`},
+				{"User params:", `"db_file"`, `"name"`, `newNameConfig`},
+				{"Data saved successfully"},
+				{"User params:", `"db_file"`, `"loaded_at"`, `"name"`, `newNameConfig`, `packed_key`},
+			},
+			wantNoStrOut: [][]string{
+				{},
+				{},
+				{},
+				{"packed_key"},
+			},
+			inputs: [][]string{
+				{},
+				{},
+				{},
+				{},
+				{"somePass", "somePass"},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -183,7 +203,12 @@ func (s *appTestSuite) Test_App() {
 				// require.NoError(t, err)
 				if i < len(tt.wantStrOut) {
 					for _, wantOut := range tt.wantStrOut[i] {
-						require.Contains(t, consoleOutput, wantOut)
+						require.Contains(t, consoleOutput, wantOut, cmd)
+					}
+				}
+				if i < len(tt.wantNoStrOut) {
+					for _, wantNoOut := range tt.wantNoStrOut[i] {
+						require.NotContains(t, consoleOutput, wantNoOut, cmd)
 					}
 				}
 			}

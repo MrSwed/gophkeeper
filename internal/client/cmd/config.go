@@ -69,7 +69,7 @@ func (a *app) addConfigCmd() *app {
 				cmd.Println("You should auth before your can edit your settings")
 				return
 			}
-			cmd.Println("User params")
+			cmd.Println("User params:")
 			out, err := json.MarshalIndent(cfg.User.AllSettings(), "", " ")
 			if err != nil {
 				cmd.Printf("Data format out err %s %v", err, cfg.User.AllSettings())
