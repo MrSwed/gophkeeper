@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
 	cfg "gophKeeper/internal/client/config"
-	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -14,6 +14,11 @@ func (a *app) addConfigCmd() *app {
 		Short: "Config action",
 		// Long: ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			err := cfg.GlobalLoad()
+			if err != nil {
+				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+				return
+			}
 			isAction := false
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				if flag.Changed {
@@ -25,22 +30,14 @@ func (a *app) addConfigCmd() *app {
 
 			if !isAction {
 				cmd.Println("Global configuration:")
-				cfg.Glob.Print()
-				cmd.Println("")
-
-				err := cfg.UserLoad()
+				out, err := json.MarshalIndent(cfg.Glob.AllSettings(), "", " ")
 				if err != nil {
-					cmd.Printf("error load user configuration: %s\n", err)
+					cmd.Printf("Data format out err %s %v", err, cfg.Glob.AllSettings())
 					return
 				}
-				cmd.Printf("User \"%s\" configuration:\n", cfg.User.GetString("name"))
-				cfg.User.Print()
+				cmd.Println(string(out))
 
 				cmd.Println()
-				err = cmd.Usage()
-				if err != nil {
-					log.Fatal(err)
-				}
 			} else {
 				if cfg.Glob.Get("autosave") == nil || cfg.Glob.GetBool("autosave") {
 					if err := cfg.Glob.Save(); err != nil {
@@ -59,12 +56,26 @@ func (a *app) addConfigCmd() *app {
 		Short: "change user config params",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			err := cfg.GlobalLoad()
+			if err != nil {
+				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+				return
+			}
+			err = cfg.UserLoad()
+			if err != nil {
+				cmd.PrintErrf("failed to load user profile: %v\n", err)
+			}
 			if cfg.User.Get("name") == nil {
 				cmd.Println("You should auth before your can edit your settings")
 				return
 			}
 			cmd.Println("User params")
-			cfg.User.Print()
+			out, err := json.MarshalIndent(cfg.User.AllSettings(), "", " ")
+			if err != nil {
+				cmd.Printf("Data format out err %s %v", err, cfg.User.AllSettings())
+				return
+			}
+			cmd.Println(string(out))
 
 			// todo handle flags
 		},
@@ -78,9 +89,18 @@ func (a *app) addConfigCmd() *app {
 	configCmd.AddCommand(updUserCmd,
 		&cobra.Command{
 			Use:   "save",
-			Short: "Save now",
+			Short: "Save now, for shell mode, if autosave disabled",
 			Long:  ``,
 			Run: func(cmd *cobra.Command, args []string) {
+				err := cfg.GlobalLoad()
+				if err != nil {
+					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+					return
+				}
+				err = cfg.UserLoad()
+				if err != nil {
+					cmd.PrintErrf("failed to load user profile: %v\n", err)
+				}
 				cmd.Print("Saving global config.. ")
 				if cfg.Glob.IsChanged() {
 					err := cfg.Glob.Save()

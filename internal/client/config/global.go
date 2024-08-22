@@ -15,7 +15,10 @@ func NewGlobProfileItem(path string) map[string]any {
 	}
 }
 
-func GlobalLoad() (err error) {
+func GlobalLoad(reload ...bool) (err error) {
+	if Glob.Get("loaded_at") != nil && (len(reload) == 0 || !reload[0]) {
+		return
+	}
 	var cfgDir string
 	// can set configs home path before load
 	if Glob.GetString("config_path") == "" {
@@ -23,7 +26,7 @@ func GlobalLoad() (err error) {
 		if err != nil {
 			return
 		}
-		Glob.Set("config_path", cfgDir)
+		Glob.Viper.Set("config_path", cfgDir)
 	} else {
 		cfgDir = Glob.GetString("config_path")
 	}

@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -24,10 +23,6 @@ var (
 	Glob = config{Viper: viper.New()}
 )
 
-func (c *config) Print() {
-	fmt.Println(c.AllSettings())
-}
-
 func (c *config) Set(key string, value any) {
 	c.Viper.Set(key, value)
 	c.Viper.Set("changed_at", time.Now())
@@ -48,7 +43,7 @@ func (c *config) Save() error {
 	}
 	defer func() {
 		// restore excluded fields
-		// todo: check viper for excluded from save
+		// todo: check viper for excluded from save instead
 		for k, v := range c.excluded {
 			c.Viper.Set(k, v)
 		}

@@ -34,7 +34,7 @@ func (s *appTestSuite) executeCommand(args ...string) (string, error) {
 }
 
 func (s *appTestSuite) SetupSuite() {
-	cfg.Glob.Set("config_path", s.T().TempDir())
+	cfg.Glob.Viper.Set("config_path", s.T().TempDir())
 	var err error
 	s.stdin, s.stdinPipe, err = os.Pipe()
 	require.NoError(s.T(), err)

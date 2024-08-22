@@ -55,21 +55,21 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 	return
 }
 
-func UserLoad() (err error) {
+func UserLoad(reload ...bool) (err error) {
+	userName := GetUserName()
+	if User.Viper != nil && User.Get("loaded_at") != nil &&
+		!(len(reload) > 0 && reload[0]) &&
+		userName == User.GetString("name") {
+		return
+	}
 	User = config{Viper: viper.New()}
-	var (
-		userName, usrCfgDir string
-	)
-	userName = GetUserName()
-
+	usrCfgDir := ""
 	if usrCfgDir, err = UsrCfgDir(); err != nil {
 		return
 	}
-
 	if err = os.MkdirAll(usrCfgDir, os.ModePerm); err != nil {
 		return
 	}
-
 	err = User.Load(AppName, usrCfgDir,
 		map[string]any{
 			"name":     userName,
