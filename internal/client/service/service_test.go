@@ -195,6 +195,7 @@ func (s *serviceStoreTestSuite) Test_service() {
 						FileName: filepath.Join("some-wrong-path", "SomeFile.pdf"),
 					},
 				},
+				del: true,
 			},
 		},
 		{

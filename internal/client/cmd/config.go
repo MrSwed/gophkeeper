@@ -65,11 +65,6 @@ func (a *app) addConfigCmd() *app {
 			if err != nil {
 				cmd.PrintErrf("failed to load user profile: %v\n", err)
 			}
-			if cfg.User.Get("name") == nil {
-				cmd.Println("You should auth before your can edit your settings")
-				return
-			}
-
 			isAction := false
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				if flag.Changed {
