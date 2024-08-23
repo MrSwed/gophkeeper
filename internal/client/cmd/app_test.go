@@ -173,7 +173,7 @@ func (s *appTestSuite) Test_App() {
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "newNameConfig"},
-				{"Saving global config.. success", "Saving user config.. not changed"},
+				{"Saving global config.. not changed", "Saving user config.. not changed"},
 				{"Global configuration:", `"autosave"`, `"config_path"`, `"loaded_at"`, `"profile"`, `newNameConfig`},
 				{"User configuration:", `"db_file"`, `"name"`, `newNameConfig`},
 				{"Data saved successfully"},

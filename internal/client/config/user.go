@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -34,7 +35,7 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 	}
 	usrCfgDir = filepath.Join(cfgDir, AppName, userName)
 	profiles := Glob.GetStringMap("profiles")
-	profile, ok := profiles[userName].(map[string]any)
+	profile, ok := profiles[strings.ToLower(userName)].(map[string]any)
 	if !ok {
 		profile = NewGlobProfileItem(usrCfgDir)
 		ch = true
@@ -49,7 +50,7 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 		usrCfgDir = profilePath
 	}
 	if ch {
-		profiles[userName] = profile
+		profiles[strings.ToLower(userName)] = profile
 		Glob.Set("profiles", profiles)
 	}
 	return

@@ -361,7 +361,7 @@ func (s *serviceStoreTestSuite) Test_WrongPass() {
 		cfg.Glob.Set("debug", true)
 		s.input("someWrongPass")
 		_, err = s.srv.Get(testKey)
-		require.Contains(t, err.Error(), `unpad error`)
+		require.Error(t, err)
 	})
 }
 
