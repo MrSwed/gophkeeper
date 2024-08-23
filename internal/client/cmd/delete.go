@@ -8,10 +8,9 @@ import (
 )
 
 func (a *app) addDeleteCmd() *app {
-	var (
-		quiet bool
-		// notConfirm bool
-	)
+	// var (
+	// notConfirm bool
+	// )
 	cmd := &cobra.Command{
 		Use:   "delete [flags] record_key [...record_key]",
 		Short: "delete records",
@@ -20,6 +19,7 @@ func (a *app) addDeleteCmd() *app {
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				cmd.PrintErrln("You must specify a record key")
+				return
 			}
 			for _, key := range args {
 				// if !notConfirm {
@@ -27,21 +27,18 @@ func (a *app) addDeleteCmd() *app {
 				// }
 
 				err := a.Srv().Delete(key)
-				if !quiet {
-					if err != nil {
-						if errors.Is(err, sql.ErrNoRows) {
-							cmd.Printf("Record not exist: %s\n", key)
-						} else {
-							cmd.PrintErrf("Delete error: %s\n", err)
-						}
+				if err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						cmd.Printf("Record not exist: %s\n", key)
 					} else {
-						cmd.Printf("%s success deleted \n", key)
+						cmd.PrintErrf("Delete error: %s\n", err)
 					}
+				} else {
+					cmd.Printf("%s success deleted \n", key)
 				}
 			}
 		},
 	}
-	cmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "do not show log")
 	// cmd.Flags().BoolVarP(&notConfirm, "", "y", false, "do not confirm deleting")
 
 	a.root.AddCommand(cmd)

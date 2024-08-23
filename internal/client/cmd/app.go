@@ -75,33 +75,22 @@ func (a *app) Srv() service.Service {
 	return a.srv
 }
 
-func (a *app) Close() {
+func (a *app) Close() (err error) {
 	if a.db != nil {
 		defer func() {
-			err := a.db.Close()
+			err = a.db.Close()
 			if err != nil {
 				a.root.Printf("close db error: %s", err)
 			}
 			a.srv = nil
 		}()
 	}
-}
-
-func (a *app) Execute() (err error) {
-	defer a.Close()
-
-	err = a.root.Execute()
-	if err != nil {
-		a.root.Println(err)
-		return
-	}
-
 	if cfg.Glob.GetBool("autosave") && cfg.Glob.IsChanged() {
 		a.root.Print("Saving global cfg files at exit..")
 		err = cfg.Glob.Save()
 		if err != nil {
 			a.root.Println(err)
-			return
+			// return
 		}
 		a.root.Println(" ..Success")
 	}
@@ -110,10 +99,24 @@ func (a *app) Execute() (err error) {
 		err = cfg.User.Save()
 		if err != nil {
 			a.root.Println(err)
-			return
+			// return
 		}
 		a.root.Println(" ..Success")
 	}
+	return
+}
+
+func (a *app) Execute() (err error) {
+	defer func() {
+		err = errors.Join(err, a.Close())
+	}()
+
+	err = a.root.Execute()
+	if err != nil {
+		a.root.Println(err)
+		return
+	}
+
 	return
 }
 
