@@ -18,7 +18,7 @@ import (
 //	 - usage - usage text
 //
 // thanks https://stackoverflow.com/questions/72891199/procedurally-bind-struct-fields-to-command-line-flag-values-using-reflect
-func GenerateFlags(dst interface{}, fs *pflag.FlagSet) error {
+func GenerateFlags(dst interface{}, fs *pflag.FlagSet) (err error) {
 	rv := reflect.ValueOf(dst)
 	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
 		return errors.New("not pointer-to-a-struct") // exit if not pointer-to-a-struct
@@ -54,8 +54,8 @@ func GenerateFlags(dst interface{}, fs *pflag.FlagSet) error {
 			defVal, _ := strconv.ParseUint(defVal, 10, 64)
 			fs.Uint64VarP(p, tagNames[0], tagNames[1], defVal, usage)
 		default:
-			return GenerateFlags(fv.Interface(), fs)
+			err = errors.New("unknown type")
 		}
 	}
-	return nil
+	return
 }
