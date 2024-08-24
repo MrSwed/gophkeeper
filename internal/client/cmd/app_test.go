@@ -124,13 +124,16 @@ func (s *appTestSuite) Test_App() {
 				{"somePass"},
 			},
 		}, {
-			name: "profile use default, save, list and view",
+			name: "profile use default, save, list, view, delete",
 			commands: [][]string{
 				{"profile", "use", "default"},
 				{"save", "card", "--num", "0000-0000-0000-0001", "--cvv", "222", "-k", "card-key-1"},
 				{"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
 				{"list"},
 				{"view", "card-key-1"},
+				{"delete", "card-key-1"},
+				{"view", "card-key-1"},
+				{"delete", "card-key-1"},
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "default"},
@@ -138,6 +141,9 @@ func (s *appTestSuite) Test_App() {
 				{"Data saved successfully"},
 				{"card-key-1", "Total:"},
 				{"card-key-1", "0000 0000 0000 0000", "222"},
+				{"card-key-1 success deleted"},
+				{"Record not exist: card-key-1"},
+				{"Record not exist: card-key-1"},
 			},
 			inputs: [][]string{
 				{},
@@ -146,20 +152,14 @@ func (s *appTestSuite) Test_App() {
 				{"somePass"},
 			},
 		}, {
-			name: "profile use test2, save, list and view",
+			name: "profile use test2, config",
 			commands: [][]string{
 				{"profile", "use", "test2"},
-				{"config", "save"},
 				{"config", "user", "-e", "some@email.net"},
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "test2"},
-				{"Saving global config.. not changed", "Saving user config.. not changed"},
 				{"some@email.net", "User configuration: set", "Success autosave config"},
-			},
-			inputs: [][]string{
-				{},
-				{"somePass", "somePass"},
 			},
 		}, {
 			name: "test configs",

@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -17,11 +19,13 @@ func (a *app) addViewCmd() *app {
 				_ = cmd.Help()
 				return
 			}
-
 			data, err := a.Srv().Get(args[0])
-
 			if err != nil {
-				cmd.Println("Data get error:", err)
+				if errors.Is(err, sql.ErrNoRows) {
+					cmd.Printf("Record not exist: %s\n", args[0])
+				} else {
+					cmd.Println("Data get error:", err)
+				}
 				return
 			}
 			out, err := json.MarshalIndent(data, "", " ")
