@@ -31,9 +31,9 @@ func (a *app) addProfileCmd() *app {
 				prs := cfg.Glob.GetStringMap("profiles")
 				if len(prs) == 0 {
 					cmd.Println(`No profiles yet. New default profile will be created, after first save data 
-or config key.
+or set some profile data in config.
 
-also yoy can create new profile by command
+also you can create new profile by command
     profile use <new_name>`)
 				}
 				cmd.Println("Available profiles: ")

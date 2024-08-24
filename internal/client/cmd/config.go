@@ -129,19 +129,15 @@ func (a *app) addConfigCmd() *app {
 				}
 
 				cmd.Print("Saving user config.. ")
-				if cfg.User.GetString("name") != "" {
-					if cfg.User.IsChanged() {
-						err := cfg.User.Save()
-						if err != nil {
-							cmd.Println(err)
-						} else {
-							cmd.Println("succeess")
-						}
+				if cfg.User.IsChanged() {
+					err := cfg.User.Save()
+					if err != nil {
+						cmd.Println(err)
 					} else {
-						cmd.Println("not changed")
+						cmd.Println("success")
 					}
 				} else {
-					cmd.Println("You should auth before your can edit your settings")
+					cmd.Println("not changed")
 				}
 			},
 		},
