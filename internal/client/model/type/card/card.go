@@ -80,8 +80,8 @@ func (m *Model) GetDst() any {
 }
 
 type Data struct {
-	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date" flag:"exp,e" default:"" usage:"long card number 0000-0000-0000-0000"`
-	Number string `json:"number" validate:"required,credit_card" flag:"num,n" default:"" usage:"expiry           MM/YY"`
+	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date" flag:"exp,e" default:"" usage:"expiry           MM/YY"`
+	Number string `json:"number" validate:"required,credit_card" flag:"num,n" default:"" usage:"long card number 0000-0000-0000-0000"`
 	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv" flag:"cvv,c" default:"" usage:"cvv value        000"`
 	Name   string `json:"name,omitempty" validate:"omitempty" flag:"owner,o" default:"" usage:"owner, card holder     Firstname Lastname"`
 }
