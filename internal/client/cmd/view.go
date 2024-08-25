@@ -13,7 +13,6 @@ func (a *app) addViewCmd() *app {
 		Use:   "view <key name>",
 		Short: "View data",
 		Long:  `Decrypt data and print it to stdout.`,
-		// Example: `  `,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				_ = cmd.Help()
