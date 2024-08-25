@@ -5,7 +5,7 @@ import (
 	"gophKeeper/internal/client/model/out"
 )
 
-var _ Service = (*service)(nil)
+var _ Service = (*serviceError)(nil)
 
 type serviceError struct {
 	e error
@@ -13,6 +13,11 @@ type serviceError struct {
 
 func NewServiceError(e error) *serviceError {
 	return &serviceError{e: e}
+}
+
+func (s *serviceError) ChangePasswd() (err error) {
+	err = s.e
+	return
 }
 
 func (s *serviceError) GetToken() (token string, err error) {

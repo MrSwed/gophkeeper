@@ -23,6 +23,7 @@ type Service interface {
 	Save(data model.Model) (err error)
 	Delete(key string) (err error)
 	GetToken() (token string, err error)
+	ChangePasswd() (err error)
 }
 
 var _ Service = (*service)(nil)
@@ -33,6 +34,41 @@ type service struct {
 
 func NewService(r *storage.Storage) *service {
 	return &service{r: r}
+}
+
+func (s *service) ChangePasswd() (err error) {
+	var token string
+	isNew := cfg.User.GetString("packed_key") == ""
+	bakToken := cfg.User.GetString("encryption_key")
+	cfg.User.Set("encryption_key", nil)
+	defer func() {
+		if cfg.User.GetString("encryption_key") == "" && bakToken != "" {
+			cfg.User.Set("encryption_key", bakToken)
+		}
+	}()
+	token, err = s.GetToken()
+	if err != nil {
+		return
+	}
+	if isNew {
+		return
+	}
+	var passRaw string
+	passRaw, err = password.GetRawPass(true)
+	userName := cfg.User.GetString("name")
+
+	var (
+		packedBytes  []byte
+		cryptKeyPass = userName + string([]byte{9}) + passRaw
+	)
+
+	packedBytes, err = crypt.Encode([]byte(token), cryptKeyPass)
+	if err != nil {
+		return
+	}
+	cfg.User.Set("packed_key", hex.EncodeToString(packedBytes))
+
+	return
 }
 
 func (s *service) GetToken() (token string, err error) {

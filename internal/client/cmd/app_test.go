@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	cfg "gophKeeper/internal/client/config"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +16,8 @@ import (
 
 type appTestSuite struct {
 	suite.Suite
-	oldStdin, stdin, stdinPipe *os.File
+	oldStdin, stdin, stdinPipe, oldStdOut, stdout, stdoutPipe *os.File
+	outC                                                      chan string
 }
 
 var testDataPath string = filepath.Join("..", "..", "..", "testdata")
@@ -100,58 +103,77 @@ func (s *appTestSuite) Test_App() {
 			commands:   [][]string{{"profile", "use"}},
 			wantStrOut: [][]string{{"Error: accepts 1 arg(s), received 0"}},
 		}, {
-			name: "profile use test, save, list and view",
+			name: "profile use test, save, list and view, change password",
 			commands: [][]string{
-				{"profile", "use", "testName"},
-				{"save", "text", "-t", "some text data", "-d", "some description", "-k", "text-key-1"},
-				{"list"},
-				{"view", "text-key-1"},
-				{"list"},
-				{"profile", "list"},
+				0:  {"profile", "use", "testName"},
+				1:  {"save", "text", "-t", "some text data", "-d", "some description", "-k", "text-key-1"},
+				2:  {"list"},
+				3:  {"view", "text-key-1"},
+				4:  {"list", "-k", "text"},
+				5:  {"profile", "list"},
+				6:  {"profile", "password"},
+				7:  {"view", "text-key-1"},
+				8:  {"profile", "use", "someOtherUser"},
+				10: {"profile", "password"},
+				11: {"profile", "password"},
+				12: {"save", "text", "-t", "some text data", "-k", "text-key-1"},
 			},
 			wantStrOut: [][]string{
-				{"Switching to profile..  " + "testName"},
-				{"Data saved successfully"},
-				{"text-key-1", "some description", "Total:"},
-				{"text-key-1", "some description", "some text data"},
-				{},
-				{"Available profiles", "- testName"},
+				0:  {"Switching to profile..  " + "testName"},
+				1:  {"Data saved successfully"},
+				2:  {"text-key-1", "some description", "Total:"},
+				3:  {"text-key-1", "some description", "some text data"},
+				4:  {"text-key-1", "some description", "Total:"},
+				5:  {"Available profiles", "- testName"},
+				6:  {"User testName configuration loaded", "Please enter password", "Please enter new password", "Please confirm you password"},
+				7:  {"text-key-1", "some description", "some text data"},
+				8:  {"Switching to profile..  " + "someOtherUser"},
+				10: {"Current profile someOtherUser", "User someOtherUser configuration loaded", "Please enter new password", "Please confirm you password"},
+				11: {"Current profile someOtherUser", "User someOtherUser configuration loaded", "Please enter password", "Please enter new password", "Please confirm you password"},
+				12: {"Data saved successfully"},
 			},
 			inputs: [][]string{
-				{},
-				{"somePass", "somePass"},
-				{},
-				{"somePass"},
+				0:  {},
+				1:  {"somePass", "somePass"},
+				2:  {},
+				3:  {"somePass"},
+				4:  {},
+				5:  {},
+				6:  {"somePass", "newPass", "newPass"},
+				7:  {},
+				8:  {},
+				10: {"newProfPass", "newProfPass"},
+				11: {"newProfPass", "newNewProfPass", "newNewProfPass"},
 			},
 		}, {
 			name: "profile use default, save, list, view, delete",
 			commands: [][]string{
-				{"profile", "use", "default"},
-				{"save", "card", "--num", "0000-0000-0000-0001", "--cvv", "222", "-k", "card-key-1"},
-				{"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
-				{"list"},
-				{"view"},
-				{"view", "card-key-1"},
-				{"delete", "card-key-1"},
-				{"view", "card-key-1"},
-				{"delete", "card-key-1"},
+				0: {"profile", "use", "default"},
+				1: {"save", "card", "--num", "0000-0000-0000-0001", "--cvv", "222", "-k", "card-key-1"},
+				2: {"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
+				3: {"list"},
+				4: {"view"},
+				5: {"view", "card-key-1"},
+				6: {"delete", "card-key-1"},
+				7: {"view", "card-key-1"},
+				8: {"delete", "card-key-1"},
 			},
 			wantStrOut: [][]string{
-				{"Switching to profile..  ", "default"},
-				{"Error:Field validation for 'Number'"},
-				{"Data saved successfully"},
-				{"card-key-1", "Total:"},
-				{"Usage:", "view <key name> [flags]"},
-				{"card-key-1", "0000 0000 0000 0000", "222"},
-				{"card-key-1 success deleted"},
-				{"Record not exist: card-key-1"},
-				{"Record not exist: card-key-1"},
+				0: {"Switching to profile..  ", "default"},
+				1: {"Error:Field validation for 'Number'"},
+				2: {"Data saved successfully"},
+				3: {"card-key-1", "Total:"},
+				4: {"Usage:", "view <key name> [flags]"},
+				5: {"card-key-1", "0000 0000 0000 0000", "222"},
+				6: {"card-key-1 success deleted"},
+				7: {"Record not exist: card-key-1"},
+				8: {"Record not exist: card-key-1"},
 			},
 			inputs: [][]string{
-				{},
-				{"somePass", "somePass"},
-				{"somePass", "somePass"},
-				{"somePass"},
+				0: {},
+				1: {"somePass", "somePass"},
+				2: {"somePass", "somePass"},
+				3: {"somePass"},
 			},
 		}, {
 			name: "profile use test2, config",
@@ -202,12 +224,21 @@ func (s *appTestSuite) Test_App() {
 				if i < len(tt.inputs) {
 					s.input(tt.inputs[i]...)
 				}
+				rescueStdout := os.Stdout
+				r, w, err := os.Pipe()
+				require.NoError(t, err)
+				os.Stdout = w
+
 				consoleOutput, _ := s.executeCommand(cmd...)
-				// fmt.Println(consoleOutput)
-				// require.NoError(t, err)
+
+				err = w.Close()
+				require.NoError(t, err)
+				out, err := io.ReadAll(r)
+				require.NoError(t, err)
+				os.Stdout = rescueStdout
 				if i < len(tt.wantStrOut) {
 					for _, wantOut := range tt.wantStrOut[i] {
-						require.Contains(t, consoleOutput, wantOut, cmd)
+						require.Contains(t, consoleOutput+string(out), wantOut, append(cmd, fmt.Sprintf(" : %d", i)))
 					}
 				}
 				if i < len(tt.wantNoStrOut) {
