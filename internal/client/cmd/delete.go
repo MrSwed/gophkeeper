@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// addDeleteCmd
+// Cobra commands for delete operation
 func (a *app) addDeleteCmd() *app {
 	// var (
 	// notConfirm bool

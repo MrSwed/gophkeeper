@@ -64,6 +64,8 @@ func validSaveArgs(m model.Data) (validArgs []string) {
 }
 /**/
 
+// saveAuthCmd
+// Cobra command for save auth model
 func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	debug := false
 	data := auth.New()
@@ -87,6 +89,8 @@ func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	return
 }
 
+// saveTextCmd
+// Cobra command for save text model
 func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	debug := false
 	data := text.New()
@@ -109,6 +113,8 @@ func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	return
 }
 
+// saveBinCmd
+// Cobra command for save bin model
 func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	debug := false
 	data := bin.New()
@@ -128,6 +134,8 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	return
 }
 
+// saveCardCmd
+// Cobra command for save card model
 func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	debug := false
 	data := card.New()
@@ -149,6 +157,8 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	return
 }
 
+// addSaveCmd
+// Cobra commands for save data operation
 func (a *app) addSaveCmd() *app {
 	var saveCmd = &cobra.Command{
 		Use:   "save [command]",

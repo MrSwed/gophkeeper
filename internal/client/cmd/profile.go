@@ -6,7 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
+// addProfileCmd
+// Cobra command for profile operations
 func (a *app) addProfileCmd() *app {
 	cmd := &cobra.Command{
 		Use:   "profile",
@@ -51,7 +52,6 @@ also you can create new profile by command
 						cmd.Println(" -", name)
 					}
 				}
-				// cmd.Println(" -", strings.Join(maps.Keys(prs), "\n - "))
 				cmd.Println()
 			},
 		},

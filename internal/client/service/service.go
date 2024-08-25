@@ -112,7 +112,7 @@ func (s *service) GetToken() (token string, err error) {
 			}
 		}
 		token = string(tokenBytes)
-		// cache token in config, ot must be excluded from saving
+		// cache token in config, it must be excluded from saving
 		cfg.User.Set("encryption_key", token)
 	}
 	return

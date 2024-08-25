@@ -8,11 +8,13 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// addConfigCmd
+// Cobra commands for config operations
 func (a *app) addConfigCmd() *app {
+
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Config action",
-		// Long: ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := cfg.GlobalLoad()
 			if err != nil {
@@ -95,53 +97,53 @@ func (a *app) addConfigCmd() *app {
 		},
 	}
 	// updUserCmd.Flags().StringP("mode", "m", "", "remote mode")
+	// updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("server", "s", "", "server address")
-	updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("sync_interval", "i", "", "synchronisation interval ")
 	updUserCmd.Flags().BoolP("autosave", "a", true, "Auto save user config")
 	updUserCmd.Flags().StringP("email", "e", "", "User email")
 
-	configCmd.AddCommand(updUserCmd,
-		&cobra.Command{
-			Use:   "save",
-			Short: "Save now, for shell mode, if autosave disabled",
-			Long:  ``,
-			Run: func(cmd *cobra.Command, args []string) {
-				err := cfg.GlobalLoad()
+	saveCmd := &cobra.Command{
+		Use:   "save",
+		Short: "Save now, for shell mode, if autosave disabled",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			err := cfg.GlobalLoad()
+			if err != nil {
+				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+				return
+			}
+			err = cfg.UserLoad()
+			if err != nil {
+				cmd.PrintErrf("failed to load user profile: %v\n", err)
+			}
+			cmd.Print("Saving global config.. ")
+			if cfg.Glob.IsChanged() {
+				err := cfg.Glob.Save()
 				if err != nil {
-					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
-					return
-				}
-				err = cfg.UserLoad()
-				if err != nil {
-					cmd.PrintErrf("failed to load user profile: %v\n", err)
-				}
-				cmd.Print("Saving global config.. ")
-				if cfg.Glob.IsChanged() {
-					err := cfg.Glob.Save()
-					if err != nil {
-						cmd.Println(err)
-					} else {
-						cmd.Println("success")
-					}
+					cmd.Println(err)
 				} else {
-					cmd.Println("not changed")
+					cmd.Println("success")
 				}
+			} else {
+				cmd.Println("not changed")
+			}
 
-				cmd.Print("Saving user config.. ")
-				if cfg.User.IsChanged() {
-					err := cfg.User.Save()
-					if err != nil {
-						cmd.Println(err)
-					} else {
-						cmd.Println("success")
-					}
+			cmd.Print("Saving user config.. ")
+			if cfg.User.IsChanged() {
+				err := cfg.User.Save()
+				if err != nil {
+					cmd.Println(err)
 				} else {
-					cmd.Println("not changed")
+					cmd.Println("success")
 				}
-			},
+			} else {
+				cmd.Println("not changed")
+			}
 		},
-	)
+	}
+
+	configCmd.AddCommand(updUserCmd, saveCmd)
 
 	a.root.AddCommand(configCmd)
 	return a

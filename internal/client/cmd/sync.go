@@ -1,12 +1,18 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"github.com/spf13/cobra"
 )
 
+/*
+	syncCmd
+
+todo:
+
+	0.1. sunc now
+	0.2. sync cron(schedule)
+	0.4. agent mode, runned as daemon (?)
+*/
 func (a *app) syncCmd() *cobra.Command {
 
 	// syncCmd represents the sync command

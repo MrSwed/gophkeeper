@@ -7,7 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
+// addListCmd
+// Cobra command for list operation
 func (a *app) addListCmd() *app {
 	query := model.ListQuery{}
 

@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// addViewCmd
+// Cobra command for view data by key
 func (a *app) addViewCmd() *app {
 	a.root.AddCommand(&cobra.Command{
 		Use:   "view <key name>",
