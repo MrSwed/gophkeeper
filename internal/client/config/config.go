@@ -19,13 +19,23 @@ type config struct {
 }
 
 var (
-	User config
-	Glob = config{Viper: viper.New()}
+	excludeSaveKeys = []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
+	excludeViewKeys = []string{"encryption_key"}
+	User            config
+	Glob            = config{Viper: viper.New()}
 )
 
 func (c *config) Set(key string, value any) {
 	c.Viper.Set(key, value)
 	c.Viper.Set("changed_at", time.Now())
+}
+
+func (c *config) AllSettings() (m map[string]any) {
+	m = c.Viper.AllSettings()
+	for _, k := range excludeViewKeys {
+		delete(m, k)
+	}
+	return
 }
 
 func (c *config) Save() error {
@@ -34,11 +44,10 @@ func (c *config) Save() error {
 		isNew = false
 	}
 	clearAfterSave := []string{"changed_at"}
-	excluded := []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
 	if c.excluded == nil {
 		c.excluded = make(map[string]any)
 	}
-	for _, k := range excluded {
+	for _, k := range excludeSaveKeys {
 		if x := c.Viper.Get(k); x != nil {
 			c.excluded[k] = x
 			c.Viper.Set(k, nil)

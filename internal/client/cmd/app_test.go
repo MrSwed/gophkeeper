@@ -207,7 +207,9 @@ func (s *appTestSuite) Test_App() {
 				{},
 				{},
 				{},
-				{"packed_key"},
+				{"packed_key", "encryption_key"},
+				{},
+				{"encryption_key"},
 			},
 			inputs: [][]string{
 				{},
