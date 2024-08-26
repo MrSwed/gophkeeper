@@ -24,9 +24,8 @@ type app struct {
 }
 
 func NewApp() (a *app) {
-	a = &app{}
-
-	a.addRootCmd().
+	a = (&app{}).
+		addRootCmd().
 		addConfigCmd().
 		addSaveCmd().
 		addViewCmd().

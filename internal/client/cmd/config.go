@@ -26,7 +26,7 @@ func (a *app) addConfigCmd() *app {
 				if flag.Changed {
 					isAction = true
 					cfg.Glob.Set(flag.Name, flag.Value)
-					cmd.Println("Global configuration: set ", flag.Name, flag.Value)
+					cmd.Printf("Global configuration: set `%s` = `%s`\n", flag.Name, flag.Value)
 				}
 			})
 
@@ -38,7 +38,6 @@ func (a *app) addConfigCmd() *app {
 					return
 				}
 				cmd.Println(string(out))
-
 				cmd.Println()
 			} else {
 				if cfg.Glob.Get("autosave") == nil || cfg.Glob.GetBool("autosave") {
