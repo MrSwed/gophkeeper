@@ -4,26 +4,58 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 )
 
+type testStruct struct {
+	StringVar string  `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
+	IntVar    int     `json:"int" flag:"int,i" default:"" usage:"usage for intVar"`
+	FloatVar  float64 `json:"float" flag:"float,f" default:"" usage:"usage for floatVar"`
+	UintVar   uint64  `json:"uint" flag:"uint,u" default:"" usage:"usage for uintVar"`
+}
+
+func (ts *testStruct) check(t *testing.T, _ map[string]string) {
+	require.Equal(t, true, ts.StringVar != "0")
+	require.Equal(t, true, ts.IntVar != 0)
+	require.Equal(t, true, ts.FloatVar != 0)
+	require.Equal(t, true, ts.UintVar != 0)
+}
+
+type testErrStruct struct {
+	StringVar string         `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
+	BadVar    map[string]any `json:"bad" flag:"bad,b" default:"" usage:"usage for badVar"`
+}
+
+type testStructSub struct {
+	BoolVar     bool          `json:"bool" flag:"bool,b" default:"" usage:"usage for boolVar"`
+	DurationVar time.Duration `json:"duration" flag:"duration,d" default:"" usage:"usage for durationVar"`
+}
+
+func (ts *testStructSub) check(t *testing.T, want map[string]string) {
+	require.Equal(t, true, ts.DurationVar != 0)
+	var (
+		b   bool
+		err error
+	)
+	if s, ok := want["bool"]; ok {
+		b, err = strconv.ParseBool(s)
+		require.NoError(t, err)
+	}
+	require.Equal(t, true, ts.BoolVar == b)
+}
+
+type testStructCollect struct {
+	testStructSub
+	testStruct
+}
+
 func TestGenerateFlags(t *testing.T) {
-
-	type testStruct struct {
-		StringVar string  `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
-		IntVar    int     `json:"int" flag:"int,i" default:"" usage:"usage for intVar"`
-		FloatVar  float64 `json:"float" flag:"float,f" default:"" usage:"usage for floatVar"`
-		UintVar   uint64  `json:"uint" flag:"uint,u" default:"" usage:"usage for uintVar"`
-	}
-
-	type testErrStruct struct {
-		StringVar string         `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
-		BadVar    map[string]any `json:"bad" flag:"bad,b" default:"" usage:"usage for badVar"`
-	}
 
 	type args struct {
 		dst any
@@ -46,6 +78,21 @@ func TestGenerateFlags(t *testing.T) {
 				"int":    "-1",
 				"float":  "0.1",
 				"uint":   "2",
+			},
+		},
+		{
+			name: "test struct sub",
+			args: args{
+				dst: &testStructCollect{},
+				fs:  (&cobra.Command{}).Flags(),
+			},
+			want: map[string]string{
+				"string":   "string",
+				"int":      "-1",
+				"float":    "0.1",
+				"uint":     "2",
+				"bool":     "true",
+				"duration": "1m0s",
 			},
 		},
 		{
@@ -78,10 +125,14 @@ func TestGenerateFlags(t *testing.T) {
 					require.NoError(t, err)
 				}
 				if dst, ok := tt.args.dst.(*testStruct); ok {
-					require.Equal(t, true, dst.StringVar != "0")
-					require.Equal(t, true, dst.IntVar != 0)
-					require.Equal(t, true, dst.FloatVar != 0)
-					require.Equal(t, true, dst.UintVar != 0)
+					dst.check(t, nil)
+				}
+				if dst, ok := tt.args.dst.(*testStructSub); ok {
+					dst.check(t, tt.want)
+				}
+				if dst, ok := tt.args.dst.(*testStructCollect); ok {
+					dst.testStruct.check(t, nil)
+					dst.testStructSub.check(t, tt.want)
 				}
 			}
 		})
