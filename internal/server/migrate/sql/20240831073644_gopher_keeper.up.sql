@@ -1,37 +1,46 @@
-CREATE EXTENSION if not exists moddatetime;
 CREATE EXTENSION if not exists pgcrypto;
 
 create table users
 (
- id          uuid primary key,
+ id          uuid primary key default gen_random_uuid(),
  description text,
  email       text,
- packed_key  bytea,
- created_at  timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+ packed_key  text,
+ created_at  timestamptz      DEFAULT CURRENT_TIMESTAMP NOT NULL,
  updated_at  timestamptz
 );
 
 create index users_packed_key_email_index
  on users (packed_key, email);
 
+create function update_modified_column() returns trigger
+ language plpgsql
+as
+$$
+BEGIN
+  NEW.updated_at = now();
+ RETURN NEW;
+END;
+$$;
+
 CREATE TRIGGER mdt_users
  BEFORE UPDATE
  ON users
  FOR EACH ROW
-EXECUTE PROCEDURE moddatetime(updated_at);
+EXECUTE PROCEDURE update_modified_column();
 
 create table storage
 (
- key         varchar(255)                          not null
-  primary key,
- user_id     uuid                                  not null
-  constraint "storage_users.id_fk"
+ key         varchar(255)                                       not null,
+ user_id     uuid                                               not null
+  constraint "storage_users. id_fk"
    references users,
  description text,
  filename    text,
  blob        bytea,
  created_at  timestamptz default CURRENT_TIMESTAMP not null,
- updated_at  timestamptz
+ updated_at  timestamptz,
+ primary key (key, user_id)
 );
 create index storage_created_at_index
  on storage (created_at desc);
@@ -39,13 +48,13 @@ CREATE TRIGGER mdt_storage
  BEFORE UPDATE
  ON storage
  FOR EACH ROW
-EXECUTE PROCEDURE moddatetime(updated_at);
+EXECUTE PROCEDURE update_modified_column();
 
 create table clients
 (
  token      bytea                                              not null
-   primary key,
- user_id    uuid                     default gen_random_uuid() not null
+  primary key,
+ user_id    uuid                                               not null
   constraint clients_users_id_fk
    references users,
  meta       json,
