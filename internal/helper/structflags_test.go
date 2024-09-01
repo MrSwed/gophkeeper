@@ -72,7 +72,7 @@ func TestGenerateFlags(t *testing.T) {
 				reflect.DeepEqual(err, tt.wantErr),
 				fmt.Sprintf("GenerateFlags() error = %v, wantErr %v, data %v", err, tt.wantErr, tt.args.fs))
 
-			if tt.wantErr != nil {
+			if tt.wantErr == nil {
 				for k, v := range tt.want {
 					err = tt.args.fs.Set(k, v)
 					require.NoError(t, err)

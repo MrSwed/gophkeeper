@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 )
@@ -37,22 +38,29 @@ func GenerateFlags(dst interface{}, fs *pflag.FlagSet) (err error) {
 		usage := sf.Tag.Get("usage")
 		defVal := sf.Tag.Get("default")
 
-		switch fv.Type() {
-		case reflect.TypeOf(string("")):
-			p := fv.Addr().Interface().(*string)
-			fs.StringVarP(p, tagNames[0], tagNames[1], defVal, usage)
-		case reflect.TypeOf(int(0)):
-			p := fv.Addr().Interface().(*int)
-			defVal, _ := strconv.Atoi(defVal)
-			fs.IntVarP(p, tagNames[0], tagNames[1], defVal, usage)
-		case reflect.TypeOf(float64(0)):
-			p := fv.Addr().Interface().(*float64)
-			defVal, _ := strconv.ParseFloat(defVal, 64)
-			fs.Float64VarP(p, tagNames[0], tagNames[1], defVal, usage)
-		case reflect.TypeOf(uint64(0)):
-			p := fv.Addr().Interface().(*uint64)
-			defVal, _ := strconv.ParseUint(defVal, 10, 64)
-			fs.Uint64VarP(p, tagNames[0], tagNames[1], defVal, usage)
+		switch fv.Kind() {
+		case reflect.Struct:
+			return GenerateFlags(fv, fs)
+		case reflect.Bool, reflect.Int64, reflect.Float64, reflect.Int, reflect.Uint64, reflect.String:
+			switch p := fv.Addr().Interface().(type) {
+			case *bool:
+				defVal, _ := strconv.ParseBool(defVal)
+				fs.BoolVarP(p, tagNames[0], tagNames[1], defVal, usage)
+			case *string:
+				fs.StringVarP(p, tagNames[0], tagNames[1], defVal, usage)
+			case *int:
+				defVal, _ := strconv.Atoi(defVal)
+				fs.IntVarP(p, tagNames[0], tagNames[1], defVal, usage)
+			case *time.Duration:
+				defVal, _ := time.ParseDuration(defVal)
+				fs.DurationVarP(p, tagNames[0], tagNames[1], defVal, usage)
+			case *float64:
+				defVal, _ := strconv.ParseFloat(defVal, 64)
+				fs.Float64VarP(p, tagNames[0], tagNames[1], defVal, usage)
+			case *uint64:
+				defVal, _ := strconv.ParseUint(defVal, 10, 64)
+				fs.Uint64VarP(p, tagNames[0], tagNames[1], defVal, usage)
+			}
 		default:
 			err = errors.New("unknown type")
 		}
