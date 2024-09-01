@@ -61,7 +61,12 @@ also you can create new profile by command
 			Long:  "if it not exist, it will be created",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				err := cfg.GlobalLoad()
+				err := a.Close()
+				if err != nil {
+					cmd.PrintErrf("Error close prev profile session  %s  %s", err, cfg.Glob.GetString("config_path"))
+					return
+				}
+				err = cfg.GlobalLoad()
 				if err != nil {
 					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
 					return
