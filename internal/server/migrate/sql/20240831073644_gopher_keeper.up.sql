@@ -10,6 +10,10 @@ create table users
  created_at  timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
  updated_at  timestamptz
 );
+
+create index users_packed_key_email_index
+ on users (packed_key, email);
+
 CREATE TRIGGER mdt_users
  BEFORE UPDATE
  ON users
