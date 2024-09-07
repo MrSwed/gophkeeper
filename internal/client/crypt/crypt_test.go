@@ -1,8 +1,11 @@
 package crypt
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncodeDecode(t *testing.T) {
@@ -44,6 +47,14 @@ func TestEncodeDecode(t *testing.T) {
 				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			gotCipherText2, err := Encode(tt.args.plainText, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Encode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			require.Equal(t, false, reflect.DeepEqual(gotCipherText, gotCipherText2),
+				"twice ciphered can not be equal")
 
 			gotPlainText, err := Decode(gotCipherText, tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -51,13 +62,20 @@ func TestEncodeDecode(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(gotPlainText, tt.args.plainText) {
-				t.Errorf("Decode() gotPlainText = %v, want %v", gotPlainText, tt.args.plainText)
+			gotPlainText2, err := Decode(gotCipherText2, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 
-			if reflect.DeepEqual(gotPlainText, gotCipherText) {
-				t.Errorf("Decode() gotPlainText = %v, gotCipherText %v", gotPlainText, gotCipherText)
-			}
+			require.Equal(t, true, reflect.DeepEqual(gotPlainText, gotPlainText2),
+				fmt.Sprintf("Decode() gotPlainText = %v, gotPlainText2 %v", gotPlainText, gotPlainText2))
+
+			require.Equal(t, true, reflect.DeepEqual(gotPlainText, tt.args.plainText),
+				fmt.Sprintf("Decode() gotPlainText = %v, want %v", gotPlainText, tt.args.plainText))
+
+			require.Equal(t, false, reflect.DeepEqual(gotPlainText, gotCipherText),
+				fmt.Sprintf("Decode() gotPlainText = %v, gotCipherText %v", gotPlainText, gotCipherText))
 		})
 	}
 }
