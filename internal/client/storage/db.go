@@ -33,7 +33,7 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 		b = b.Where(sq.Like{"updated_at": "%" + query.UpdatedAt + "%"})
 	}
 	if query.Limit != 0 {
-		b.Limit(query.Limit)
+		b = b.Limit(query.Limit)
 	}
 	if query.Offset != 0 {
 		b = b.Offset(query.Offset)
