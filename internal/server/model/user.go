@@ -7,11 +7,21 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID  `json:"-" db:"id"`
-	Password    []byte     `json:"-" db:"password"`
-	Email       string     `json:"email" db:"email"`
-	Description string     `json:"description" db:"description"`
-	PackedKey   []byte     `json:"packedKey" db:"packed_key"`
-	CreatedAt   time.Time  `json:"createdAt" db:"created_at"`
-	UpdatedAt   *time.Time `json:"updatedAt" db:"updated_at"`
+	ID          uuid.UUID
+	Password    string
+	Email       string
+	Description string
+	PackedKey   []byte
+	CreatedAt   time.Time
+	UpdatedAt   *time.Time
+}
+
+type DBUser struct {
+	ID          uuid.UUID  `db:"id"`
+	Password    []byte     `db:"password"`
+	Email       string     `db:"email"`
+	Description string     `db:"description"`
+	PackedKey   []byte     `db:"packed_key"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
 }

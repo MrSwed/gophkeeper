@@ -2,13 +2,15 @@ package model
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ItemShort struct {
-	Key         string     `db:"key" json:"key"`
-	Description string     `db:"description" json:"description"`
-	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
-	UpdatedAt   *time.Time `db:"updated_at" json:"updated_at"`
+	Key         string     `db:"key"`
+	Description string     `db:"description"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
 }
 
 type Item struct {
@@ -23,8 +25,9 @@ type List struct {
 
 type DBRecord struct {
 	ItemShort
-	FileName *string `db:"filename,omitempty"`
-	Blob     []byte  `db:"blob"`
+	UserID   uuid.UUID `db:"user_id" validate:"required"`
+	FileName *string   `db:"filename,omitempty"`
+	Blob     []byte    `db:"blob"`
 }
 
 func (i *Item) IsNew() bool {
