@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"gophKeeper/internal/helper"
 	"gophKeeper/internal/server/config"
 	"gophKeeper/internal/server/model"
 	"time"
@@ -28,7 +29,7 @@ func NewUserStorage(c *config.StorageConfig, db *sqlx.DB) *userStore {
 	}
 }
 
-func (s *userStore) SaveUser(ctx context.Context, user *model.User) (err error) {
+func (s *userStore) SaveUser(ctx context.Context, user model.DBUser) (err error) {
 	var (
 		query string
 		args  []interface{}
@@ -54,22 +55,27 @@ RETURNING id, created_at, updated_at`).
 	return
 }
 
-/*
-	func (s *userStore) GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error) {
-		var (
-			query string
-			args  []interface{}
-		)
-		query, args, err = sq.Select(`id, description, email, packed_key, created_at, updated_at`).
-			From(userTableName).
-			Where("id = ?", userID).ToSql()
-		if err != nil {
-			return
-		}
-		err = s.db.GetContext(ctx, &user, query, args...)
+func (s *userStore) GetUserSelf(ctx context.Context) (user model.User, err error) {
+	var (
+		query  string
+		args   []interface{}
+		userID uuid.UUID
+	)
+	userID, err = helper.GetCtxUserID(ctx)
+	if err != nil {
 		return
 	}
-*/
+
+	query, args, err = sq.Select(`id, description, email, packed_key, created_at, updated_at`).
+		From(userTableName).
+		Where("id = ?", userID).ToSql()
+	if err != nil {
+		return
+	}
+	err = s.db.GetContext(ctx, &user, query, args...)
+	return
+}
+
 func (s *userStore) GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error) {
 	var (
 		query string

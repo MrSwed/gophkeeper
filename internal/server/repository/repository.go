@@ -21,20 +21,20 @@ type store struct {
 
 // DataStorage methods
 type DataStorage interface {
-	GetDataItem(ctx context.Context, id string) (item *model.DBRecord, err error)
+	GetDataItem(ctx context.Context, id string) (item model.DBRecord, err error)
 	ListDataItems(ctx context.Context, q *model.ListQuery) (item []model.ItemShort, err error)
 	CountDataItems(ctx context.Context, q *model.ListQuery) (count int64, err error)
-	SaveDataItem(ctx context.Context, item *model.DBRecord) (err error)
+	SaveDataItem(ctx context.Context, item model.DBRecord) (err error)
 	DeleteDataItem(ctx context.Context, id string) (err error)
 }
 
 type UserStorage interface {
-	// GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error)
+	GetUserSelf(ctx context.Context) (user model.User, err error)
 	GetUserByEmail(ctx context.Context, email string) (user model.User, err error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) (err error)
 	DeleteClient(ctx context.Context, token []byte) (err error)
 	GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error)
-	SaveUser(ctx context.Context, user *model.User) (err error)
+	SaveUser(ctx context.Context, user model.DBUser) (err error)
 	NewUserClientToken(ctx context.Context, userID uuid.UUID, expAt *time.Time, meta any) (token []byte, err error)
 }
 

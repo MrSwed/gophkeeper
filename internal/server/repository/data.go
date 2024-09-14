@@ -23,13 +23,12 @@ const storeTableName = "storage"
 
 type dataStore store
 
-func (s *dataStore) GetDataItem(ctx context.Context, key string) (item *model.DBRecord, err error) {
+func (s *dataStore) GetDataItem(ctx context.Context, key string) (item model.DBRecord, err error) {
 	var (
 		userID uuid.UUID
 		query  string
 		args   []interface{}
 	)
-	item = new(model.DBRecord)
 	userID, err = helper.GetCtxUserID(ctx)
 	if err != nil {
 		return
@@ -99,7 +98,7 @@ func (s *dataStore) CountDataItems(ctx context.Context, _ *model.ListQuery) (tot
 
 }
 
-func (s *dataStore) SaveDataItem(ctx context.Context, item *model.DBRecord) (err error) {
+func (s *dataStore) SaveDataItem(ctx context.Context, item model.DBRecord) (err error) {
 	var (
 		userID uuid.UUID
 		query  string
