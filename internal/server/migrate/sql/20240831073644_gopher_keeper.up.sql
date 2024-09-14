@@ -3,7 +3,7 @@ CREATE EXTENSION if not exists pgcrypto;
 create table users
 (
  id          uuid primary key default gen_random_uuid(),
- password bytea,
+ password    bytea,
  description text,
  email       text,
  packed_key  text,
