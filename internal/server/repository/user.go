@@ -55,7 +55,7 @@ RETURNING id, created_at, updated_at`).
 	return
 }
 
-func (s *userStore) GetUserSelf(ctx context.Context) (user model.User, err error) {
+func (s *userStore) GetUserSelf(ctx context.Context) (user model.DBUser, err error) {
 	var (
 		query  string
 		args   []interface{}
@@ -93,7 +93,7 @@ func (s *userStore) GetUserIDByToken(ctx context.Context, token []byte) (userID 
 	return
 }
 
-func (s *userStore) GetUserByEmail(ctx context.Context, email string) (user model.User, err error) {
+func (s *userStore) GetUserByEmail(ctx context.Context, email string) (user model.DBUser, err error) {
 	var (
 		query string
 		args  []interface{}

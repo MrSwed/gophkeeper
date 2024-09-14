@@ -29,8 +29,8 @@ type DataStorage interface {
 }
 
 type UserStorage interface {
-	GetUserSelf(ctx context.Context) (user model.User, err error)
-	GetUserByEmail(ctx context.Context, email string) (user model.User, err error)
+	GetUserSelf(ctx context.Context) (user model.DBUser, err error)
+	GetUserByEmail(ctx context.Context, email string) (user model.DBUser, err error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) (err error)
 	DeleteClient(ctx context.Context, token []byte) (err error)
 	GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error)
