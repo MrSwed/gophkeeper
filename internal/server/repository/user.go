@@ -17,11 +17,6 @@ type userStore store
 
 var _ UserStorage = (*userStore)(nil)
 
-const (
-	userTableName   = "users"
-	clientTableName = "clients"
-)
-
 func NewUserStorage(c *config.StorageConfig, db *sqlx.DB) *userStore {
 	return &userStore{
 		db: db,
@@ -29,7 +24,7 @@ func NewUserStorage(c *config.StorageConfig, db *sqlx.DB) *userStore {
 	}
 }
 
-func (s *userStore) SaveUser(ctx context.Context, user model.DBUser) (err error) {
+func (s *userStore) SaveUser(ctx context.Context, user *model.DBUser) (err error) {
 	var (
 		query string
 		args  []interface{}
@@ -129,13 +124,14 @@ func (s *userStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, ex
 	return
 }
 
-func (s *userStore) DeleteClient(ctx context.Context, token []byte) (err error) {
+func (s *userStore) DeleteClient(ctx context.Context, userID uuid.UUID, token []byte) (err error) {
 	var (
 		query string
 		args  []interface{}
 	)
 	query, args, err = sq.Delete(clientTableName).
 		Where("token = ?", token).
+		Where("user_id = ?", userID).
 		ToSql()
 	if err != nil {
 		return
@@ -161,10 +157,17 @@ func (s *userStore) DeleteUser(ctx context.Context, userID uuid.UUID) (err error
 		}
 	}()
 
+	query, args, err = sq.Delete(storeTableName).
+		Where("user_id = ?", userID).
+		ToSql()
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return
+	}
+
 	query, args, err = sq.Delete(clientTableName).
 		Where("user_id = ?", userID).
 		ToSql()
-
 	_, err = tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return

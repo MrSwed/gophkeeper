@@ -14,6 +14,12 @@ import (
 
 var sq = sqrl.StatementBuilder.PlaceholderFormat(sqrl.Dollar)
 
+const (
+	storeTableName  = "storage"
+	userTableName   = "users"
+	clientTableName = "clients"
+)
+
 type store struct {
 	db *sqlx.DB
 	c  *config.StorageConfig
@@ -21,20 +27,19 @@ type store struct {
 
 // DataStorage methods
 type DataStorage interface {
-	GetDataItem(ctx context.Context, id string) (item model.DBRecord, err error)
+	GetDataItem(ctx context.Context, userID uuid.UUID, key string) (item model.DBRecord, err error)
 	ListDataItems(ctx context.Context, q *model.ListQuery) (item []model.ItemShort, err error)
 	CountDataItems(ctx context.Context, q *model.ListQuery) (count int64, err error)
 	SaveDataItem(ctx context.Context, item model.DBRecord) (err error)
-	DeleteDataItem(ctx context.Context, id string) (err error)
 }
 
 type UserStorage interface {
 	GetUserSelf(ctx context.Context) (user model.DBUser, err error)
 	GetUserByEmail(ctx context.Context, email string) (user model.DBUser, err error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) (err error)
-	DeleteClient(ctx context.Context, token []byte) (err error)
+	DeleteClient(ctx context.Context, userID uuid.UUID, token []byte) (err error)
 	GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error)
-	SaveUser(ctx context.Context, user model.DBUser) (err error)
+	SaveUser(ctx context.Context, user *model.DBUser) (err error)
 	NewUserClientToken(ctx context.Context, userID uuid.UUID, expAt *time.Time, meta any) (token []byte, err error)
 }
 

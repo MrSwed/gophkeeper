@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"gophKeeper/internal/helper"
+	"errors"
 	"gophKeeper/internal/server/config"
 	"gophKeeper/internal/server/model"
 
@@ -19,20 +19,13 @@ func NewDBRepository(c *config.StorageConfig, db *sqlx.DB) *dataStore {
 
 var _ DataStorage = (*dataStore)(nil)
 
-const storeTableName = "storage"
-
 type dataStore store
 
-func (s *dataStore) GetDataItem(ctx context.Context, key string) (item model.DBRecord, err error) {
+func (s *dataStore) GetDataItem(ctx context.Context, userID uuid.UUID, key string) (item model.DBRecord, err error) {
 	var (
-		userID uuid.UUID
-		query  string
-		args   []interface{}
+		query string
+		args  []interface{}
 	)
-	userID, err = helper.GetCtxUserID(ctx)
-	if err != nil {
-		return
-	}
 	query, args, err = sq.Select(`key, description, created_at, updated_at, filename, blob`).
 		From(storeTableName).
 		Where("key = ?", key).
@@ -41,102 +34,82 @@ func (s *dataStore) GetDataItem(ctx context.Context, key string) (item model.DBR
 	if err != nil {
 		return
 	}
-	err = s.db.Get(&item, query, args...)
+	err = s.db.GetContext(ctx, &item, query, args...)
 	return
 }
 
 func (s *dataStore) ListDataItems(ctx context.Context, q *model.ListQuery) (list []model.ItemShort, err error) {
 	var (
-		userID uuid.UUID
-		query  string
-		args   []interface{}
+		query string
+		args  []interface{}
 	)
-	userID, err = helper.GetCtxUserID(ctx)
-	if err != nil {
-		return
-	}
-	sqlBuild := sq.Select("key", "description", "created_at", "updated_at").
-		From(storeTableName).
-		Where("user_id = ?", userID)
-	if q.Limit != 0 {
-		sqlBuild = sqlBuild.Limit(q.Limit)
-	}
-	if q.Offset != 0 {
-		sqlBuild = sqlBuild.Offset(q.Offset)
-	}
 
+	sqlBuild := sq.Select("key", "description", "created_at", "updated_at").
+		From(storeTableName)
+	if q != nil {
+		if q.UserID != uuid.Nil {
+			sqlBuild = sqlBuild.Where("user_id = ?", q.UserID)
+		}
+		if q.Limit != 0 {
+			sqlBuild = sqlBuild.Limit(q.Limit)
+		}
+		if q.Offset != 0 {
+			sqlBuild = sqlBuild.Offset(q.Offset)
+		}
+	}
 	query, args, err = sqlBuild.
 		ToSql()
 	if err != nil {
 		return
 	}
-	err = s.db.Select(&list, query, args...)
+	err = s.db.SelectContext(ctx, &list, query, args...)
+
 	return
 }
 
-func (s *dataStore) CountDataItems(ctx context.Context, _ *model.ListQuery) (total int64, err error) {
+func (s *dataStore) CountDataItems(ctx context.Context, q *model.ListQuery) (total int64, err error) {
 	var (
-		userID uuid.UUID
-		query  string
-		args   []interface{}
+		query string
+		args  []interface{}
 	)
-	userID, err = helper.GetCtxUserID(ctx)
+	sqlBuild := sq.Select("count(*)").From(storeTableName)
+	if q != nil {
+		if q.UserID != uuid.Nil {
+			sqlBuild = sqlBuild.Where("user_id = ?", q.UserID)
+		}
+	}
+	query, args, err = sqlBuild.ToSql()
 	if err != nil {
 		return
 	}
-	sqlBuild := sq.Select("count(*)").
-		From(storeTableName).
-		Where("user_id = ?", userID)
+	err = s.db.GetContext(ctx, &total, query, args...)
 
-	query, args, err = sqlBuild.
-		ToSql()
-	if err != nil {
-		return
-	}
-	err = s.db.Get(&total, query, args...)
 	return
-
 }
 
 func (s *dataStore) SaveDataItem(ctx context.Context, item model.DBRecord) (err error) {
 	var (
-		userID uuid.UUID
-		query  string
-		args   []interface{}
+		query string
+		args  []interface{}
 	)
-	userID, err = helper.GetCtxUserID(ctx)
-	if err != nil {
+	// todo: use it if db cannot check key reference
+	// if item.UserID == uuid.Nil {
+	// 	err = errors.New("UserID should not be nil")
+	// 	return
+	// }
+	if item.Key == "" {
+		err = errors.New("key is required")
 		return
 	}
+
 	query, args, err = sq.Insert(storeTableName).
 		Columns(`key, user_id, description, created_at, updated_at, filename, blob`).
-		Values(item.Key, userID, item.Description, item.CreatedAt, item.UpdatedAt, item.FileName, item.Blob).
+		Values(item.Key, item.UserID, item.Description, item.CreatedAt, item.UpdatedAt, item.FileName, item.Blob).
 		Prefix(`on conflict (key, userID) do update 
   set description=excluded.description,
       updated_at=excluded.updated_at,
       filename=excluded.filename,
       blob=excluded.blob`).
-		ToSql()
-	if err != nil {
-		return
-	}
-	_, err = s.db.ExecContext(ctx, query, args...)
-	return
-}
-
-func (s *dataStore) DeleteDataItem(ctx context.Context, key string) (err error) {
-	var (
-		userID uuid.UUID
-		query  string
-		args   []interface{}
-	)
-	userID, err = helper.GetCtxUserID(ctx)
-	if err != nil {
-		return
-	}
-	query, args, err = sq.Delete(storeTableName).
-		Where("user_id = ?", userID).
-		Where("key = ?", key).
 		ToSql()
 	if err != nil {
 		return
