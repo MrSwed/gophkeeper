@@ -12,23 +12,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type authStore store
+type userStore store
 
-var _ UserStorage = (*authStore)(nil)
+var _ UserStorage = (*userStore)(nil)
 
 const (
 	userTableName   = "users"
 	clientTableName = "clients"
 )
 
-func NewAuthStorage(c *config.StorageConfig, db *sqlx.DB) *authStore {
-	return &authStore{
+func NewUserStorage(c *config.StorageConfig, db *sqlx.DB) *userStore {
+	return &userStore{
 		db: db,
 		c:  c,
 	}
 }
 
-func (s *authStore) NewUser(ctx context.Context, user model.User) (userID uuid.UUID, err error) {
+func (s *userStore) SaveUser(ctx context.Context, user *model.User) (err error) {
 	var (
 		query string
 		args  []interface{}
@@ -40,23 +40,13 @@ func (s *authStore) NewUser(ctx context.Context, user model.User) (userID uuid.U
 			"description": user.Description,
 			"packed_key":  user.PackedKey,
 		}).
-		Suffix("RETURNING id").
+		Suffix(`
+on conflict (email) do update
+set description=excluded.description,
+      password=excluded.password,
+      packed_key=excluded.packed_key
+RETURNING id, created_at, updated_at`).
 		ToSql()
-	if err != nil {
-		return
-	}
-	err = s.db.GetContext(ctx, &userID, query, args...)
-	return
-}
-
-func (s *authStore) GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error) {
-	var (
-		query string
-		args  []interface{}
-	)
-	query, args, err = sq.Select(`id, description, email, packed_key, created_at, updated_at`).
-		From(userTableName).
-		Where("id = ?", userID).ToSql()
 	if err != nil {
 		return
 	}
@@ -64,7 +54,23 @@ func (s *authStore) GetUserByID(ctx context.Context, userID uuid.UUID) (user mod
 	return
 }
 
-func (s *authStore) GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error) {
+/*
+	func (s *userStore) GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error) {
+		var (
+			query string
+			args  []interface{}
+		)
+		query, args, err = sq.Select(`id, description, email, packed_key, created_at, updated_at`).
+			From(userTableName).
+			Where("id = ?", userID).ToSql()
+		if err != nil {
+			return
+		}
+		err = s.db.GetContext(ctx, &user, query, args...)
+		return
+	}
+*/
+func (s *userStore) GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error) {
 	var (
 		query string
 		args  []interface{}
@@ -81,12 +87,12 @@ func (s *authStore) GetUserIDByToken(ctx context.Context, token []byte) (userID 
 	return
 }
 
-func (s *authStore) GetByEmail(ctx context.Context, email string) (user model.User, err error) {
+func (s *userStore) GetUserByEmail(ctx context.Context, email string) (user model.User, err error) {
 	var (
 		query string
 		args  []interface{}
 	)
-	query, args, err = sq.Select(`id, email, description, createdAt, updatedAt`).
+	query, args, err = sq.Select(`id, email, password, description, createdAt, updatedAt, packed_key`).
 		From(userTableName).
 		Where("email = ?", email).
 		ToSql()
@@ -97,7 +103,7 @@ func (s *authStore) GetByEmail(ctx context.Context, email string) (user model.Us
 	return
 }
 
-func (s *authStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, expAt *time.Time, meta any) (token []byte, err error) {
+func (s *userStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, expAt *time.Time, meta any) (token []byte, err error) {
 	var (
 		query string
 		args  []interface{}
@@ -117,7 +123,7 @@ func (s *authStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, ex
 	return
 }
 
-func (s *authStore) DeleteClient(ctx context.Context, token []byte) (err error) {
+func (s *userStore) DeleteClient(ctx context.Context, token []byte) (err error) {
 	var (
 		query string
 		args  []interface{}
@@ -132,7 +138,7 @@ func (s *authStore) DeleteClient(ctx context.Context, token []byte) (err error) 
 	return
 }
 
-func (s *authStore) DeleteUser(ctx context.Context, userID uuid.UUID) (err error) {
+func (s *userStore) DeleteUser(ctx context.Context, userID uuid.UUID) (err error) {
 	var (
 		query string
 		args  []interface{}

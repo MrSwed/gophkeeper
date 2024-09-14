@@ -23,7 +23,7 @@ const storeTableName = "storage"
 
 type dataStore store
 
-func (s *dataStore) GetItem(ctx context.Context, key string) (item *model.DBRecord, err error) {
+func (s *dataStore) GetDataItem(ctx context.Context, key string) (item *model.DBRecord, err error) {
 	var (
 		userID uuid.UUID
 		query  string
@@ -46,7 +46,7 @@ func (s *dataStore) GetItem(ctx context.Context, key string) (item *model.DBReco
 	return
 }
 
-func (s *dataStore) ListItems(ctx context.Context, q *model.ListQuery) (list []model.ItemShort, err error) {
+func (s *dataStore) ListDataItems(ctx context.Context, q *model.ListQuery) (list []model.ItemShort, err error) {
 	var (
 		userID uuid.UUID
 		query  string
@@ -75,7 +75,7 @@ func (s *dataStore) ListItems(ctx context.Context, q *model.ListQuery) (list []m
 	return
 }
 
-func (s *dataStore) CountItems(ctx context.Context, _ *model.ListQuery) (total int, err error) {
+func (s *dataStore) CountDataItems(ctx context.Context, _ *model.ListQuery) (total int64, err error) {
 	var (
 		userID uuid.UUID
 		query  string
@@ -99,7 +99,7 @@ func (s *dataStore) CountItems(ctx context.Context, _ *model.ListQuery) (total i
 
 }
 
-func (s *dataStore) SaveItem(ctx context.Context, item *model.DBRecord) (err error) {
+func (s *dataStore) SaveDataItem(ctx context.Context, item *model.DBRecord) (err error) {
 	var (
 		userID uuid.UUID
 		query  string
@@ -125,7 +125,7 @@ func (s *dataStore) SaveItem(ctx context.Context, item *model.DBRecord) (err err
 	return
 }
 
-func (s *dataStore) DeleteItem(ctx context.Context, key string) (err error) {
+func (s *dataStore) DeleteDataItem(ctx context.Context, key string) (err error) {
 	var (
 		userID uuid.UUID
 		query  string

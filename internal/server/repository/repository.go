@@ -21,20 +21,20 @@ type store struct {
 
 // DataStorage methods
 type DataStorage interface {
-	GetItem(ctx context.Context, id string) (item *model.DBRecord, err error)
-	ListItems(ctx context.Context, q *model.ListQuery) (item []model.ItemShort, err error)
-	CountItems(ctx context.Context, q *model.ListQuery) (count int, err error)
-	SaveItem(ctx context.Context, item *model.DBRecord) (err error)
-	DeleteItem(ctx context.Context, id string) (err error)
+	GetDataItem(ctx context.Context, id string) (item *model.DBRecord, err error)
+	ListDataItems(ctx context.Context, q *model.ListQuery) (item []model.ItemShort, err error)
+	CountDataItems(ctx context.Context, q *model.ListQuery) (count int64, err error)
+	SaveDataItem(ctx context.Context, item *model.DBRecord) (err error)
+	DeleteDataItem(ctx context.Context, id string) (err error)
 }
 
 type UserStorage interface {
-	GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error)
-	GetByEmail(ctx context.Context, email string) (user model.User, err error)
+	// GetUserByID(ctx context.Context, userID uuid.UUID) (user model.User, err error)
+	GetUserByEmail(ctx context.Context, email string) (user model.User, err error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) (err error)
 	DeleteClient(ctx context.Context, token []byte) (err error)
 	GetUserIDByToken(ctx context.Context, token []byte) (userID uuid.UUID, err error)
-	NewUser(ctx context.Context, user model.User) (userID uuid.UUID, err error)
+	SaveUser(ctx context.Context, user *model.User) (err error)
 	NewUserClientToken(ctx context.Context, userID uuid.UUID, expAt *time.Time, meta any) (token []byte, err error)
 }
 
@@ -59,10 +59,10 @@ type storage struct {
 var _ Storage = (*storage)(nil)
 
 // NewRepository return repository of database or memory if no db set
-func NewRepository(c *config.StorageConfig, db *sqlx.DB) (s *storage) {
+func NewRepository(c *config.StorageConfig, db *sqlx.DB) (s Storage) {
 	return &storage{
 		DataStorage: NewDBRepository(c, db),
-		UserStorage: NewAuthStorage(c, db),
+		UserStorage: NewUserStorage(c, db),
 		// FileStorage: NewFileStorageRepository(c),
 	}
 }
