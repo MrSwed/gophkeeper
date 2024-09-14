@@ -3,37 +3,19 @@ CREATE EXTENSION if not exists pgcrypto;
 create table users
 (
  id          uuid primary key default gen_random_uuid(),
+ email       varchar(255) not null,
  password    bytea,
  description text,
- email       text,
- packed_key  text,
- created_at  timestamptz      DEFAULT CURRENT_TIMESTAMP NOT NULL,
+ packed_key  bytea,
+ created_at  timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
  updated_at  timestamptz
 );
 
-create index users_packed_key_email_index
- on users (email, password);
-
-create function update_modified_column() returns trigger
- language plpgsql
-as
-$$
-BEGIN
- NEW.updated_at = now();
- RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER mdt_users
- BEFORE UPDATE
- ON users
- FOR EACH ROW
-EXECUTE PROCEDURE update_modified_column();
 
 create table storage
 (
- key     varchar(255) not null,
- user_id uuid         not null
+ key         varchar(255)                          not null,
+ user_id     uuid                                  not null
   constraint "storage_users. id_fk"
    references users,
  description text,
@@ -43,13 +25,10 @@ create table storage
  updated_at  timestamptz,
  primary key (key, user_id)
 );
+
 create index storage_created_at_index
  on storage (created_at desc);
-CREATE TRIGGER mdt_storage
- BEFORE UPDATE
- ON storage
- FOR EACH ROW
-EXECUTE PROCEDURE update_modified_column();
+
 
 create table clients
 (
