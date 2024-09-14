@@ -18,11 +18,15 @@ type Item struct {
 
 type List struct {
 	Items []ItemShort `json:"items"`
-	Total int         `json:"total"`
+	Total int64       `json:"total"`
 }
 
 type DBRecord struct {
 	ItemShort
 	FileName *string `db:"filename,omitempty"`
 	Blob     []byte  `db:"blob"`
+}
+
+func (i *Item) IsNew() bool {
+	return i.CreatedAt.IsZero()
 }
