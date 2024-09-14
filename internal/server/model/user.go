@@ -7,8 +7,8 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID  `json:"id" db:"id"`
-	Password    []byte     `json:"password" db:"password"`
+	ID          uuid.UUID  `json:"-" db:"id"`
+	Password    []byte     `json:"-" db:"password"`
 	Email       string     `json:"email" db:"email"`
 	Description string     `json:"description" db:"description"`
 	PackedKey   []byte     `json:"packedKey" db:"packed_key"`
