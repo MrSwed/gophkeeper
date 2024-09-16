@@ -93,7 +93,7 @@ func (s *userStore) GetUserByEmail(ctx context.Context, email string) (user mode
 		query string
 		args  []interface{}
 	)
-	query, args, err = sq.Select(`id, email, password, description, createdAt, updatedAt, packed_key`).
+	query, args, err = sq.Select(`id, email, password, description, created_at, updated_at, packed_key`).
 		From(userTableName).
 		Where("email = ?", email).
 		ToSql()
