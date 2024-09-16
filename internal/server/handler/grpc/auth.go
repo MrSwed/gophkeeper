@@ -44,7 +44,7 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 	}
 	out.AppToken, err = g.s.GetClientToken(ctx, req)
 	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
+		if errors.As(err, &sql.ErrNoRows) {
 			// register new one with login data, rest at sync
 			u := &model.User{
 				Email:    in.GetEmail(),

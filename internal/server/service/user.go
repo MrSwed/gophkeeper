@@ -52,10 +52,11 @@ func (s *user) SaveSelf(ctx context.Context, user *model.User) (err error) {
 	}
 
 	err = s.r.SaveUser(ctx, &u)
-	user.ID = u.ID
-	user.CreatedAt = u.CreatedAt
-	user.UpdatedAt = u.UpdatedAt
-
+	if err == nil {
+		user.ID = u.ID
+		user.CreatedAt = u.CreatedAt
+		user.UpdatedAt = u.UpdatedAt
+	}
 	return
 }
 

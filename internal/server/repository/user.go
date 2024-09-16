@@ -29,7 +29,7 @@ func (s *userStore) SaveUser(ctx context.Context, user *model.DBUser) (err error
 		query string
 		args  []interface{}
 	)
-	query, args, err = sq.Insert(clientTableName).
+	query, args, err = sq.Insert(userTableName).
 		SetMap(map[string]any{
 			"email":       user.Email,
 			"password":    user.Password,
@@ -46,7 +46,7 @@ RETURNING id, created_at, updated_at`).
 	if err != nil {
 		return
 	}
-	err = s.db.GetContext(ctx, &user, query, args...)
+	err = s.db.GetContext(ctx, user, query, args...)
 	return
 }
 
