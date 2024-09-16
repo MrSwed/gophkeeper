@@ -125,6 +125,7 @@ func (suite *AppTestSuite) SetupSuite() {
 
 	suite.T().Setenv("DATABASE_DSN", databaseDSN)
 	suite.T().Setenv("GRPC_ADDRESS", suite.address)
+	suite.T().Setenv("GRPC_OPERATION_TIMEOUT", "5000s")
 
 	go RunApp(suite.ctx, nil, nil, BuildMetadata{Version: "testing..", Date: time.Now().String(), Commit: ""})
 	require.NoError(suite.T(), waitGRPCPort(suite.ctx, suite.address))
@@ -153,6 +154,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 		wantErr  error
 	}{
 		{
+			name: "success register",
 			req: &pb.RegisterClientRequest{
 				Email:    "test@email.ru",
 				Password: "11111",
