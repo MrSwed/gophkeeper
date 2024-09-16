@@ -68,3 +68,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE TRIGGER mdt_clients
+ BEFORE UPDATE
+ ON clients
+ FOR EACH ROW
+EXECUTE PROCEDURE hash_update_tg();

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"gophKeeper/internal/server/config"
@@ -28,25 +29,24 @@ func NewServiceAuth(r repository.Storage, c *config.Config) Auth {
 // auth by email and password, return client token for sync
 func (s auth) GetClientToken(ctx context.Context, req model.AuthRequest) (token []byte, err error) {
 	var (
-		email    = req.Email
-		passHash []byte
-		u        model.DBUser
-		exp      = time.Now().Add(constant.ExpDuration)
+		email = req.Email
+		u     model.DBUser
+		exp   = time.Now().Add(constant.ExpDuration)
 	)
 	u, err = s.r.GetUserByEmail(ctx, email)
 	if err != nil {
 		return
 	}
-	passHash, err = bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return
-	}
 
-	if nil != bcrypt.CompareHashAndPassword(passHash, u.Password) {
+	if nil != bcrypt.CompareHashAndPassword(u.Password, []byte(req.Password)) {
 		err = errs.ErrorWrongAuth
 		return
 	}
+	var meta []byte
+	meta, err = json.Marshal(req.Meta)
+	if err != nil {
 
-	token, err = s.r.NewUserClientToken(ctx, u.ID, &exp, req.Meta)
+	}
+	token, err = s.r.NewUserClientToken(ctx, u.ID, &exp, meta)
 	return
 }
