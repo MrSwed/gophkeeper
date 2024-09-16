@@ -48,7 +48,7 @@ create index storage_created_at_index
 
 create table clients
 (
- token      bytea                                              not null
+ token bytea default digest(md5(random()::text), 'sha256') not null
   primary key,
  user_id    uuid                                               not null
   constraint clients_users_id_fk
@@ -58,18 +58,3 @@ create table clients
  expired_at timestamp with time zone
 );
 
-CREATE OR REPLACE FUNCTION hash_update_tg() RETURNS trigger AS
-$$
-BEGIN
- IF tg_op = 'INSERT' THEN
-  NEW.token = digest(md5(random()::text), 'sha256');
-  RETURN NEW;
- END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER mdt_clients
- BEFORE UPDATE
- ON clients
- FOR EACH ROW
-EXECUTE PROCEDURE hash_update_tg();
