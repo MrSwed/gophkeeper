@@ -141,11 +141,10 @@ func (suite *AppTestSuite) TestRegisterClient() {
 	t := suite.T()
 
 	tests := []struct {
-		name     string
-		req      *pb.RegisterClientRequest
-		wantResp *pb.ClientToken
-		headers  map[string]string
-		wantErr  []string
+		name    string
+		req     *pb.RegisterClientRequest
+		headers map[string]string
+		wantErr []string
 	}{
 		{
 			name: "success register",
