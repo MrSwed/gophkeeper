@@ -58,7 +58,12 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	if (in.GetUpdatedAt().IsValid() && ((storedUser.UpdatedAt != nil &&
 		in.UpdatedAt.AsTime().After(*storedUser.UpdatedAt)) ||
 		storedUser.UpdatedAt == nil)) || storedUser.CreatedAt.IsZero() {
-		storedUser.Description = in.GetDescription()
+		if in.GetDescription() != "" {
+			if storedUser.Description == nil {
+				storedUser.Description = new(string)
+			}
+			*storedUser.Description = in.GetDescription()
+		}
 		storedUser.CreatedAt = in.GetCreatedAt().AsTime()
 		storedUser.PackedKey = in.GetPackedKey()
 		storedUser.Password = in.GetPassword()
@@ -77,7 +82,9 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 
 	// incoming is oldest, return from server store
 	out.PackedKey = storedUser.PackedKey
-	out.Description = storedUser.Description
+	if storedUser.Description != nil {
+		out.Description = *storedUser.Description
+	}
 	out.CreatedAt = timestamppb.New(storedUser.CreatedAt)
 	if storedUser.UpdatedAt != nil {
 		out.UpdatedAt = timestamppb.New(*storedUser.UpdatedAt)

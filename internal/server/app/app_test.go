@@ -8,10 +8,12 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -36,6 +38,9 @@ type AppTestSuite struct {
 
 func createPostgresContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
 	pgContainer, err := postgres.Run(ctx, "postgres:14-alpine",
+		// postgres.WithInitScripts(
+		// 	filepath.Join("../../../", "testdata", "server.sql"),
+		// ),
 		postgres.WithDatabase("test-db"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
@@ -90,24 +95,6 @@ func testGRPCDial(addr string, ctx context.Context, meta map[string]string) (
 	return
 }
 
-/*
-func testGRPCProto(suite AppTestSuite) {
-	t := suite.T()
-	t.Run("generated grpc proto not implemented", func(t *testing.T) {
-		g := myGrpc.NewMetricsServer(suite.Srv(), suite.Cfg(), zap.NewNop())
-		ctx := context.Background()
-		_, err := g.UnimplementedMetricsServer.GetMetrics(ctx, nil)
-		assert.Error(t, err, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented"))
-		_, err = g.UnimplementedMetricsServer.GetMetric(ctx, nil)
-		assert.Error(t, err, status.Errorf(codes.Unimplemented, "method GetMetric not implemented"))
-		_, err = g.UnimplementedMetricsServer.SetMetrics(ctx, nil)
-		assert.Error(t, err, status.Errorf(codes.Unimplemented, "method SetMetrics not implemented"))
-		_, err = g.UnimplementedMetricsServer.SetMetric(ctx, nil)
-		assert.Error(t, err, status.Errorf(codes.Unimplemented, "method SetMetric not implemented"))
-	})
-}
-*/
-
 func (suite *AppTestSuite) SetupSuite() {
 	var (
 		err error
@@ -129,6 +116,12 @@ func (suite *AppTestSuite) SetupSuite() {
 
 	go RunApp(suite.ctx, nil, nil, BuildMetadata{Version: "testing..", Date: time.Now().String(), Commit: ""})
 	require.NoError(suite.T(), waitGRPCPort(suite.ctx, suite.address))
+
+	db, err := sqlx.Connect("postgres", databaseDSN)
+	predefined, err := os.ReadFile(filepath.Join("../../../", "testdata", "server.sql"))
+	require.NoError(suite.T(), err)
+	_, err = db.Exec(string(predefined))
+	require.NoError(suite.T(), err)
 }
 
 func (suite *AppTestSuite) TearDownSuite() {
@@ -161,7 +154,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			},
 		},
 		{
-			name: "bad password",
+			name: "not valid password",
 			req: &pb.RegisterClientRequest{
 				Email:    "test2@email.ru",
 				Password: "11111",
@@ -169,7 +162,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			wantErr: true,
 		},
 		{
-			name: "bad email",
+			name: "not valid email",
 			req: &pb.RegisterClientRequest{
 				Email:    "test2-email.ru",
 				Password: "Ansddd12@!",
@@ -180,6 +173,14 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			name: "empty password",
 			req: &pb.RegisterClientRequest{
 				Email: "test2@email.ru",
+			},
+			wantErr: true,
+		},
+		{
+			name: "exist user, wrong password",
+			req: &pb.RegisterClientRequest{
+				Email:    "example@example.com",
+				Password: "Ansddd12@!###dddsdf",
 			},
 			wantErr: true,
 		},
