@@ -3,14 +3,15 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"gophKeeper/internal/helper"
 	pb "gophKeeper/internal/proto"
 	"gophKeeper/internal/server/config"
 	"gophKeeper/internal/server/constant"
+	errs "gophKeeper/internal/server/errors"
 	"gophKeeper/internal/server/service"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"go.uber.org/zap"
@@ -68,13 +69,19 @@ func (h *Handler) skipMethod(method string) bool {
 
 func (h *Handler) unaryInterceptor(ctx context.Context, req interface{}, g *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	if !h.skipMethod(g.FullMethod) {
-		token := helper.GetGRPCCtxToken(ctx)
+		var token []byte
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if values := md.Get(constant.TokenKey); len(values) > 0 {
+				token = []byte(values[0])
+			}
+		}
+
 		if len(token) == 0 {
-			return nil, status.Error(codes.Unauthenticated, `missing token`)
+			return nil, status.Error(codes.Unauthenticated, errs.ErrorNoToken.Error())
 		}
 		userID, err := h.s.UserIDByToken(ctx, token)
 		if err != nil {
-			return nil, status.Error(codes.Unauthenticated, `invalid token`)
+			return nil, status.Error(codes.Unauthenticated, errs.ErrorInvalidToken.Error())
 		}
 
 		ctx = context.WithValue(ctx, constant.CtxUserID, userID)

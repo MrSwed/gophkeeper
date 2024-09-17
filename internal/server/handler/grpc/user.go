@@ -36,7 +36,7 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	ctx, cancel := context.WithTimeout(ctx, g.c.GRPCOperationTimeout)
 	defer cancel()
 	syncKey := in.GetEmail()
-	if syncKey != "" {
+	if syncKey == "" {
 		err = errs.ErrorSyncNoKey
 		return
 	}
@@ -58,19 +58,17 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	if (in.GetUpdatedAt().IsValid() && ((storedUser.UpdatedAt != nil &&
 		in.UpdatedAt.AsTime().After(*storedUser.UpdatedAt)) ||
 		storedUser.UpdatedAt == nil)) || storedUser.CreatedAt.IsZero() {
+		storedUser.Description = nil
 		if in.GetDescription() != "" {
-			if storedUser.Description == nil {
-				storedUser.Description = new(string)
-			}
+			storedUser.Description = new(string)
 			*storedUser.Description = in.GetDescription()
 		}
 		storedUser.CreatedAt = in.GetCreatedAt().AsTime()
 		storedUser.PackedKey = in.GetPackedKey()
 		storedUser.Password = in.GetPassword()
+		storedUser.UpdatedAt = nil
 		if in.GetUpdatedAt().IsValid() {
-			if storedUser.UpdatedAt == nil {
-				storedUser.UpdatedAt = new(time.Time)
-			}
+			storedUser.UpdatedAt = new(time.Time)
 			*storedUser.UpdatedAt = in.GetUpdatedAt().AsTime()
 		}
 		err = g.s.SaveSelf(ctx, &storedUser)
@@ -82,10 +80,12 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 
 	// incoming is oldest, return from server store
 	out.PackedKey = storedUser.PackedKey
+	out.Description = ""
 	if storedUser.Description != nil {
 		out.Description = *storedUser.Description
 	}
 	out.CreatedAt = timestamppb.New(storedUser.CreatedAt)
+	out.UpdatedAt = nil
 	if storedUser.UpdatedAt != nil {
 		out.UpdatedAt = timestamppb.New(*storedUser.UpdatedAt)
 	}
@@ -93,10 +93,11 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 }
 
 func (g *user) DeleteUser(ctx context.Context, in *pb.NoMessage) (out *pb.OkResponse, err error) {
-
+	// todo
 	return
 }
 func (g *user) DeleteClient(ctx context.Context, in *pb.NoMessage) (out *pb.OkResponse, err error) {
+	// todo
 
 	return
 }

@@ -7,7 +7,7 @@ type CtxKey string
 const (
 	CtxUserID CtxKey = "userID"
 
-	TokenKey = "key"
+	TokenKey = "tokenKey"
 
 	ExpDuration = time.Hour * 24 * 365
 

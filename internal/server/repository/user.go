@@ -79,7 +79,7 @@ func (s *userStore) GetUserIDByToken(ctx context.Context, token []byte) (userID 
 	query, args, err = sq.Select(`u.id`).
 		LeftJoin(clientTableName+" c on c.user_id = u.id").
 		From(userTableName+" u").
-		Where("token = ?", token).ToSql()
+		Where("token = decode(?, 'hex');", token).ToSql()
 	if err != nil {
 		return
 	}

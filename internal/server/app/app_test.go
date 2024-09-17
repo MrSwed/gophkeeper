@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "gophKeeper/internal/proto"
+	"gophKeeper/internal/server/constant"
 	errs "gophKeeper/internal/server/errors"
 	"log"
 	"math/rand"
@@ -15,6 +16,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -23,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const waitPortInterval = 100 * time.Millisecond
@@ -199,6 +202,119 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				}
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func (suite *AppTestSuite) TestSyncUser() {
+	t := suite.T()
+
+	existCreatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:00:00+03:00")
+	require.NoError(t, err)
+	existUpdatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:50:00+03:00")
+	require.NoError(t, err)
+	newCreatedAt := time.Now()
+	tests := []struct {
+		name     string
+		req      *pb.UserSync
+		wantResp *pb.UserSync
+		headers  map[string]string
+		wantErr  []string
+	}{
+		{
+			name: "no token",
+			req: &pb.UserSync{
+				Email: "example@example.com",
+			},
+			wantErr: []string{errs.ErrorNoToken.Error()},
+		},
+		{
+			name: "not valid token",
+			req: &pb.UserSync{
+				Email: "example@example.com",
+			},
+			headers: map[string]string{
+				constant.TokenKey: "not valid token",
+			},
+			wantErr: []string{errs.ErrorInvalidToken.Error()},
+		},
+		{
+			name: "new client, new server",
+			req: &pb.UserSync{
+				Email: "example1@example.com",
+			},
+			wantResp: &pb.UserSync{
+				Email:     "example1@example.com",
+				CreatedAt: timestamppb.New(existCreatedAt),
+			},
+			headers: map[string]string{
+				constant.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "send user",
+			req: &pb.UserSync{
+				Email:     "example2@example.com",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(newCreatedAt),
+				PackedKey: []byte("PackedKey"),
+			},
+			wantResp: &pb.UserSync{
+				Email:     "example2@example.com",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(newCreatedAt),
+				PackedKey: []byte("PackedKey"),
+			},
+			headers: map[string]string{
+				constant.TokenKey: "862AB376DF9DBD090F28F9DD9A2F5F1C9F88F05D27B63AE3942B5057C6BA2688",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "get user",
+			req: &pb.UserSync{
+				Email:       "example3@example.com",
+				UpdatedAt:   timestamppb.New(existUpdatedAt.Add(-1 * time.Hour)),
+				PackedKey:   []byte("some existed packed data"),
+				Description: "description",
+			},
+			wantResp: &pb.UserSync{
+				Email:     "example3@example.com",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(existUpdatedAt),
+				PackedKey: []byte("predefined packed data"),
+			},
+			headers: map[string]string{
+				constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, conn, callOpt, err := testGRPCDial(suite.address, ctx, tt.headers)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, conn.Close()) }()
+			client := pb.NewUserClient(conn)
+			data, err := client.SyncUser(ctx, tt.req, callOpt...)
+			if tt.wantErr != nil {
+				for _, e := range tt.wantErr {
+					require.Contains(t, err.Error(), e)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.wantResp != nil {
+				assert.Equal(t, tt.wantResp.Email, data.Email, "Email")
+				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.CreatedAt.AsTime(), "CreatedAt")
+				if tt.wantResp.UpdatedAt != nil {
+					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.UpdatedAt.AsTime(), "UpdatedAt")
+				}
+				assert.Equal(t, tt.wantResp.Description, data.Description, "Description")
+				assert.Equal(t, tt.wantResp.PackedKey, data.PackedKey, "PackedKey")
 			}
 		})
 	}
