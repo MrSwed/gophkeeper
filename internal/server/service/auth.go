@@ -29,11 +29,10 @@ func NewServiceAuth(r repository.Storage, c *config.Config) Auth {
 // auth by email and password, return client token for sync
 func (s auth) GetClientToken(ctx context.Context, req model.AuthRequest) (token []byte, err error) {
 	var (
-		email = req.Email
-		u     model.DBUser
-		exp   = time.Now().Add(constant.ExpDuration)
+		u   model.DBUser
+		exp = time.Now().Add(constant.ExpDuration)
 	)
-	u, err = s.r.GetUserByEmail(ctx, email)
+	u, err = s.r.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return
 	}
@@ -45,7 +44,7 @@ func (s auth) GetClientToken(ctx context.Context, req model.AuthRequest) (token 
 	var meta []byte
 	meta, err = json.Marshal(req.Meta)
 	if err != nil {
-
+		return
 	}
 	token, err = s.r.NewUserClientToken(ctx, u.ID, &exp, meta)
 	return

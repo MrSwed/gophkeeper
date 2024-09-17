@@ -46,6 +46,10 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			// register new one with login data, rest at sync
+			err = req.Validate()
+			if err != nil {
+				return
+			}
 			u := &model.User{
 				Email:    in.GetEmail(),
 				Password: in.GetPassword(),

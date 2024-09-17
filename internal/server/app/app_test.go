@@ -151,14 +151,37 @@ func (suite *AppTestSuite) TestRegisterClient() {
 		req      *pb.RegisterClientRequest
 		wantResp *pb.ClientToken
 		headers  map[string]string
-		wantErr  error
+		wantErr  bool
 	}{
 		{
 			name: "success register",
 			req: &pb.RegisterClientRequest{
-				Email:    "test@email.ru",
+				Email:    "test1@email.ru",
+				Password: "Ansddd12@!",
+			},
+		},
+		{
+			name: "bad password",
+			req: &pb.RegisterClientRequest{
+				Email:    "test2@email.ru",
 				Password: "11111",
 			},
+			wantErr: true,
+		},
+		{
+			name: "bad email",
+			req: &pb.RegisterClientRequest{
+				Email:    "test2-email.ru",
+				Password: "Ansddd12@!",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty password",
+			req: &pb.RegisterClientRequest{
+				Email: "test2@email.ru",
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -169,7 +192,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			defer func() { require.NoError(t, conn.Close()) }()
 			client := pb.NewAuthClient(conn)
 			_, err = client.RegisterClient(ctx, tt.req, callOpt...)
-			if tt.wantErr != nil {
+			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)

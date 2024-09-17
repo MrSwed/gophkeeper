@@ -5,7 +5,7 @@ create table users
  id          uuid primary key default gen_random_uuid(),
  email       varchar(255)                               not null
   constraint email_pk unique,
- password    bytea,
+ password    bytea                                      not null,
  description text,
  packed_key  bytea,
  created_at  timestamptz      DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -48,13 +48,13 @@ create index storage_created_at_index
 
 create table clients
 (
- token bytea default digest(md5(random()::text), 'sha256') not null
+ token      bytea                    default digest(md5(random()::text), 'sha256') not null
   primary key,
- user_id    uuid                                               not null
+ user_id    uuid                                                                   not null
   constraint clients_users_id_fk
    references users,
  meta       json,
- created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+ created_at timestamp with time zone default CURRENT_TIMESTAMP                     not null,
  expired_at timestamp with time zone
 );
 
