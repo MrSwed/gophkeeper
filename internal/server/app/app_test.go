@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "gophKeeper/internal/proto"
+	errs "gophKeeper/internal/server/errors"
 	"log"
 	"math/rand"
 	"net"
@@ -144,7 +145,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 		req      *pb.RegisterClientRequest
 		wantResp *pb.ClientToken
 		headers  map[string]string
-		wantErr  bool
+		wantErr  []string
 	}{
 		{
 			name: "success register",
@@ -159,7 +160,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2@email.ru",
 				Password: "11111",
 			},
-			wantErr: true,
+			wantErr: []string{"Error:Field validation for 'Password'"},
 		},
 		{
 			name: "not valid email",
@@ -167,14 +168,14 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2-email.ru",
 				Password: "Ansddd12@!",
 			},
-			wantErr: true,
+			wantErr: []string{"Error:Field validation for 'Email'"},
 		},
 		{
 			name: "empty password",
 			req: &pb.RegisterClientRequest{
 				Email: "test2@email.ru",
 			},
-			wantErr: true,
+			wantErr: []string{"Error:Field validation for 'Password'", "required"},
 		},
 		{
 			name: "exist user, wrong password",
@@ -182,7 +183,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "example@example.com",
 				Password: "Ansddd12@!###dddsdf",
 			},
-			wantErr: true,
+			wantErr: []string{errs.ErrorWrongAuth.Error()},
 		},
 	}
 	for _, tt := range tests {
@@ -193,8 +194,10 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			defer func() { require.NoError(t, conn.Close()) }()
 			client := pb.NewAuthClient(conn)
 			_, err = client.RegisterClient(ctx, tt.req, callOpt...)
-			if tt.wantErr {
-				require.Error(t, err)
+			if tt.wantErr != nil {
+				for _, e := range tt.wantErr {
+					require.Contains(t, err.Error(), e)
+				}
 			} else {
 				require.NoError(t, err)
 			}
