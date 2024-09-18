@@ -66,7 +66,7 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 	ctx, cancel := context.WithTimeout(ctx, g.c.GRPCOperationTimeout)
 	defer cancel()
 	syncKey := in.GetKey()
-	if syncKey != "" {
+	if syncKey == "" {
 		err = errs.ErrorSyncNoKey
 		return
 	}
