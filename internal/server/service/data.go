@@ -37,7 +37,7 @@ func (s *serv) ListSelf(ctx context.Context, q *model.ListQuery) (list model.Lis
 }
 
 func (s *serv) GetSelfItem(ctx context.Context, k string) (item *model.Item, err error) {
-	item = new(model.Item)
+	item = &model.Item{ItemShort: model.ItemShort{Key: k}}
 	var (
 		userID uuid.UUID
 		dbItem model.DBRecord

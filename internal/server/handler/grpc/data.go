@@ -50,12 +50,14 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 	}
 	for i, item := range list.Items {
 		out.Items[i] = &pb.ItemShort{
-			Key:         item.Key,
-			Description: item.Description,
-			CreatedAt:   timestamppb.New(item.CreatedAt),
+			Key:       item.Key,
+			CreatedAt: timestamppb.New(item.CreatedAt),
 		}
 		if item.UpdatedAt != nil {
 			out.Items[i].UpdatedAt = timestamppb.New(*item.UpdatedAt)
+		}
+		if item.Description != nil {
+			out.Items[i].Description = *item.Description
 		}
 	}
 	return
@@ -78,7 +80,7 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 		return
 	}
 
-	if !item.IsNew() && !item.CreatedAt.IsZero() && !in.CreatedAt.AsTime().Equal(item.CreatedAt) {
+	if !item.IsNew() && in.CreatedAt != nil && !in.CreatedAt.AsTime().Equal(item.CreatedAt) {
 		err = fmt.Errorf("%w key: %s", errs.ErrorSyncSameKey, syncKey)
 		return
 	}
@@ -92,7 +94,10 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 	if item.CreatedAt.IsZero() || (in.GetUpdatedAt().IsValid() && ((item.UpdatedAt != nil &&
 		in.UpdatedAt.AsTime().After(*item.UpdatedAt)) ||
 		item.UpdatedAt == nil)) {
-		item.Description = in.GetDescription()
+		if in.GetDescription() != "" {
+			item.Description = new(string)
+			*item.Description = in.GetDescription()
+		}
 		item.CreatedAt = in.GetCreatedAt().AsTime()
 		item.Blob = in.GetBlob()
 		if in.GetUpdatedAt().IsValid() {
@@ -110,7 +115,10 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 
 	// incoming is oldest or empty, return from server store
 	out.Blob = item.Blob
-	out.Description = item.Description
+	out.Description = ""
+	if item.Description != nil {
+		out.Description = *item.Description
+	}
 	out.CreatedAt = timestamppb.New(item.CreatedAt)
 	if item.UpdatedAt != nil {
 		out.UpdatedAt = timestamppb.New(*item.UpdatedAt)

@@ -8,7 +8,7 @@ import (
 
 type ItemShort struct {
 	Key         string     `db:"key"`
-	Description string     `db:"description"`
+	Description *string    `db:"description"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
 }

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"gophKeeper/internal/server/config"
 	"gophKeeper/internal/server/model"
 
@@ -97,15 +96,11 @@ func (s *dataStore) SaveDataItem(ctx context.Context, item model.DBRecord) (err 
 	// 	err = errors.New("UserID should not be nil")
 	// 	return
 	// }
-	if item.Key == "" {
-		err = errors.New("key is required")
-		return
-	}
 
 	query, args, err = sq.Insert(storeTableName).
 		Columns(`key, user_id, description, created_at, updated_at, filename, blob`).
 		Values(item.Key, item.UserID, item.Description, item.CreatedAt, item.UpdatedAt, item.FileName, item.Blob).
-		Prefix(`on conflict (key, userID) do update 
+		Suffix(`on conflict (key, user_id) do update 
   set description=excluded.description,
       updated_at=excluded.updated_at,
       filename=excluded.filename,
