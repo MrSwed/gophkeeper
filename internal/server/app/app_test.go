@@ -292,6 +292,17 @@ func (suite *AppTestSuite) TestSyncUser() {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "bad sync key",
+			req: &pb.UserSync{
+				Description: "description",
+			},
+
+			headers: map[string]string{
+				constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+			},
+			wantErr: []string{errs.ErrorSyncNoKey.Error()},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
