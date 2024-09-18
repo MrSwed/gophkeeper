@@ -331,3 +331,140 @@ func (suite *AppTestSuite) TestSyncUser() {
 		})
 	}
 }
+
+func (suite *AppTestSuite) TestSyncItem() {
+	t := suite.T()
+
+	existCreatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:00:00+03:00")
+	require.NoError(t, err)
+	existUpdatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:50:00+03:00")
+	require.NoError(t, err)
+	headers := map[string]string{
+		constant.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
+	}
+	timeNow := time.Now()
+	tests := []struct {
+		name     string
+		req      *pb.ItemSync
+		wantResp *pb.ItemSync
+		headers  map[string]string
+		wantErr  []string
+	}{
+		{
+			name: "no token",
+			req: &pb.ItemSync{
+				Key: "some-key",
+			},
+			wantErr: []string{errs.ErrorNoToken.Error()},
+		},
+		{
+			name: "not valid token",
+			req: &pb.ItemSync{
+				Key: "some-key",
+			},
+			headers: map[string]string{
+				constant.TokenKey: "not valid token",
+			},
+			wantErr: []string{errs.ErrorInvalidToken.Error()},
+		},
+		{
+			name: "new from client",
+			req: &pb.ItemSync{
+				Key:       "some-key",
+				CreatedAt: timestamppb.New(timeNow),
+				Blob:      []byte("some blob data"),
+			},
+			wantResp: &pb.ItemSync{
+				Key:       "some-key",
+				CreatedAt: timestamppb.New(timeNow),
+				Blob:      []byte("some blob data"),
+			},
+			headers: headers,
+			wantErr: nil,
+		},
+		{
+			name: "sync key required",
+			req: &pb.ItemSync{
+				Blob: []byte("some blob data"),
+			},
+			headers: headers,
+			wantErr: []string{errs.ErrorSyncNoKey.Error()},
+		},
+		{
+			name: "new from server",
+			req: &pb.ItemSync{
+				Key: "some-exist-key",
+			},
+			wantResp: &pb.ItemSync{
+				Key:       "some-exist-key",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(existUpdatedAt),
+				Blob:      []byte("some existed blob data"),
+			},
+			headers: headers,
+			wantErr: nil,
+		},
+		{
+			name: "exist from server",
+			req: &pb.ItemSync{
+				Key:         "some-exist-key1",
+				CreatedAt:   timestamppb.New(existCreatedAt),
+				UpdatedAt:   timestamppb.New(existUpdatedAt.Add(-1 * time.Hour)),
+				Blob:        []byte("some old blob data"),
+				Description: "description",
+			},
+			wantResp: &pb.ItemSync{
+				Key:         "some-exist-key1",
+				CreatedAt:   timestamppb.New(existCreatedAt),
+				UpdatedAt:   timestamppb.New(existUpdatedAt),
+				Blob:        []byte("some existed more new blob data"),
+				Description: "new description",
+			},
+			headers: headers,
+			wantErr: nil,
+		},
+		{
+			name: "soft delete exist from server",
+			req: &pb.ItemSync{
+				Key:       "some-exist-key2",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(timeNow),
+				Blob:      nil,
+			},
+			wantResp: &pb.ItemSync{
+				Key:       "some-exist-key2",
+				CreatedAt: timestamppb.New(existCreatedAt),
+				UpdatedAt: timestamppb.New(timeNow),
+				Blob:      nil,
+			},
+			headers: headers,
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, conn, callOpt, err := testGRPCDial(suite.address, ctx, tt.headers)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, conn.Close()) }()
+			client := pb.NewDataClient(conn)
+			data, err := client.SyncItem(ctx, tt.req, callOpt...)
+			if tt.wantErr != nil {
+				for _, e := range tt.wantErr {
+					require.Contains(t, err.Error(), e)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.wantResp != nil {
+				assert.Equal(t, tt.wantResp.Key, data.Key, "Key")
+				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.CreatedAt.AsTime(), "CreatedAt")
+				if tt.wantResp.UpdatedAt != nil {
+					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.UpdatedAt.AsTime(), "UpdatedAt")
+				}
+				assert.Equal(t, tt.wantResp.Description, data.Description, "Description")
+				assert.Equal(t, tt.wantResp.Blob, data.Blob, "Blob")
+			}
+		})
+	}
+}
