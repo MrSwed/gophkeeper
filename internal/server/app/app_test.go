@@ -182,7 +182,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 		{
 			name: "exist user, wrong password",
 			req: &pb.RegisterClientRequest{
-				Email:    "example@example.com",
+				Email:    "example1@example.com",
 				Password: "Ansddd12@!###dddsdf",
 			},
 			wantErr: []string{errs.ErrorWrongAuth.Error()},
@@ -197,6 +197,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 			client := pb.NewAuthClient(conn)
 			_, err = client.RegisterClient(ctx, tt.req, callOpt...)
 			if tt.wantErr != nil {
+				require.Error(t, err)
 				for _, e := range tt.wantErr {
 					require.Contains(t, err.Error(), e)
 				}
