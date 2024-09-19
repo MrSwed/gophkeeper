@@ -40,6 +40,8 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 		q    = new(model.ListQuery)
 		list model.List
 	)
+	q.Offset = in.Offset
+	q.Limit = in.Limit
 	list, err = g.s.ListSelf(ctx, q)
 	if err != nil {
 		return

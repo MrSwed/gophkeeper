@@ -56,8 +56,7 @@ func (s *dataStore) ListDataItems(ctx context.Context, q *model.ListQuery) (list
 			sqlBuild = sqlBuild.Offset(q.Offset)
 		}
 	}
-	query, args, err = sqlBuild.
-		ToSql()
+	query, args, err = sqlBuild.ToSql()
 	if err != nil {
 		return
 	}
