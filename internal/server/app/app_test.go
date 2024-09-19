@@ -468,3 +468,110 @@ func (suite *AppTestSuite) TestSyncItem() {
 		})
 	}
 }
+
+func (suite *AppTestSuite) TestList() {
+	t := suite.T()
+
+	existCreatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:00:00+03:00")
+	require.NoError(t, err)
+	existUpdatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:50:00+03:00")
+	require.NoError(t, err)
+
+	headers := map[string]string{
+		constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+	}
+	tests := []struct {
+		name     string
+		req      *pb.ListRequest
+		wantResp *pb.ListResponse
+		headers  map[string]string
+		wantErr  []string
+	}{
+		{
+			name:    "no token",
+			req:     &pb.ListRequest{},
+			wantErr: []string{errs.ErrorNoToken.Error()},
+		},
+		{
+			name: "not valid token",
+			req:  &pb.ListRequest{},
+			headers: map[string]string{
+				constant.TokenKey: "not valid token",
+			},
+			wantErr: []string{errs.ErrorInvalidToken.Error()},
+		},
+		{
+			name: "get list no param",
+			wantResp: &pb.ListResponse{
+				Total: 3,
+				Items: []*pb.ItemShort{
+					{
+						Key:         "some-exist-key",
+						Description: "",
+						CreatedAt:   timestamppb.New(existCreatedAt),
+					},
+					{
+						Key:         "some-exist-key1",
+						Description: "new description",
+						CreatedAt:   timestamppb.New(existCreatedAt),
+						UpdatedAt:   timestamppb.New(existUpdatedAt),
+					},
+					{
+						Key:         "some-exist-key2",
+						Description: "new description2",
+						CreatedAt:   timestamppb.New(existCreatedAt),
+						UpdatedAt:   timestamppb.New(existUpdatedAt),
+					},
+				},
+			},
+			headers: headers,
+		},
+		{
+			name: "get list limit",
+			req: &pb.ListRequest{
+				Limit: 1,
+			},
+			wantResp: &pb.ListResponse{
+				Total: 3,
+				Items: []*pb.ItemShort{
+					{
+						Key:       "some-exist-key",
+						CreatedAt: timestamppb.New(existCreatedAt),
+					},
+				},
+			},
+			headers: headers,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, conn, callOpt, err := testGRPCDial(suite.address, ctx, tt.headers)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, conn.Close()) }()
+			client := pb.NewDataClient(conn)
+			data, err := client.List(ctx, tt.req, callOpt...)
+			if tt.wantErr != nil {
+				for _, e := range tt.wantErr {
+					require.NotNil(t, err)
+					require.Contains(t, err.Error(), e)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.wantResp != nil {
+				assert.Equal(t, tt.wantResp.Total, data.Total, "Total")
+				assert.Equal(t, len(tt.wantResp.Items), len(data.Items), "len items")
+				for i, item := range tt.wantResp.Items {
+					assert.Equal(t, item.Key, data.Items[i].Key, fmt.Sprintf("%d. Key ", i))
+					assert.Equal(t, item.CreatedAt, data.Items[i].CreatedAt, fmt.Sprintf("%d. CreatedAt ", i))
+					if item.UpdatedAt != nil {
+						assert.Equal(t, item.UpdatedAt.AsTime(), data.Items[i].UpdatedAt.AsTime(), fmt.Sprintf("%d. updated at ", i))
+					}
+					assert.Equal(t, item.Description, data.Items[i].Description, fmt.Sprintf("%d. description ", i))
+				}
+			}
+		})
+	}
+}
