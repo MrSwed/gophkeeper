@@ -32,10 +32,6 @@ message ItemShort {
   google.protobuf.Timestamp updated_at = 4;
 }
 
-message ItemRequest {
-  string key = 1;
-}
-
 message ItemSync {
   string key = 1;
   string description = 2;
