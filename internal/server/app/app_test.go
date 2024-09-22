@@ -575,3 +575,73 @@ func (suite *AppTestSuite) TestList() {
 		})
 	}
 }
+
+func (suite *AppTestSuite) TestDeleteUser() {
+	t := suite.T()
+
+	headers := map[string]string{
+		constant.TokenKey: "7210ABC35DC938383CE233297698D1B3B5CEA3AE1F0A75E69CBF48961B841EDB",
+	}
+	tests := []struct {
+		name       string
+		req        *pb.NoMessage
+		wantResp   *pb.OkResponse
+		headers    map[string]string
+		wantErr    []string
+		wantErrTry []string
+	}{
+		{
+			name:    "no token",
+			req:     &pb.NoMessage{},
+			wantErr: []string{errs.ErrorNoToken.Error()},
+		},
+		{
+			name: "not valid token",
+			req:  &pb.NoMessage{},
+			headers: map[string]string{
+				constant.TokenKey: "not valid token",
+			},
+			wantErr: []string{errs.ErrorInvalidToken.Error()},
+		},
+		{
+			name: "delete success",
+			wantResp: &pb.OkResponse{
+				Ok: true,
+			},
+			headers:    headers,
+			wantErrTry: []string{errs.ErrorInvalidToken.Error()},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, conn, callOpt, err := testGRPCDial(suite.address, ctx, tt.headers)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, conn.Close()) }()
+			client := pb.NewUserClient(conn)
+			data, err := client.DeleteUser(ctx, tt.req, callOpt...)
+			if tt.wantErr != nil {
+				for _, e := range tt.wantErr {
+					require.NotNil(t, err)
+					require.Contains(t, err.Error(), e)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.wantResp != nil {
+				assert.Equal(t, tt.wantResp.Ok, data.Ok, "Ok")
+				if tt.wantResp.Ok {
+					// try again delete deleted user
+					data, err = client.DeleteUser(ctx, tt.req, callOpt...)
+					if tt.wantErr != nil {
+						for _, e := range tt.wantErr {
+							require.NotNil(t, err)
+							require.Contains(t, err.Error(), e)
+						}
+					}
+				}
+			}
+		})
+	}
+}
