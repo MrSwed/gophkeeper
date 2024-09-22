@@ -320,13 +320,14 @@ func (suite *AppTestSuite) TestSyncUser() {
 				require.NoError(t, err)
 			}
 			if tt.wantResp != nil {
-				assert.Equal(t, tt.wantResp.Email, data.Email, "Email")
-				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.CreatedAt.AsTime(), "CreatedAt")
+				assert.Equal(t, tt.wantResp.Email, data.GetEmail(), "Email")
+				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.GetCreatedAt().AsTime(), "CreatedAt")
 				if tt.wantResp.UpdatedAt != nil {
-					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.UpdatedAt.AsTime(), "UpdatedAt")
+					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.GetUpdatedAt().AsTime(), "UpdatedAt")
 				}
-				assert.Equal(t, tt.wantResp.Description, data.Description, "Description")
-				assert.Equal(t, tt.wantResp.PackedKey, data.PackedKey, "PackedKey")
+				assert.Equal(t, tt.wantResp.Description, data.GetDescription(), "Description")
+				assert.Equal(t, tt.wantResp.PackedKey, data.GetPackedKey(), "PackedKey")
+				assert.Equal(t, tt.wantResp.Password, data.GetPassword(), "password must be empty")
 			}
 		})
 	}
@@ -457,13 +458,13 @@ func (suite *AppTestSuite) TestSyncItem() {
 				require.NoError(t, err)
 			}
 			if tt.wantResp != nil {
-				assert.Equal(t, tt.wantResp.Key, data.Key, "Key")
-				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.CreatedAt.AsTime(), "CreatedAt")
+				assert.Equal(t, tt.wantResp.Key, data.GetKey(), "Key")
+				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.GetCreatedAt().AsTime(), "CreatedAt")
 				if tt.wantResp.UpdatedAt != nil {
-					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.UpdatedAt.AsTime(), "UpdatedAt")
+					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.GetUpdatedAt().AsTime(), "UpdatedAt")
 				}
-				assert.Equal(t, tt.wantResp.Description, data.Description, "Description")
-				assert.Equal(t, tt.wantResp.Blob, data.Blob, "Blob")
+				assert.Equal(t, tt.wantResp.Description, data.GetDescription(), "Description")
+				assert.Equal(t, tt.wantResp.Blob, data.GetBlob(), "Blob")
 			}
 		})
 	}
@@ -561,15 +562,15 @@ func (suite *AppTestSuite) TestList() {
 				require.NoError(t, err)
 			}
 			if tt.wantResp != nil {
-				assert.Equal(t, tt.wantResp.Total, data.Total, "Total")
-				assert.Equal(t, len(tt.wantResp.Items), len(data.Items), "len items")
+				assert.Equal(t, tt.wantResp.Total, data.GetTotal(), "Total")
+				assert.Equal(t, len(tt.wantResp.Items), len(data.GetItems()), "len items")
 				for i, item := range tt.wantResp.Items {
-					assert.Equal(t, item.Key, data.Items[i].Key, fmt.Sprintf("%d. Key ", i))
-					assert.Equal(t, item.CreatedAt, data.Items[i].CreatedAt, fmt.Sprintf("%d. CreatedAt ", i))
+					assert.Equal(t, item.Key, data.GetItems()[i].GetKey(), fmt.Sprintf("%d. Key ", i))
+					assert.Equal(t, item.CreatedAt, data.GetItems()[i].GetCreatedAt(), fmt.Sprintf("%d. CreatedAt ", i))
 					if item.UpdatedAt != nil {
-						assert.Equal(t, item.UpdatedAt.AsTime(), data.Items[i].UpdatedAt.AsTime(), fmt.Sprintf("%d. updated at ", i))
+						assert.Equal(t, item.UpdatedAt.AsTime(), data.Items[i].GetUpdatedAt().AsTime(), fmt.Sprintf("%d. updated at ", i))
 					}
-					assert.Equal(t, item.Description, data.Items[i].Description, fmt.Sprintf("%d. description ", i))
+					assert.Equal(t, item.Description, data.Items[i].GetDescription(), fmt.Sprintf("%d. description ", i))
 				}
 			}
 		})
@@ -630,7 +631,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 				require.NoError(t, err)
 			}
 			if tt.wantResp != nil {
-				assert.Equal(t, tt.wantResp.Ok, data.Ok, "Ok")
+				assert.Equal(t, tt.wantResp.Ok, data.GetOk(), "Ok")
 				if tt.wantResp.Ok {
 					// try again delete deleted user
 					data, err = client.DeleteUser(ctx, tt.req, callOpt...)
