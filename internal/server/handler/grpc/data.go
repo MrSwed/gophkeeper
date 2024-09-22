@@ -40,8 +40,8 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 		q    = new(model.ListQuery)
 		list model.List
 	)
-	q.Offset = in.Offset
-	q.Limit = in.Limit
+	q.Offset = in.GetOffset()
+	q.Limit = in.GetLimit()
 	list, err = g.s.ListSelf(ctx, q)
 	if err != nil {
 		return
@@ -82,19 +82,19 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 		return
 	}
 
-	if !item.IsNew() && in.CreatedAt != nil && !in.CreatedAt.AsTime().Equal(item.CreatedAt) {
+	if !item.IsNew() && in.GetCreatedAt() != nil && !in.GetCreatedAt().AsTime().Equal(item.CreatedAt) {
 		err = fmt.Errorf("%w key: %s", errs.ErrorSyncSameKey, syncKey)
 		return
 	}
 
 	// it is same data
-	if in.CreatedAt.AsTime().Equal(item.CreatedAt) && (item.UpdatedAt == nil || in.UpdatedAt.AsTime().Equal(*item.UpdatedAt)) {
+	if in.GetCreatedAt().AsTime().Equal(item.CreatedAt) && (item.UpdatedAt == nil || in.GetUpdatedAt().AsTime().Equal(*item.UpdatedAt)) {
 		return
 	}
 
 	// incoming data is newest - update server store
 	if item.CreatedAt.IsZero() || (in.GetUpdatedAt().IsValid() && ((item.UpdatedAt != nil &&
-		in.UpdatedAt.AsTime().After(*item.UpdatedAt)) ||
+		in.GetUpdatedAt().AsTime().After(*item.UpdatedAt)) ||
 		item.UpdatedAt == nil)) {
 		if in.GetDescription() != "" {
 			item.Description = new(string)

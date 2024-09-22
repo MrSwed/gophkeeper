@@ -49,8 +49,8 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 
 	// it is same data
 	if storedUser.PackedKey != nil &&
-		in.CreatedAt.AsTime().Equal(storedUser.CreatedAt) &&
-		(storedUser.UpdatedAt == nil || in.UpdatedAt.AsTime().Equal(*storedUser.UpdatedAt)) {
+		in.GetCreatedAt().AsTime().Equal(storedUser.CreatedAt) &&
+		(storedUser.UpdatedAt == nil || in.GetUpdatedAt().AsTime().Equal(*storedUser.UpdatedAt)) {
 		return
 	}
 
