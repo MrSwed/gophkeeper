@@ -21,7 +21,6 @@ service Auth {
 service User {
   rpc SyncUser (UserSync) returns (UserSync);
   rpc DeleteUser (NoMessage) returns (OkResponse);
-  rpc DeleteClient (NoMessage) returns (OkResponse);
 }
 
 message NoMessage{}

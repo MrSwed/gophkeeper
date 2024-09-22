@@ -232,7 +232,6 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 type UserClient interface {
 	SyncUser(ctx context.Context, in *UserSync, opts ...grpc.CallOption) (*UserSync, error)
 	DeleteUser(ctx context.Context, in *NoMessage, opts ...grpc.CallOption) (*OkResponse, error)
-	DeleteClient(ctx context.Context, in *NoMessage, opts ...grpc.CallOption) (*OkResponse, error)
 }
 
 type userClient struct {
@@ -261,22 +260,12 @@ func (c *userClient) DeleteUser(ctx context.Context, in *NoMessage, opts ...grpc
 	return out, nil
 }
 
-func (c *userClient) DeleteClient(ctx context.Context, in *NoMessage, opts ...grpc.CallOption) (*OkResponse, error) {
-	out := new(OkResponse)
-	err := c.cc.Invoke(ctx, "/service.User/DeleteClient", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
 type UserServer interface {
 	SyncUser(context.Context, *UserSync) (*UserSync, error)
 	DeleteUser(context.Context, *NoMessage) (*OkResponse, error)
-	DeleteClient(context.Context, *NoMessage) (*OkResponse, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -289,9 +278,6 @@ func (UnimplementedUserServer) SyncUser(context.Context, *UserSync) (*UserSync, 
 }
 func (UnimplementedUserServer) DeleteUser(context.Context, *NoMessage) (*OkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
-}
-func (UnimplementedUserServer) DeleteClient(context.Context, *NoMessage) (*OkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteClient not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -342,24 +328,6 @@ func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_DeleteClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NoMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServer).DeleteClient(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/service.User/DeleteClient",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).DeleteClient(ctx, req.(*NoMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -374,10 +342,6 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteUser",
 			Handler:    _User_DeleteUser_Handler,
-		},
-		{
-			MethodName: "DeleteClient",
-			Handler:    _User_DeleteClient_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
