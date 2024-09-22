@@ -124,22 +124,6 @@ func (s *userStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, ex
 	return
 }
 
-func (s *userStore) DeleteClient(ctx context.Context, userID uuid.UUID, token []byte) (err error) {
-	var (
-		query string
-		args  []interface{}
-	)
-	query, args, err = sq.Delete(clientTableName).
-		Where("token = ?", token).
-		Where("user_id = ?", userID).
-		ToSql()
-	if err != nil {
-		return
-	}
-	_, err = s.db.ExecContext(ctx, query, args...)
-	return
-}
-
 func (s *userStore) DeleteUser(ctx context.Context, userID uuid.UUID) (err error) {
 	var (
 		query string

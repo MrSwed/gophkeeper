@@ -73,12 +73,3 @@ func (s *user) DeleteSelf(ctx context.Context) (err error) {
 
 	return s.r.DeleteUser(ctx, userID)
 }
-
-func (s *user) DeleteSelfClient(ctx context.Context, token []byte) (err error) {
-	var userID uuid.UUID
-	userID, err = helper.GetCtxUserID(ctx)
-	if err != nil {
-		return
-	}
-	return s.r.DeleteClient(ctx, userID, token)
-}

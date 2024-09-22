@@ -90,12 +90,6 @@ func (s *dataStore) SaveDataItem(ctx context.Context, item model.DBRecord) (err 
 		query string
 		args  []interface{}
 	)
-	// todo: use it if db cannot check key reference
-	// if item.UserID == uuid.Nil {
-	// 	err = errors.New("UserID should not be nil")
-	// 	return
-	// }
-
 	query, args, err = sq.Insert(storeTableName).
 		Columns(`key, user_id, description, created_at, updated_at, filename, blob`).
 		Values(item.Key, item.UserID, item.Description, item.CreatedAt, item.UpdatedAt, item.FileName, item.Blob).

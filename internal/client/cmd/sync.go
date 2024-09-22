@@ -9,7 +9,7 @@ import (
 
 todo:
 
-	0.1. sunc now
+	0.1. sync now
 	0.2. sync cron(schedule)
 	0.4. agent mode, runned as daemon (?)
 */

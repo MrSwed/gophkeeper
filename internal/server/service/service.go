@@ -28,7 +28,6 @@ type User interface {
 	GetSelf(ctx context.Context) (user model.User, err error)
 	SaveSelf(ctx context.Context, user *model.User) (err error)
 	DeleteSelf(ctx context.Context) (err error)
-	DeleteSelfClient(ctx context.Context, token []byte) (err error)
 
 	UserIDByToken(ctx context.Context, token []byte) (uuid.UUID, error)
 }

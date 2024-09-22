@@ -92,12 +92,8 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	return
 }
 
-func (g *user) DeleteUser(ctx context.Context, in *pb.NoMessage) (out *pb.OkResponse, err error) {
-	// todo
-	return
-}
-func (g *user) DeleteClient(ctx context.Context, in *pb.NoMessage) (out *pb.OkResponse, err error) {
-	// todo
-
+func (g *user) DeleteUser(ctx context.Context, _ *pb.NoMessage) (out *pb.OkResponse, err error) {
+	err = g.s.DeleteSelf(ctx)
+	out = &pb.OkResponse{Ok: err == nil}
 	return
 }
