@@ -161,6 +161,10 @@ func (s *userStore) DeleteUser(ctx context.Context, userID uuid.UUID) (err error
 		Where("id = ?", userID).
 		ToSql()
 	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return
+	}
 
+	err = tx.Commit()
 	return
 }
