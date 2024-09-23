@@ -54,6 +54,12 @@ func TestNewServiceError(t *testing.T) {
 
 			err = srv.Delete("")
 			assert.Equal(t, err, tt.args.e, "Delete()")
+
+			err = srv.ChangePasswd()
+			assert.Equal(t, err, tt.args.e, "ChangePasswd()")
+
+			_, err = srv.GetToken()
+			assert.Equal(t, err, tt.args.e, "GetToken()")
 		})
 	}
 }
