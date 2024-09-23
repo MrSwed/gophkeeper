@@ -107,24 +107,26 @@ func newApp(ctx context.Context, stop context.CancelFunc, cfg *config.Config, lo
 }
 
 func (a *App) maybeConnectDB(ctx context.Context) {
-	if len(a.cfg.DatabaseDSN) > 0 {
-		var err error
-		if a.db, err = sqlx.ConnectContext(ctx, "postgres", a.cfg.DatabaseDSN); err != nil {
-			a.log.Fatal("cannot connect db", zap.Error(err))
-		}
-		a.isNewStore = false
-		a.log.Info("DB connected")
-		versions, errM := myMigrate.Migrate(a.db.DB)
-		switch {
-		case errors.Is(errM, migrate.ErrNoChange):
-			a.log.Info("DB migrate: ", zap.Any("info", errM), zap.Any("versions", versions))
-		case errM == nil:
-			a.log.Info("DB migrate: new applied ", zap.Any("versions", versions))
-			a.isNewStore = versions[0] == 0
-		default:
-			a.log.Fatal("DB migrate: ", zap.Any("versions", versions), zap.Error(errM))
-		}
+	if len(a.cfg.DatabaseDSN) == 0 {
+		a.log.Fatal("database config is empty")
 	}
+	var err error
+	if a.db, err = sqlx.ConnectContext(ctx, "postgres", a.cfg.DatabaseDSN); err != nil {
+		a.log.Fatal("cannot connect db", zap.Error(err))
+	}
+	a.isNewStore = false
+	a.log.Info("DB connected")
+	versions, errM := myMigrate.Migrate(a.db.DB)
+	switch {
+	case errors.Is(errM, migrate.ErrNoChange):
+		a.log.Info("DB migrate: ", zap.Any("info", errM), zap.Any("versions", versions))
+	case errM == nil:
+		a.log.Info("DB migrate: new applied ", zap.Any("versions", versions))
+		a.isNewStore = versions[0] == 0
+	default:
+		a.log.Fatal("DB migrate: ", zap.Any("versions", versions), zap.Error(errM))
+	}
+
 }
 
 // func (a *App) shutdownFileStore(ctx context.Context) (err error) {
