@@ -1,7 +1,7 @@
-version?=1.0
+version?=1.1
 
-APP_NAME=server
-AGENT_NAME=agent
+SERVER_NAME=server
+CLIENT_NAME=client
 buildVersion=$(shell git log --pretty=format:"%h" -1)
 buildCommit=$(shell git log --pretty=format:"%s (%ad)" --date=rfc2822 -1)
 buildDate=$(shell date +'%Y-%m-%d %H:%M:%S')
@@ -9,27 +9,27 @@ buildDate=$(shell date +'%Y-%m-%d %H:%M:%S')
 dir:
 	mkdir -p ./bin
 
-clean_app: dir
-	rm -f ./bin/${APP_NAME}
-clean_agent: dir
-	rm -f ./bin/${AGENT_NAME}
+clean_server: dir
+	rm -f ./bin/${SERVER_NAME}
+clean_client: dir
+	rm -f ./bin/${CLIENT_NAME}
 
-clean: clean_agent clean_app
+clean: clean_client clean_server
 
-build_app: clean_app
+build_server: clean_server
 	CGO_ENABLED=1 \
-    go build -ldflags "-X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${APP_NAME}" ./cmd/${APP_NAME}/*.go
+    go build -ldflags "-X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${SERVER_NAME}" ./cmd/${SERVER_NAME}/*.go
 
-build_agent: clean_agent
-	go build -ldflags "-X 'app.buildVersion=${version} (${buildVersion})' -X 'app.buildDate=${buildDate}' -X 'app.buildCommit=${buildCommit}'" -o "./bin/${AGENT_NAME}" ./cmd/${AGENT_NAME}/*.go
+build_client: clean_client
+	go build -ldflags "-X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}" ./cmd/${CLIENT_NAME}/*.go
 
-build_all: build_app build_agent
+build_all: build_server build_client
 
-run_app: build_app
-	./bin/${APP_NAME}
+run_app: build_server
+	./bin/${SERVER_NAME}
 
-run_agent: build_agent
-	./bin/${AGENT_NAME}
+run_client: build_client
+	./bin/${CLIENT_NAME}
 
 test:
 	go test -v -count=1 ./...

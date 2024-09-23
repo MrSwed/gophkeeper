@@ -5,8 +5,17 @@ import (
 	"os"
 )
 
+var buildVersion string
+var buildDate string
+var buildCommit string
+
 func main() {
-	if err := cmd.NewApp().Execute(); err != nil {
+	err := cmd.NewApp(cmd.BuildMetadata{
+		Version: buildVersion,
+		Date:    buildDate,
+		Commit:  buildCommit,
+	}).Execute()
+	if err != nil {
 		os.Exit(1)
 	}
 }

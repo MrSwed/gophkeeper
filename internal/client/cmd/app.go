@@ -17,14 +17,21 @@ type App interface {
 	Execute() error
 }
 
+type BuildMetadata struct {
+	Version string `json:"buildVersion"`
+	Date    string `json:"buildDate"`
+	Commit  string `json:"buildCommit"`
+}
+
 type app struct {
+	v    BuildMetadata
 	db   *sqlx.DB
 	srv  service.Service
 	root *cobra.Command
 }
 
-func NewApp() (a *app) {
-	a = (&app{}).
+func NewApp(b BuildMetadata) (a *app) {
+	a = (&app{v: b}).
 		addRootCmd().
 		addConfigCmd().
 		addSaveCmd().
