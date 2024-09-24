@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -26,7 +27,11 @@ var testDataPath string = filepath.Join("..", "..", "..", "testdata")
 // https://github.com/spf13/cobra/issues/1790#issuecomment-2121139148
 func (s *appTestSuite) executeCommand(args ...string) (string, error) {
 	buf := new(bytes.Buffer)
-	a := NewApp()
+	a := NewApp(BuildMetadata{
+		Version: "N/A",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Commit:  "N/A",
+	})
 	a.root.SetOut(buf)
 	a.root.SetErr(buf)
 	a.root.SetArgs(args)
