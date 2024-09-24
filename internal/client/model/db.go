@@ -1,4 +1,4 @@
-package storage
+package model
 
 import (
 	_ "github.com/mattn/go-sqlite3"
@@ -15,8 +15,4 @@ type DBRecord struct {
 	DBItem
 	Filename *string `db:"filename,omitempty"`
 	Blob     []byte  `db:"blob" json:"blob"`
-}
-
-type ListItem struct {
-	DBItem
 }

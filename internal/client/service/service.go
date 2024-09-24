@@ -125,7 +125,7 @@ func (s *service) List(query model.ListQuery) (data out.List, err error) {
 	if data.Total, err = s.r.DB.Count(query); err != nil {
 		return
 	}
-	var items []storage.DBItem
+	var items []model.DBItem
 	items, err = s.r.DB.List(query)
 	if err != nil {
 		return
@@ -136,7 +136,7 @@ func (s *service) List(query model.ListQuery) (data out.List, err error) {
 
 func (s *service) Get(key string) (data out.Item, err error) {
 	var (
-		r storage.DBRecord
+		r model.DBRecord
 	)
 	if r, err = s.r.DB.Get(key); err != nil {
 		return
@@ -174,7 +174,7 @@ func (s *service) Save(data model.Model) (err error) {
 	if err = data.Validate(); err != nil {
 		return
 	}
-	var r storage.DBRecord
+	var r model.DBRecord
 	if r, err = s.r.DB.Get(data.GetKey()); err != nil &&
 		!errors.Is(err, sql.ErrNoRows) {
 		return
@@ -219,7 +219,7 @@ func (s *service) Save(data model.Model) (err error) {
 }
 
 func (s *service) Delete(key string) (err error) {
-	var r storage.DBRecord
+	var r model.DBRecord
 	if r, err = s.r.DB.Get(key); err != nil {
 		return
 	}

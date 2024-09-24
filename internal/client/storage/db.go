@@ -41,7 +41,7 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 	return b
 }
 
-func (s *dbStore) List(query model.ListQuery) (data []DBItem, err error) {
+func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 	var (
 		builder = sq.Select("key", "description", "created_at", "updated_at").
 			From("storage")
@@ -75,17 +75,17 @@ func (s *dbStore) Count(query model.ListQuery) (n int, err error) {
 	return
 }
 
-func (s *dbStore) Get(key string) (DBRecord, error) {
-	var data DBRecord
+func (s *dbStore) Get(key string) (model.DBRecord, error) {
+	var data model.DBRecord
 	err := s.db.Get(&data,
 		`SELECT key, description, created_at, updated_at, filename, blob FROM storage where key = ?`,
 		key)
 	if err != nil {
-		return DBRecord{}, err
+		return model.DBRecord{}, err
 	}
 	return data, nil
 }
-func (s *dbStore) Save(data DBRecord) (err error) {
+func (s *dbStore) Save(data model.DBRecord) (err error) {
 	_, err = s.db.Exec(`insert into storage 
  (key, description, created_at, updated_at, filename, blob)
  values(?,?,DATETIME('now'),DATETIME('now'),?,?)

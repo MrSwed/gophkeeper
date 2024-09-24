@@ -3,7 +3,6 @@ package out
 import (
 	"encoding/json"
 	"gophKeeper/internal/client/model"
-	"gophKeeper/internal/client/storage"
 )
 
 type dTypeRaw []byte
@@ -19,7 +18,7 @@ type dRaw struct {
 }
 
 type Item struct {
-	storage.DBItem
+	model.DBItem
 	Data model.Data `json:"data"`
 }
 
@@ -37,7 +36,7 @@ func (i *Item) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (i *Item) FromDBItem(dbItem storage.DBItem) {
+func (i *Item) FromDBItem(dbItem model.DBItem) {
 	i.DBItem = dbItem
 }
 
@@ -46,7 +45,7 @@ type List struct {
 	Total int    `json:"total"`
 }
 
-func (l *List) FromDBItems(r ...storage.DBItem) {
+func (l *List) FromDBItems(r ...model.DBItem) {
 	l.Items = make([]Item, len(r))
 	for idx, item := range r {
 		l.Items[idx].FromDBItem(item)

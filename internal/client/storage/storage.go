@@ -7,10 +7,10 @@ import (
 )
 
 type DB interface {
-	List(query model.ListQuery) (data []DBItem, err error)
+	List(query model.ListQuery) (data []model.DBItem, err error)
 	Count(query model.ListQuery) (n int, err error)
-	Get(key string) (data DBRecord, err error)
-	Save(data DBRecord) (err error)
+	Get(key string) (data model.DBRecord, err error)
+	Save(data model.DBRecord) (err error)
 	Delete(key string) (err error)
 }
 
