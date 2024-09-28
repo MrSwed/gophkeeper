@@ -57,15 +57,11 @@ func (a *app) addConfigCmd() *app {
 		Short: "change user config params",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cfg.GlobalLoad()
+			err := cfg.UserLoad()
 			if err != nil {
-				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
-				return
+				cmd.PrintErrf("failed to load config: %v\n", err)
 			}
-			err = cfg.UserLoad()
-			if err != nil {
-				cmd.PrintErrf("failed to load user profile: %v\n", err)
-			}
+
 			isAction := false
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				if flag.Changed {
@@ -107,15 +103,11 @@ func (a *app) addConfigCmd() *app {
 		Short: "Save now, for shell mode, if autosave disabled",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cfg.GlobalLoad()
+			err := cfg.UserLoad()
 			if err != nil {
-				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
-				return
+				cmd.PrintErrf("failed to load config: %v\n", err)
 			}
-			err = cfg.UserLoad()
-			if err != nil {
-				cmd.PrintErrf("failed to load user profile: %v\n", err)
-			}
+
 			cmd.Print("Saving global config.. ")
 			if cfg.Glob.IsChanged() {
 				err := cfg.Glob.Save()

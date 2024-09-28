@@ -89,14 +89,9 @@ also you can create new profile by command
 			Use:   "password",
 			Short: "set new password",
 			Run: func(cmd *cobra.Command, args []string) {
-				err := cfg.GlobalLoad()
+				err := cfg.UserLoad()
 				if err != nil {
-					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
-					return
-				}
-				err = cfg.UserLoad()
-				if err != nil {
-					cmd.PrintErrf("failed to load user profile: %v\n", err)
+					cmd.PrintErrf("failed to load config: %v\n", err)
 				}
 				cmd.Println("Current profile", cfg.GetUserName())
 				cmd.Println("Change password:.. ")

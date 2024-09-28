@@ -46,13 +46,9 @@ func NewApp(b BuildMetadata) (a *app) {
 // initialize the service with the configured store if it is not early
 func (a *app) Srv() service.Service {
 	if a.srv == nil {
-		err := cfg.GlobalLoad()
+		err := cfg.UserLoad()
 		if err != nil {
-			return service.NewServiceError(fmt.Errorf("error load global config: %v", err))
-		}
-		err = cfg.UserLoad()
-		if err != nil {
-			return service.NewServiceError(fmt.Errorf("error load current user profile: %v", err))
+			return service.NewServiceError(fmt.Errorf("error load config: %v", err))
 		}
 		a.root.Printf("User %s configuration loaded\n", cfg.User.GetString("name"))
 
