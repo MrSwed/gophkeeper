@@ -13,6 +13,11 @@ func (a *app) addProfileCmd() *app {
 		Use:   "profile",
 		Short: "Profiles menu",
 		Run: func(cmd *cobra.Command, args []string) {
+			err := cfg.GlobalLoad()
+			if err != nil {
+				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+				return
+			}
 			cmd.Println("Current profile", cfg.GetUserName())
 			// todo
 			_ = cmd.Usage()
