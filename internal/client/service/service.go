@@ -2,7 +2,6 @@ package service
 
 import (
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -175,15 +174,8 @@ func (s *service) Save(data model.Model) (err error) {
 		return
 	}
 	var r model.DBRecord
-	if r, err = s.r.DB.Get(data.GetKey()); err != nil &&
-		!errors.Is(err, sql.ErrNoRows) {
-		return
-	}
-	if r.Key == "" {
-		r.Key = data.GetKey()
-	}
+	r.Key = data.GetKey()
 	r.Description = data.GetDescription()
-
 	var blob []byte
 	blob, err = model.NewPackedBytes(data)
 	if err != nil {
@@ -197,11 +189,9 @@ func (s *service) Save(data model.Model) (err error) {
 		}
 		return
 	}
-
 	if blob, err = crypt.Encode(blob, token); err != nil {
 		return
 	}
-
 	if len(blob) > cfg.MaxBlobSize {
 		fileName := time.Now().Format("20060102150405") + "-" + r.Key
 		err = s.r.File.SaveStore(fileName, blob)
@@ -212,7 +202,6 @@ func (s *service) Save(data model.Model) (err error) {
 	} else {
 		r.Blob = blob
 	}
-
 	err = s.r.DB.Save(r)
 
 	return
