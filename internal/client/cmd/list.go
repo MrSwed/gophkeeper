@@ -3,6 +3,7 @@ package cmd
 import (
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/helper"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,11 @@ func (a *app) addListCmd() *app {
 			}
 			cmd.Printf("Total: %d\n", dataList.Total)
 			for _, item := range dataList.Items {
-				cmd.Printf("%s\t%s\t%s\n", item.Key, item.UpdatedAt, item.Description)
+				date := item.UpdatedAt
+				if date == nil {
+					date = &item.CreatedAt
+				}
+				cmd.Printf("%s\t%s\t%s\n", item.Key, date.Format(time.DateTime), item.Description)
 			}
 		},
 	}

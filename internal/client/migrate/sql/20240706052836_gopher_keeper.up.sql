@@ -3,9 +3,9 @@ create table storage
  key         TEXT not null
   constraint storage_pk
    primary key,
- description TEXT,
- created_at  integer DEFAULT CURRENT_TIMESTAMP,
- updated_at  integer DEFAULT CURRENT_TIMESTAMP,
+ description TEXT     DEFAULT '' not null,
+ created_at  datetime DEFAULT (datetime('now', 'localtime')),
+ updated_at  datetime,
  filename    text,
  blob        BLOB
 );
