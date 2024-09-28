@@ -40,7 +40,7 @@ func (c *config) AllSettings() (m map[string]any) {
 
 func (c *config) Save() error {
 	isNew := true
-	if c.Get("loaded_at") != nil {
+	if c.Viper.Get("loaded_at") != nil {
 		isNew = false
 	}
 	clearAfterSave := []string{"changed_at"}
@@ -72,27 +72,27 @@ func (c *config) Save() error {
 	_ = os.MkdirAll(c.path, 0755)
 
 	if isNew {
-		return c.SafeWriteConfig()
+		return c.Viper.SafeWriteConfig()
 	}
-	return c.WriteConfig()
+	return c.Viper.WriteConfig()
 }
 
 func (c *config) IsChanged() bool {
-	return c.Get("changed_at") != nil
+	return c.Viper.Get("changed_at") != nil
 }
 
 func (c *config) Load(name, path string, defaults map[string]any) error {
 	c.path = path
-	c.SetConfigName(name)
-	c.SetConfigType("json")
-	c.AddConfigPath(path)
-	c.AddConfigPath(".")
+	c.Viper.SetConfigName(name)
+	c.Viper.SetConfigType("json")
+	c.Viper.AddConfigPath(path)
+	c.Viper.AddConfigPath(".")
 	for k, v := range defaults {
 		c.Viper.SetDefault(k, v)
 	}
 	// _ = os.MkdirAll(path, 0755)
 
-	err := c.ReadInConfig()
+	err := c.Viper.ReadInConfig()
 	if errors.As(err, &viper.ConfigFileNotFoundError{}) {
 		return nil
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 func GetUserName() (userName string) {
-	userName = Glob.GetString("profile")
+	userName = Glob.Viper.GetString("profile")
 	if userName == "" {
 		userName = "default"
 		Glob.Set("profile", userName)
@@ -28,13 +28,13 @@ func UsrCfgDir(userNames ...string) (usrCfgDir string, err error) {
 	} else {
 		userName = GetUserName()
 	}
-	if cfgDir = Glob.GetString("config_path"); cfgDir == "" {
+	if cfgDir = Glob.Viper.GetString("config_path"); cfgDir == "" {
 		if cfgDir, err = os.UserConfigDir(); err != nil {
 			return
 		}
 	}
 	usrCfgDir = filepath.Join(cfgDir, AppName, userName)
-	profiles := Glob.GetStringMap("profiles")
+	profiles := Glob.Viper.GetStringMap("profiles")
 	profile, ok := profiles[strings.ToLower(userName)].(map[string]any)
 	if !ok {
 		profile = NewGlobProfileItem(usrCfgDir)
@@ -62,7 +62,7 @@ func UserLoad(reload ...bool) (err error) {
 		return
 	}
 	userName := GetUserName()
-	if User.Viper != nil && User.Get("loaded_at") != nil &&
+	if User.Viper != nil && User.Viper.Get("loaded_at") != nil &&
 		!(len(reload) > 0 && reload[0]) &&
 		userName == User.Viper.GetString("name") {
 		return
