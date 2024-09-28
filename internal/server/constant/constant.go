@@ -5,11 +5,7 @@ import "time"
 type CtxKey string
 
 const (
-	CtxUserID CtxKey = "userID"
-
-	TokenKey = "tokenKey"
-
-	ExpDuration = time.Hour * 24 * 365
-
-	ServerShutdownTimeout = 30
+	CtxUserID             CtxKey = "userID"
+	ExpDuration                  = time.Hour * 24 * 365
+	ServerShutdownTimeout        = 30
 )

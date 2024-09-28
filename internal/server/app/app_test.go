@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	pb "gophKeeper/internal/proto"
-	"gophKeeper/internal/server/constant"
 	errs "gophKeeper/internal/server/errors"
 	"log"
 	"math/rand"
@@ -236,7 +235,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 				Email: "example@example.com",
 			},
 			headers: map[string]string{
-				constant.TokenKey: "not valid token",
+				pb.TokenKey: "not valid token",
 			},
 			wantErr: []string{errs.ErrorInvalidToken.Error()},
 		},
@@ -250,7 +249,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 				CreatedAt: timestamppb.New(existCreatedAt),
 			},
 			headers: map[string]string{
-				constant.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
+				pb.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
 			},
 			wantErr: nil,
 		},
@@ -269,7 +268,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 				PackedKey: []byte("PackedKey"),
 			},
 			headers: map[string]string{
-				constant.TokenKey: "862AB376DF9DBD090F28F9DD9A2F5F1C9F88F05D27B63AE3942B5057C6BA2688",
+				pb.TokenKey: "862AB376DF9DBD090F28F9DD9A2F5F1C9F88F05D27B63AE3942B5057C6BA2688",
 			},
 			wantErr: nil,
 		},
@@ -288,7 +287,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 				PackedKey: []byte("predefined packed data"),
 			},
 			headers: map[string]string{
-				constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+				pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
 			},
 			wantErr: nil,
 		},
@@ -299,7 +298,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 			},
 
 			headers: map[string]string{
-				constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+				pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
 			},
 			wantErr: []string{errs.ErrorSyncNoKey.Error()},
 		},
@@ -341,7 +340,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 	existUpdatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:50:00+03:00")
 	require.NoError(t, err)
 	headers := map[string]string{
-		constant.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
+		pb.TokenKey: "8ca0c5a18320fc2f264cfa95639ea27888727c6090d6f9cb0d6c5798a93fcb63",
 	}
 	timeNow := time.Now()
 	tests := []struct {
@@ -364,7 +363,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 				Key: "some-key",
 			},
 			headers: map[string]string{
-				constant.TokenKey: "not valid token",
+				pb.TokenKey: "not valid token",
 			},
 			wantErr: []string{errs.ErrorInvalidToken.Error()},
 		},
@@ -479,7 +478,7 @@ func (suite *AppTestSuite) TestList() {
 	require.NoError(t, err)
 
 	headers := map[string]string{
-		constant.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+		pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
 	}
 	tests := []struct {
 		name     string
@@ -497,7 +496,7 @@ func (suite *AppTestSuite) TestList() {
 			name: "not valid token",
 			req:  &pb.ListRequest{},
 			headers: map[string]string{
-				constant.TokenKey: "not valid token",
+				pb.TokenKey: "not valid token",
 			},
 			wantErr: []string{errs.ErrorInvalidToken.Error()},
 		},
@@ -581,7 +580,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 	t := suite.T()
 
 	headers := map[string]string{
-		constant.TokenKey: "7210ABC35DC938383CE233297698D1B3B5CEA3AE1F0A75E69CBF48961B841EDB",
+		pb.TokenKey: "7210ABC35DC938383CE233297698D1B3B5CEA3AE1F0A75E69CBF48961B841EDB",
 	}
 	tests := []struct {
 		name       string
@@ -600,7 +599,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 			name: "not valid token",
 			req:  &pb.NoMessage{},
 			headers: map[string]string{
-				constant.TokenKey: "not valid token",
+				pb.TokenKey: "not valid token",
 			},
 			wantErr: []string{errs.ErrorInvalidToken.Error()},
 		},

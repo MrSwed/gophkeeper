@@ -71,7 +71,7 @@ func (h *Handler) unaryInterceptor(ctx context.Context, req interface{}, g *grpc
 	if !h.skipMethod(g.FullMethod) {
 		var token []byte
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
-			if values := md.Get(constant.TokenKey); len(values) > 0 {
+			if values := md.Get(pb.TokenKey); len(values) > 0 {
 				token = []byte(values[0])
 			}
 		}
