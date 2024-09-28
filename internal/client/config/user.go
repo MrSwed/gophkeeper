@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -80,6 +81,7 @@ func UserLoad(reload ...bool) (err error) {
 			"name":     userName,
 			"autosave": true,
 			"db_file":  path.Join(usrCfgDir, userName+".db"),
+			"timeout":  time.Second * 5,
 		})
 	return
 }

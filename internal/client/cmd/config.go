@@ -94,9 +94,9 @@ func (a *app) addConfigCmd() *app {
 	// updUserCmd.Flags().StringP("mode", "m", "", "remote mode")
 	// updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("server", "s", "", "server address")
-	updUserCmd.Flags().StringP("sync_interval", "i", "", "synchronisation interval ")
-	updUserCmd.Flags().BoolP("autosave", "a", true, "Auto save user config")
+	updUserCmd.Flags().DurationP("timeout", "t", 0, "server connect timeout")
 	updUserCmd.Flags().StringP("email", "e", "", "User email")
+	updUserCmd.Flags().BoolP("autosave", "a", true, "Auto save user config")
 
 	saveCmd := &cobra.Command{
 		Use:   "save",

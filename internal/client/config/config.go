@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"time"
@@ -18,11 +19,18 @@ type config struct {
 	excluded map[string]any
 }
 
+type duration time.Duration
+
+func (d duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).String())
+}
+
 var (
-	excludeSaveKeys = []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
-	excludeViewKeys = []string{"encryption_key"}
-	User            config
-	Glob            = config{Viper: viper.New()}
+	excludeSaveKeys  = []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
+	excludeViewKeys  = []string{"encryption_key"}
+	durationViewKeys = []string{"timeout"}
+	User             config
+	Glob             = config{Viper: viper.New()}
 )
 
 func (c *config) Set(key string, value any) {
@@ -34,6 +42,9 @@ func (c *config) AllSettings() (m map[string]any) {
 	m = c.Viper.AllSettings()
 	for _, k := range excludeViewKeys {
 		delete(m, k)
+	}
+	for _, k := range durationViewKeys {
+		m[k] = duration(c.Viper.GetDuration(k))
 	}
 	return
 }
