@@ -38,7 +38,8 @@ func NewApp(b BuildMetadata) (a *app) {
 		addViewCmd().
 		addDeleteCmd().
 		addListCmd().
-		addProfileCmd()
+		addProfileCmd().
+		addSyncCmd()
 	return
 }
 
@@ -50,6 +51,8 @@ func (a *app) Srv() service.Service {
 		if err != nil {
 			return service.NewServiceError(fmt.Errorf("error load config: %v", err))
 		}
+		// todo: do not print it if loaded early
+
 		a.root.Printf("User %s configuration loaded\n", cfg.User.GetString("name"))
 
 		dbFile := cfg.User.GetString("db_file")
