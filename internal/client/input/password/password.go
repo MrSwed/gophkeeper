@@ -40,20 +40,25 @@ func readPassword() (pw []byte, e error) {
 	}
 }
 
-func GetRawPass(confirm bool) (pass string, err error) {
+func GetRawPass(confirm bool, prompts ...string) (pass string, err error) {
 	var b []byte
-	if confirm {
-		fmt.Print("Please enter new password: ")
-	} else {
-		fmt.Print("Please enter password: ")
+	if len(prompts) == 0 {
+		prompts = make([]string, 2)
+		if confirm {
+			prompts[0] = "Please enter new password: "
+		} else {
+			prompts[0] = "Please enter password: "
+		}
+		prompts[1] = "Please confirm you password: "
 	}
+	fmt.Print(prompts[0])
 
 	b, err = readPassword()
 	fmt.Println()
 	if err == nil {
 		if confirm {
 			try := 0
-			fmt.Print("Please confirm you password: ")
+			fmt.Print(prompts[1])
 		RepeatPass:
 			b2, err2 := readPassword()
 			fmt.Println()
