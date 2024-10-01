@@ -6,7 +6,6 @@ import (
 	cfg "gophKeeper/internal/client/config"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ type appTestSuite struct {
 	outC                                                      chan string
 }
 
-var testDataPath string = filepath.Join("..", "..", "..", "testdata")
+//var testDataPath string = filepath.Join("..", "..", "..", "testdata")
 
 // executeCommand
 // https://github.com/spf13/cobra/issues/1790#issuecomment-2121139148
