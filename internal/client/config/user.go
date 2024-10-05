@@ -78,10 +78,11 @@ func UserLoad(reload ...bool) (err error) {
 	}
 	err = User.Load(AppName, usrCfgDir,
 		map[string]any{
-			"name":     userName,
-			"autosave": true,
-			"db_file":  path.Join(usrCfgDir, userName+".db"),
-			"timeout":  time.Second * 5,
+			"name":                  userName,
+			"autosave":              true,
+			"db_file":               path.Join(usrCfgDir, userName+".db"),
+			"sync.timeout.register": time.Minute * 1,
+			"sync.timeout.sync":     time.Hour * 3,
 		})
 	return
 }

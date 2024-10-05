@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/spf13/viper"
 )
 
@@ -26,9 +28,10 @@ func (d duration) MarshalJSON() ([]byte, error) {
 }
 
 var (
-	excludeSaveKeys  = []string{"config_path", "loaded_at", "changed_at", "encryption_key"}
-	excludeViewKeys  = []string{"encryption_key"}
-	durationViewKeys = []string{"timeout"}
+	excludeSaveKeys  = []string{"config_path", "loaded_at", "changed_at", "encryption_key", "sync_password"}
+	excludeViewKeys  = []string{"encryption_key", "sync_password"}
+	durationViewKeys = []string{"sync.timeout.sync", "sync.timeout.register"}
+	clearAfterSave   = []string{"changed_at"}
 	User             config
 	Glob             = config{Viper: viper.New()}
 )
@@ -38,13 +41,32 @@ func (c *config) Set(key string, value any) {
 	c.Viper.Set("changed_at", time.Now())
 }
 
+func deepMapSet(path []string, value any) (res map[string]any) {
+	res = make(map[string]any)
+	if len(path) >= 1 {
+		if len(path) == 1 {
+			res[path[0]] = value
+			return
+		}
+		res[path[0]] = deepMapSet(path[1:], value)
+		return
+	}
+	return
+}
+
 func (c *config) AllSettings() (m map[string]any) {
 	m = c.Viper.AllSettings()
 	for _, k := range excludeViewKeys {
 		delete(m, k)
 	}
 	for _, k := range durationViewKeys {
-		m[k] = duration(c.Viper.GetDuration(k))
+		path := strings.Split(k, ".")
+		if len(path) == 1 {
+			m[k] = duration(c.Viper.GetDuration(k))
+		} else {
+			upd := deepMapSet(path[:], duration(c.Viper.GetDuration(k)))
+			_ = mergo.Map(&m, &upd, mergo.WithOverride)
+		}
 	}
 	return
 }
@@ -54,7 +76,6 @@ func (c *config) Save() error {
 	if c.Viper.Get("loaded_at") != nil {
 		isNew = false
 	}
-	clearAfterSave := []string{"changed_at"}
 	if c.excluded == nil {
 		c.excluded = make(map[string]any)
 	}

@@ -94,7 +94,8 @@ func (a *app) addConfigCmd() *app {
 	// updUserCmd.Flags().StringP("mode", "m", "", "remote mode")
 	// updUserCmd.Flags().StringP("server_type", "t", "", "server type (default grpc)")
 	updUserCmd.Flags().StringP("server", "s", "", "server address")
-	updUserCmd.Flags().DurationP("timeout", "t", 0, "server connect timeout")
+	updUserCmd.Flags().DurationP("sync.timeout.sync", "t", 0, "synchronisation timeout")
+	updUserCmd.Flags().DurationP("sync.timeout.register", "", 0, "register at server timeout")
 	updUserCmd.Flags().StringP("email", "e", "", "User email")
 	updUserCmd.Flags().BoolP("autosave", "a", true, "Auto save user config")
 
