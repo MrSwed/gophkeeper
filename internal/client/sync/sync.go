@@ -17,7 +17,7 @@ type SyncService interface {
 	List(context.Context, model.ListRequest) (model.ListResponse, error)
 	SyncItem(context.Context, *model.ItemSync) error
 
-	SyncUser(context.Context, *model.UserSync) error
+	SyncUser(context.Context, string) error
 	DeleteUser(context.Context) error
 	Close() error
 }
@@ -111,56 +111,46 @@ func (sync syncService) SyncItem(ctx context.Context, item *model.ItemSync) (err
 	return
 }
 
-func (sync syncService) SyncUser(ctx context.Context, user *model.UserSync) (err error) {
-	pbUser := &pb.UserSync{
-		Email:     user.Email,
-		Password:  user.Password,
-		PackedKey: user.PackedKey,
-		CreatedAt: timestamppb.New(user.CreatedAt),
+func (sync syncService) SyncUser(ctx context.Context, newPass string) (err error) {
+	var getUser *pb.UserSync
+	user := &pb.UserSync{
+		Email:       cfg.User.GetString("email"),
+		PackedKey:   []byte(cfg.User.GetString("packed_key")),
+		Description: cfg.User.GetString("sync.user.description"),
+		Password:    newPass,
 	}
-	if !user.CreatedAt.IsZero() {
-		pbUser.CreatedAt = timestamppb.New(user.CreatedAt)
+	if createdAt := cfg.User.GetTime("sync.user.created_at"); !createdAt.IsZero() {
+		user.CreatedAt = timestamppb.New(createdAt)
 	}
-	if user.UpdatedAt != nil {
-		pbUser.UpdatedAt = timestamppb.New(*user.UpdatedAt)
-	}
-	if user.Description != nil {
-		pbUser.Description = *user.Description
+	if updatedAt := cfg.User.GetTime("sync.user.updated_at"); !updatedAt.IsZero() {
+		user.UpdatedAt = timestamppb.New(updatedAt)
 	}
 
 	client := pb.NewUserClient(sync.conn)
-	pbUser, err = client.SyncUser(ctx, pbUser, sync.callOpt...)
+	getUser, err = client.SyncUser(ctx, user, sync.callOpt...)
 	if err != nil {
 		return
 	}
 	var updated bool
-
-	if !bytes.Equal(user.PackedKey, pbUser.PackedKey) {
-		user.PackedKey = pbUser.PackedKey
+	if !bytes.Equal(user.PackedKey, getUser.PackedKey) {
+		user.PackedKey = getUser.PackedKey
 		cfg.User.Set("packed_key", user.PackedKey)
 		updated = true
 	}
-	if pbUser.Description != "" {
-		user.Description = &pbUser.Description
-		cfg.User.Set("sync.user.description", user.UpdatedAt)
+	if user.Description != getUser.Description {
+		cfg.User.Set("sync.user.description", getUser.Description)
 		updated = true
 	}
-	if pbUser.Email != "" {
-		user.Email = pbUser.Email
-		cfg.User.Set("email", user.UpdatedAt)
+	if getUser.Email != "" && user.Email != getUser.Email {
+		cfg.User.Set("email", getUser.Email)
 		updated = true
 	}
-	if pbUser.CreatedAt != nil {
-		user.CreatedAt = pbUser.CreatedAt.AsTime()
-		cfg.User.Set("sync.user.created_at", user.UpdatedAt)
+	if getUser.CreatedAt != nil && (user.CreatedAt == nil || user.CreatedAt != getUser.CreatedAt) {
+		cfg.User.Set("sync.user.created_at", getUser.CreatedAt.AsTime())
 		updated = true
 	}
-	if pbUser.UpdatedAt != nil {
-		if user.UpdatedAt == nil {
-			user.UpdatedAt = new(time.Time)
-		}
-		*user.UpdatedAt = pbUser.UpdatedAt.AsTime()
-		cfg.User.Set("sync.user.updated_at", user.UpdatedAt)
+	if getUser.UpdatedAt != nil {
+		cfg.User.Set("sync.user.updated_at", getUser.UpdatedAt.AsTime())
 		updated = true
 	}
 	if updated {

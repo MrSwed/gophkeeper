@@ -96,8 +96,7 @@ The email is not specified in the configuration, please set it by command
 
 		cmd.Printf(`
 Registering this client at server with email %s. 
-If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize.
-`, cfg.User.Get("email"))
+If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize`, cfg.User.Get("email"))
 		cmd.Println()
 
 		pass, err := password.GetRawPass(false, "Please enter the server synchronization password: ")
@@ -130,12 +129,15 @@ Since there is no encryption token, first try to get user data from the server`)
 			defer cancel()
 			ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
 			if err != nil {
-				return
+				if err != nil {
+					cmd.PrintErrf("sychronization failed: %v\n", err)
+					return
+				}
 			}
 			defer syncSrv.Close()
-			var user = model.UserSync{}
-			err = syncSrv.SyncUser(ctx, &user)
+			err = syncSrv.SyncUser(ctx, "")
 			if err != nil {
+				cmd.PrintErrf("sychronization failed: %v\n", err)
 				return
 			}
 			// Steel no encryption key
