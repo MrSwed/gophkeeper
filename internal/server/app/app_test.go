@@ -254,6 +254,32 @@ func (suite *AppTestSuite) TestSyncUser() {
 			wantErr: nil,
 		},
 		{
+			name: "new user, new client - check token received from server",
+			req: &pb.UserSync{
+				Email: "example_new@example.com",
+			},
+			wantResp: &pb.UserSync{
+				Email: "example_new@example.com",
+			},
+			headers: map[string]string{
+				pb.TokenKey: func() string {
+					ctx := context.Background()
+					ctx, conn, callOpt, err := testGRPCDial(suite.address, ctx, nil)
+					require.NoError(t, err)
+					defer func() { require.NoError(t, conn.Close()) }()
+					client := pb.NewAuthClient(conn)
+					pbToken, err := client.RegisterClient(ctx, &pb.RegisterClientRequest{
+						Email:    "example_new@example.com",
+						Password: "Ansddd12@!",
+					}, callOpt...)
+					require.NoError(t, err)
+
+					return string(pbToken.AppToken)
+				}(),
+			},
+			wantErr: nil,
+		},
+		{
 			name: "send user",
 			req: &pb.UserSync{
 				Email:     "example2@example.com",
@@ -320,7 +346,9 @@ func (suite *AppTestSuite) TestSyncUser() {
 			}
 			if tt.wantResp != nil {
 				assert.Equal(t, tt.wantResp.Email, data.GetEmail(), "Email")
-				assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.GetCreatedAt().AsTime(), "CreatedAt")
+				if tt.wantResp.CreatedAt != nil {
+					assert.Equal(t, tt.wantResp.CreatedAt.AsTime(), data.GetCreatedAt().AsTime(), "CreatedAt")
+				}
 				if tt.wantResp.UpdatedAt != nil {
 					assert.Equal(t, tt.wantResp.UpdatedAt.AsTime(), data.GetUpdatedAt().AsTime(), "UpdatedAt")
 				}

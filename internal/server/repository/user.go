@@ -115,7 +115,7 @@ func (s *userStore) NewUserClientToken(ctx context.Context, userID uuid.UUID, ex
 			"expired_at": expAt,
 			"meta":       meta,
 		}).
-		Suffix("RETURNING token").
+		Suffix("RETURNING encode(token,'hex')").
 		ToSql()
 	if err != nil {
 		return
