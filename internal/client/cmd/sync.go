@@ -31,7 +31,7 @@ func (a *app) addSyncCmd() *app {
 			if err != nil {
 				cmd.PrintErrf("failed to load config: %v\n", err)
 			}
-			if cfg.User.Get("sync_status") == nil {
+			if cfg.User.Get("sync.status") == nil {
 				cmd.Println(`
 Synchronization has not been performed yet. 
 You can run synchronization by command 
@@ -40,7 +40,7 @@ You can run synchronization by command
 				// _ = cmd.Usage()
 				return
 			}
-			cmd.Println("Synchronization status:", cfg.User.Get("sync_status"))
+			cmd.Println("Synchronization status:", cfg.User.Get("sync.status"))
 		},
 	}
 	syncCmd.AddCommand(
@@ -80,7 +80,7 @@ func (a *app) syncRegisterCmd() func(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		if cfg.User.Get("sync_token") != nil {
+		if cfg.User.Get("sync.token") != nil {
 			cmd.Println(`
 This client is already registered on the server. You can run synchronization.`)
 			cmd.Println()
@@ -109,7 +109,7 @@ If you have not yet registered on the server with your email, come up with a new
 			Email:    cfg.User.GetString("email"),
 			Password: pass,
 		}
-		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("timeout"))
+		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.register"))
 		defer cancel()
 		syncToken, err := sync.RegisterClient(ctx, cfg.User.GetString("server"), req)
 		if err != nil {
@@ -117,8 +117,36 @@ If you have not yet registered on the server with your email, come up with a new
 			return
 		}
 		cmd.Println(`
-The synchronization token has been successfully received, we save it in the config...`)
+The synchronization token has been successfully received...`)
 		cmd.Println()
+
+		// Check is local encryption key exist
+		if cfg.User.GetString("packed_key") == "" {
+			cmd.Println(`
+Since there is no encryption token, first try to get user data from the server`)
+			cmd.Println()
+			var syncSrv sync.SyncService
+			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
+			defer cancel()
+			ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
+			if err != nil {
+				return
+			}
+			defer syncSrv.Close()
+			var user = model.UserSync{}
+			err = syncSrv.SyncUser(ctx, &user)
+			if err != nil {
+				return
+			}
+			// Steel no encryption key
+			// Notify about create new one
+			if cfg.User.GetString("packed_key") == "" {
+				cmd.Println(`
+To save client token to config, needs to create an encryption key, 
+please come up with a password for this..`)
+				cmd.Println()
+			}
+		}
 
 		cryptToken, err := a.Srv().GetToken()
 		if err != nil {
@@ -130,7 +158,8 @@ The synchronization token has been successfully received, we save it in the conf
 			cmd.PrintErrf("failed to crypt synchronization token: %v\n", err)
 			return
 		}
-		cfg.User.Set("sync_token", encryptedSyncToken)
+		cfg.User.Set("sync.token", encryptedSyncToken)
+		cfg.User.Set("sync.status.token.created_at", time.Now())
 		cmd.Println(`
 Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings.`)
 		cmd.Println()
@@ -146,7 +175,7 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		if !a.validateServerConfigSet(cmd) {
 			return
 		}
-		if cfg.User.Get("sync_token") == nil {
+		if cfg.User.Get("sync.token") == nil {
 			cmd.Println(`
 This client is not registered on the server yet, please run the server registration command 
   sync register`)
@@ -154,7 +183,15 @@ This client is not registered on the server yet, please run the server registrat
 			return
 		}
 
-		cmd.Println(`Start synchronization with server`, time.Now().Format(time.DateTime))
+		cmd.Println(time.Now().Format(time.DateTime), `Start synchronization with server`)
+
+		// ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
+		// defer cancel()
+
+		// ctx, syncSrv, err := sync.NewSyncService(ctx, cfg.User.GetString("server"), token, a.Srv())
+
+		cmd.Println(time.Now().Format(time.DateTime), `Start sync user data`)
+
 		// todo sync here
 		cmd.Println(`
 sync Not implemented yet `)

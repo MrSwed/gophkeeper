@@ -1,7 +1,9 @@
 package sync
 
 import (
+	"bytes"
 	"context"
+	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/service"
 	pb "gophKeeper/internal/proto"
@@ -17,6 +19,7 @@ type SyncService interface {
 
 	SyncUser(context.Context, *model.UserSync) error
 	DeleteUser(context.Context) error
+	Close() error
 }
 
 var _ SyncService = (*syncService)(nil)
@@ -36,6 +39,10 @@ func NewSyncService(ctx context.Context, addr string, token []byte, s service.Se
 		pb.TokenKey: string(token),
 	})
 	return ctx, sync, err
+}
+
+func (sync syncService) Close() error {
+	return sync.conn.Close()
 }
 
 func (sync syncService) List(ctx context.Context, request model.ListRequest) (list model.ListResponse, err error) {
@@ -66,7 +73,7 @@ func (sync syncService) List(ctx context.Context, request model.ListRequest) (li
 			*list.Items[i].UpdatedAt = item.UpdatedAt.AsTime()
 		}
 	}
-
+	// todo run goroutines
 	return
 }
 
@@ -99,6 +106,8 @@ func (sync syncService) SyncItem(ctx context.Context, item *model.ItemSync) (err
 		*item.UpdatedAt = pbItem.UpdatedAt.AsTime()
 	}
 
+	// todo save it
+
 	return
 }
 
@@ -124,20 +133,39 @@ func (sync syncService) SyncUser(ctx context.Context, user *model.UserSync) (err
 	if err != nil {
 		return
 	}
-	user.PackedKey = pbUser.PackedKey
+	var updated bool
+
+	if !bytes.Equal(user.PackedKey, pbUser.PackedKey) {
+		user.PackedKey = pbUser.PackedKey
+		cfg.User.Set("packed_key", user.PackedKey)
+		updated = true
+	}
 	if pbUser.Description != "" {
 		user.Description = &pbUser.Description
+		cfg.User.Set("sync.user.description", user.UpdatedAt)
+		updated = true
+	}
+	if pbUser.Email != "" {
+		user.Email = pbUser.Email
+		cfg.User.Set("email", user.UpdatedAt)
+		updated = true
 	}
 	if pbUser.CreatedAt != nil {
 		user.CreatedAt = pbUser.CreatedAt.AsTime()
+		cfg.User.Set("sync.user.created_at", user.UpdatedAt)
+		updated = true
 	}
 	if pbUser.UpdatedAt != nil {
 		if user.UpdatedAt == nil {
 			user.UpdatedAt = new(time.Time)
 		}
 		*user.UpdatedAt = pbUser.UpdatedAt.AsTime()
+		cfg.User.Set("sync.user.updated_at", user.UpdatedAt)
+		updated = true
 	}
-
+	if updated {
+		cfg.User.Set("sync.status.user.last_sync_at", time.Now())
+	}
 	return
 }
 
