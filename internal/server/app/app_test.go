@@ -161,7 +161,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2@email.ru",
 				Password: "11111",
 			},
-			wantErr: []string{"Error:Field validation for 'Password'"},
+			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Password'"},
 		},
 		{
 			name: "not valid email",
@@ -169,14 +169,14 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2-email.ru",
 				Password: "Ansddd12@!",
 			},
-			wantErr: []string{"Error:Field validation for 'Email'"},
+			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Email'"},
 		},
 		{
 			name: "empty password",
 			req: &pb.RegisterClientRequest{
 				Email: "test2@email.ru",
 			},
-			wantErr: []string{"Error:Field validation for 'Password'", "required"},
+			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Password'", "required"},
 		},
 		{
 			name: "exist user, wrong password",
@@ -184,7 +184,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "example1@example.com",
 				Password: "Ansddd12@!###dddsdf",
 			},
-			wantErr: []string{errs.ErrorWrongAuth.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorWrongAuth.Error()},
 		},
 	}
 	for _, tt := range tests {
@@ -339,6 +339,7 @@ func (suite *AppTestSuite) TestSyncUser() {
 			data, err := client.SyncUser(ctx, tt.req, callOpt...)
 			if tt.wantErr != nil {
 				for _, e := range tt.wantErr {
+					require.Error(t, err)
 					require.Contains(t, err.Error(), e)
 				}
 			} else {
@@ -383,7 +384,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 			req: &pb.ItemSync{
 				Key: "some-key",
 			},
-			wantErr: []string{errs.ErrorNoToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorNoToken.Error()},
 		},
 		{
 			name: "not valid token",
@@ -393,7 +394,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 			headers: map[string]string{
 				pb.TokenKey: "not valid token",
 			},
-			wantErr: []string{errs.ErrorInvalidToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorInvalidToken.Error()},
 		},
 		{
 			name: "new from client",
@@ -416,7 +417,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 				Blob: []byte("some blob data"),
 			},
 			headers: headers,
-			wantErr: []string{errs.ErrorSyncNoKey.Error()},
+			wantErr: []string{"InvalidArgument", errs.ErrorSyncNoKey.Error()},
 		},
 		{
 			name: "new from server",
@@ -468,6 +469,15 @@ func (suite *AppTestSuite) TestSyncItem() {
 			headers: headers,
 			wantErr: nil,
 		},
+		{
+			name: "sync item with different created date",
+			req: &pb.ItemSync{
+				Key:       "some-exist-key2",
+				CreatedAt: timestamppb.New(timeNow),
+			},
+			headers: headers,
+			wantErr: []string{"Canceled", errs.ErrorSyncCreatedDate.Error()},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -479,6 +489,7 @@ func (suite *AppTestSuite) TestSyncItem() {
 			data, err := client.SyncItem(ctx, tt.req, callOpt...)
 			if tt.wantErr != nil {
 				for _, e := range tt.wantErr {
+					require.Error(t, err)
 					require.Contains(t, err.Error(), e)
 				}
 			} else {
@@ -518,7 +529,7 @@ func (suite *AppTestSuite) TestList() {
 		{
 			name:    "no token",
 			req:     &pb.ListRequest{},
-			wantErr: []string{errs.ErrorNoToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorNoToken.Error()},
 		},
 		{
 			name: "not valid token",
@@ -526,7 +537,7 @@ func (suite *AppTestSuite) TestList() {
 			headers: map[string]string{
 				pb.TokenKey: "not valid token",
 			},
-			wantErr: []string{errs.ErrorInvalidToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorInvalidToken.Error()},
 		},
 		{
 			name: "get list no param",
@@ -621,7 +632,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 		{
 			name:    "no token",
 			req:     &pb.NoMessage{},
-			wantErr: []string{errs.ErrorNoToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorNoToken.Error()},
 		},
 		{
 			name: "not valid token",
@@ -629,7 +640,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 			headers: map[string]string{
 				pb.TokenKey: "not valid token",
 			},
-			wantErr: []string{errs.ErrorInvalidToken.Error()},
+			wantErr: []string{"Unauthenticated", errs.ErrorInvalidToken.Error()},
 		},
 		{
 			name: "delete success",
@@ -637,7 +648,7 @@ func (suite *AppTestSuite) TestDeleteUser() {
 				Ok: true,
 			},
 			headers:    headers,
-			wantErrTry: []string{errs.ErrorInvalidToken.Error()},
+			wantErrTry: []string{"Unauthenticated", errs.ErrorInvalidToken.Error()},
 		},
 	}
 

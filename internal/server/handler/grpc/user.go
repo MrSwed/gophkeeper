@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -37,13 +39,14 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	defer cancel()
 	syncKey := in.GetEmail()
 	if syncKey == "" {
-		err = errs.ErrorSyncNoKey
+		err = status.Error(codes.Internal, errs.ErrorSyncNoKey.Error())
 		return
 	}
 
 	var storedUser model.User
 	storedUser, err = g.s.GetSelf(ctx)
 	if err != nil {
+		err = status.Error(codes.Internal, err.Error())
 		return
 	}
 
@@ -73,8 +76,9 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 		}
 		err = g.s.SaveSelf(ctx, &storedUser)
 		if err != nil {
-			g.log.Error("save item failed", zap.Error(err))
+			err = status.Error(codes.Internal, err.Error())
 		}
+
 		return
 	}
 
@@ -89,11 +93,16 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	if storedUser.UpdatedAt != nil {
 		out.UpdatedAt = timestamppb.New(*storedUser.UpdatedAt)
 	}
+
 	return
 }
 
 func (g *user) DeleteUser(ctx context.Context, _ *pb.NoMessage) (out *pb.OkResponse, err error) {
 	err = g.s.DeleteSelf(ctx)
 	out = &pb.OkResponse{Ok: err == nil}
+	if err != nil {
+		err = status.Error(codes.Internal, err.Error())
+	}
+
 	return
 }

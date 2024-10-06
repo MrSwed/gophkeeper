@@ -24,6 +24,7 @@ type GRPC struct {
 type Config struct {
 	GRPC
 	StorageConfig
+	Debug bool `env:"DEBUG" json:"debug" flag:"debug" usage:"Enable debug mode"`
 }
 
 func NewConfig() *Config {

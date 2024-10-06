@@ -65,7 +65,11 @@ func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData 
 		}
 	}
 	if log == nil {
-		log, err = zap.NewDevelopment()
+		if cfg.Debug {
+			log, err = zap.NewDevelopment()
+		} else {
+			log, err = zap.NewProduction()
+		}
 		if err != nil {
 			panic(err)
 		}

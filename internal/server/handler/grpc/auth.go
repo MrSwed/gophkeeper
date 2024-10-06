@@ -10,7 +10,9 @@ import (
 	"gophKeeper/internal/server/service"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 )
 
 type auth struct {
@@ -48,6 +50,7 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 			// register new one with login data, rest at sync
 			err = req.Validate()
 			if err != nil {
+				err = status.Error(codes.Unauthenticated, err.Error())
 				return
 			}
 			u := &model.User{
@@ -56,12 +59,14 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 			}
 			err = g.s.SaveSelf(ctx, u)
 			if err != nil {
+				err = status.Error(codes.Unauthenticated, err.Error())
 				return
 			}
 			out.AppToken, err = g.s.GetClientToken(ctx, req)
-			return
 		}
-		return
+		if err != nil {
+			err = status.Error(codes.Unauthenticated, err.Error())
+		}
 	}
 	return
 }

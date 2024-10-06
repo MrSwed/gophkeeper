@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	pb "gophKeeper/internal/proto"
 	"gophKeeper/internal/server/config"
 	errs "gophKeeper/internal/server/errors"
@@ -13,6 +12,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -44,6 +45,7 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 	q.Limit = in.GetLimit()
 	list, err = g.s.ListSelf(ctx, q)
 	if err != nil {
+		err = status.Error(codes.Internal, err.Error())
 		return
 	}
 	out = &pb.ListResponse{
@@ -71,7 +73,7 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 	defer cancel()
 	syncKey := in.GetKey()
 	if syncKey == "" {
-		err = errs.ErrorSyncNoKey
+		err = status.Error(codes.InvalidArgument, errs.ErrorSyncNoKey.Error())
 		return
 	}
 
@@ -79,16 +81,18 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 	item, err = g.s.GetSelfItem(ctx, syncKey)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		err = status.Error(codes.Internal, err.Error())
 		return
 	}
 
 	if !item.IsNew() && in.GetCreatedAt() != nil && !in.GetCreatedAt().AsTime().Equal(item.CreatedAt) {
-		err = fmt.Errorf("%w key: %s", errs.ErrorSyncSameKey, syncKey)
+		err = status.Errorf(codes.Canceled, "%s key: %s", errs.ErrorSyncCreatedDate, syncKey)
 		return
 	}
 
-	// it is same data
-	if in.GetCreatedAt().AsTime().Equal(item.CreatedAt) && (item.UpdatedAt == nil || in.GetUpdatedAt().AsTime().Equal(*item.UpdatedAt)) {
+	// it is same data, not changed
+	if in.GetCreatedAt().AsTime().Equal(item.CreatedAt) &&
+		(item.UpdatedAt == nil || in.GetUpdatedAt().AsTime().Equal(*item.UpdatedAt)) {
 		return
 	}
 
@@ -110,7 +114,7 @@ func (g *data) SyncItem(ctx context.Context, in *pb.ItemSync) (out *pb.ItemSync,
 		}
 		err = g.s.SaveSelfItem(ctx, item)
 		if err != nil {
-			g.log.Error("save item failed", zap.Error(err))
+			err = status.Error(codes.Internal, err.Error())
 		}
 		return
 	}
