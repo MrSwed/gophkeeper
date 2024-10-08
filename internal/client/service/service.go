@@ -19,7 +19,9 @@ import (
 type Service interface {
 	List(query model.ListQuery) (data out.List, err error)
 	Get(key string) (data out.Item, err error)
+	GetRaw(key string) (data model.DBRecord, err error)
 	Save(data model.Model) (err error)
+	SaveRaw(data model.DBRecord) (err error)
 	Delete(key string) (err error)
 	GetToken() (token string, err error)
 	ChangePasswd() (err error)
@@ -137,14 +139,10 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	var (
 		r model.DBRecord
 	)
-	if r, err = s.r.DB.Get(key); err != nil {
+	if r, err = s.GetRaw(key); err != nil {
 		return
 	}
-	if len(r.Blob) == 0 && r.Filename != nil {
-		if r.Blob, err = s.r.File.GetStored(*r.Filename); err != nil {
-			return
-		}
-	}
+
 	data.DBItem = r.DBItem
 	var (
 		deCrypted []byte
@@ -169,6 +167,18 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	return
 }
 
+func (s *service) GetRaw(key string) (data model.DBRecord, err error) {
+	if data, err = s.r.DB.Get(key); err != nil {
+		return
+	}
+	if len(data.Blob) == 0 && data.Filename != nil {
+		if data.Blob, err = s.r.File.GetStored(*data.Filename); err != nil {
+			return
+		}
+	}
+	return
+}
+
 func (s *service) Save(data model.Model) (err error) {
 	if err = data.Validate(); err != nil {
 		return
@@ -189,20 +199,25 @@ func (s *service) Save(data model.Model) (err error) {
 		}
 		return
 	}
-	if blob, err = crypt.Encode(blob, token); err != nil {
+	if r.Blob, err = crypt.Encode(blob, token); err != nil {
 		return
 	}
-	if len(blob) > cfg.MaxBlobSize {
-		fileName := time.Now().Format("20060102150405") + "-" + r.Key
-		err = s.r.File.SaveStore(fileName, blob)
+	err = s.SaveRaw(r)
+
+	return
+}
+
+func (s *service) SaveRaw(data model.DBRecord) (err error) {
+	if len(data.Blob) > cfg.MaxBlobSize {
+		fileName := time.Now().Format("20060102150405") + "-" + data.Key
+		err = s.r.File.SaveStore(fileName, data.Blob)
 		if err != nil {
 			return
 		}
-		r.Filename = &fileName
-	} else {
-		r.Blob = blob
+		data.Filename = &fileName
+		data.Blob = nil
 	}
-	err = s.r.DB.Save(r)
+	err = s.r.DB.Save(data)
 
 	return
 }

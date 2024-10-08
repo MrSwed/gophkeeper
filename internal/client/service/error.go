@@ -35,7 +35,17 @@ func (s *serviceError) Get(_ string) (data out.Item, err error) {
 	return
 }
 
+func (s *serviceError) GetRaw(_ string) (data model.DBRecord, err error) {
+	err = s.e
+	return
+}
+
 func (s *serviceError) Save(_ model.Model) (err error) {
+	err = s.e
+	return
+}
+
+func (s *serviceError) SaveRaw(_ model.DBRecord) (err error) {
 	err = s.e
 	return
 }
