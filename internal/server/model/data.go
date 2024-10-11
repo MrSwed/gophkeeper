@@ -20,7 +20,7 @@ type Item struct {
 
 type List struct {
 	Items []ItemShort `json:"items"`
-	Total int64       `json:"total"`
+	Total uint64      `json:"total"`
 }
 
 type DBRecord struct {

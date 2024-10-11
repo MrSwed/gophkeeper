@@ -68,7 +68,7 @@ func (s *dataStore) ListDataItems(ctx context.Context, q *model.ListQuery) (list
 	return
 }
 
-func (s *dataStore) CountDataItems(ctx context.Context, q *model.ListQuery) (total int64, err error) {
+func (s *dataStore) CountDataItems(ctx context.Context, q *model.ListQuery) (total uint64, err error) {
 	var (
 		query string
 		args  []interface{}

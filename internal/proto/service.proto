@@ -47,7 +47,7 @@ message ListRequest {
 }
 
 message ListResponse {
-  int64 total = 1;
+  uint64 total = 1;
   repeated ItemShort items = 2;
 }
 

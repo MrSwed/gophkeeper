@@ -29,7 +29,7 @@ type store struct {
 type DataStorage interface {
 	GetDataItem(ctx context.Context, userID uuid.UUID, key string) (item model.DBRecord, err error)
 	ListDataItems(ctx context.Context, q *model.ListQuery) (item []model.ItemShort, err error)
-	CountDataItems(ctx context.Context, q *model.ListQuery) (count int64, err error)
+	CountDataItems(ctx context.Context, q *model.ListQuery) (count uint64, err error)
 	SaveDataItem(ctx context.Context, item model.DBRecord) (err error)
 }
 
