@@ -33,12 +33,6 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 	if query.UpdatedAt != "" {
 		b = b.Where(sq.Like{"updated_at": "%" + query.UpdatedAt + "%"})
 	}
-	if query.Limit != 0 {
-		b = b.Limit(query.Limit)
-	}
-	if query.Offset != 0 {
-		b = b.Offset(query.Offset)
-	}
 	return b
 }
 
@@ -49,6 +43,15 @@ func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 		sql  string
 		args []interface{}
 	)
+	if query.Limit != 0 {
+		builder = builder.Limit(query.Limit)
+	}
+	if query.Offset != 0 {
+		builder = builder.Offset(query.Offset)
+	}
+	if query.OrderBy != "" {
+		builder = builder.OrderBy(query.OrderBy)
+	}
 
 	sql, args, err = s.querySqlBuilder(builder, query).ToSql()
 	if err != nil {

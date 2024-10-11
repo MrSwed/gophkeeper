@@ -7,6 +7,7 @@ type ListQuery struct {
 	UpdatedAt   string `json:"updated_at" validate:"omitempty,datetime" flag:"updated,u" usage:"search by updated_at"`
 	Limit       uint64 `json:"limit" validate:"omitempty" default:"10" flag:"limit,l" usage:"set limit"`
 	Offset      uint64 `json:"offset" validate:"omitempty" flag:"offset,o" usage:"set offset"`
+	OrderBy     string `json:"orderBy" validate:"omitempty,oneof=key created_at updated_at 'key desc' 'created_at desc' 'updated_at desc'" flag:"order-by,b" usage:"set order by"`
 }
 
 func (m *ListQuery) Validate() (err error) {
