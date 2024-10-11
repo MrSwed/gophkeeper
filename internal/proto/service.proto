@@ -43,6 +43,7 @@ message ItemSync {
 message ListRequest {
   uint64 limit = 1;
   uint64 offset = 2;
+  string orderby = 3;
 }
 
 message ListResponse {

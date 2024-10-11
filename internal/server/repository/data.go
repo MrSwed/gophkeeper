@@ -55,6 +55,9 @@ func (s *dataStore) ListDataItems(ctx context.Context, q *model.ListQuery) (list
 		if q.Offset != 0 {
 			sqlBuild = sqlBuild.Offset(q.Offset)
 		}
+		if q.OrderBy != "" {
+			sqlBuild = sqlBuild.OrderBy(q.OrderBy)
+		}
 	}
 	query, args, err = sqlBuild.ToSql()
 	if err != nil {

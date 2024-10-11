@@ -43,6 +43,9 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 	)
 	q.Offset = in.GetOffset()
 	q.Limit = in.GetLimit()
+	if in.GetOrderby() != "" {
+		q.OrderBy = in.GetOrderby()
+	}
 	list, err = g.s.ListSelf(ctx, q)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())

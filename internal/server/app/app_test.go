@@ -511,7 +511,11 @@ func (suite *AppTestSuite) TestSyncItem() {
 func (suite *AppTestSuite) TestList() {
 	t := suite.T()
 
-	existCreatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:00:00+03:00")
+	existCreatedAt, err := time.Parse(time.RFC3339, "2024-09-17T13:00:00+03:00")
+	require.NoError(t, err)
+	existCreatedAt1, err := time.Parse(time.RFC3339, "2024-09-17T12:01:00+03:00")
+	require.NoError(t, err)
+	existCreatedAt2, err := time.Parse(time.RFC3339, "2024-09-17T12:02:00+03:00")
 	require.NoError(t, err)
 	existUpdatedAt, err := time.Parse(time.RFC3339, "2024-09-17T12:50:00+03:00")
 	require.NoError(t, err)
@@ -552,13 +556,13 @@ func (suite *AppTestSuite) TestList() {
 					{
 						Key:         "some-exist-key1",
 						Description: "new description",
-						CreatedAt:   timestamppb.New(existCreatedAt),
+						CreatedAt:   timestamppb.New(existCreatedAt1),
 						UpdatedAt:   timestamppb.New(existUpdatedAt),
 					},
 					{
 						Key:         "some-exist-key2",
 						Description: "new description2",
-						CreatedAt:   timestamppb.New(existCreatedAt),
+						CreatedAt:   timestamppb.New(existCreatedAt2),
 						UpdatedAt:   timestamppb.New(existUpdatedAt),
 					},
 				},
@@ -569,6 +573,42 @@ func (suite *AppTestSuite) TestList() {
 			name: "get list limit",
 			req: &pb.ListRequest{
 				Limit: 1,
+			},
+			wantResp: &pb.ListResponse{
+				Total: 3,
+				Items: []*pb.ItemShort{
+					{
+						Key:       "some-exist-key",
+						CreatedAt: timestamppb.New(existCreatedAt),
+					},
+				},
+			},
+			headers: headers,
+		},
+		{
+			name: "get list limit ordered by key desc",
+			req: &pb.ListRequest{
+				Limit:   1,
+				Orderby: "key desc",
+			},
+			wantResp: &pb.ListResponse{
+				Total: 3,
+				Items: []*pb.ItemShort{
+					{
+						Key:         "some-exist-key2",
+						Description: "new description2",
+						CreatedAt:   timestamppb.New(existCreatedAt2),
+						UpdatedAt:   timestamppb.New(existUpdatedAt),
+					},
+				},
+			},
+			headers: headers,
+		},
+		{
+			name: "get list limit ordered by created desc",
+			req: &pb.ListRequest{
+				Limit:   1,
+				Orderby: "created_at desc",
 			},
 			wantResp: &pb.ListResponse{
 				Total: 3,
