@@ -13,6 +13,8 @@ import (
 
 const (
 	AppName = "GophKeeper"
+
+	PageSize = 1000
 )
 
 type config struct {

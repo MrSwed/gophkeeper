@@ -3,19 +3,23 @@ package sync
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"errors"
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/model"
+	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/service"
 	pb "gophKeeper/internal/proto"
+	"runtime"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SyncService interface {
-	List(context.Context, model.ListRequest) (model.ListResponse, error)
-	SyncItem(context.Context, *model.ItemSync) error
+	SyncData(ctx context.Context) (err error)
 
 	SyncUser(context.Context, string) error
 	DeleteUser(context.Context) error
@@ -25,93 +29,194 @@ type SyncService interface {
 var _ SyncService = (*syncService)(nil)
 
 type syncService struct {
-	s       service.Service
-	conn    *grpc.ClientConn
-	callOpt []grpc.CallOption
+	s          service.Service
+	conn       *grpc.ClientConn
+	callOpt    []grpc.CallOption
+	dataClient pb.DataClient
 }
 
 func NewSyncService(ctx context.Context, addr string, token []byte, s service.Service) (context.Context, SyncService, error) {
-	sync := &syncService{
+	sc := &syncService{
 		s: s,
 	}
 	var err error
-	ctx, sync.conn, sync.callOpt, err = dial(ctx, addr, map[string]string{
+	ctx, sc.conn, sc.callOpt, err = dial(ctx, addr, map[string]string{
 		pb.TokenKey: string(token),
 	})
-	return ctx, sync, err
+	sc.dataClient = pb.NewDataClient(sc.conn)
+
+	return ctx, sc, err
 }
 
-func (sync syncService) Close() error {
-	return sync.conn.Close()
+func (sc syncService) Close() error {
+	return sc.conn.Close()
 }
 
-func (sync syncService) List(ctx context.Context, request model.ListRequest) (list model.ListResponse, err error) {
-	req := &pb.ListRequest{
-		Limit:  request.Limit,
-		Offset: request.Offset,
-	}
-	var res *pb.ListResponse
-	client := pb.NewDataClient(sync.conn)
-	res, err = client.List(ctx, req, sync.callOpt...)
-	if err != nil {
+func (sc syncService) SyncData(ctx context.Context) (err error) {
+	var (
+		startTime  = time.Now()
+		serverList *pb.ListResponse
+		clientList out.List
+
+		g          *errgroup.Group
+		numWorkers = runtime.NumCPU()
+		syncList   syncList
+	)
+	g, ctx = errgroup.WithContext(ctx)
+
+	// Stage 1. collect list of
+	// get server list
+	g.Go(func() (err error) {
+		var request = &pb.ListRequest{
+			Limit:  cfg.PageSize,
+			Offset: 0,
+			// Orderby: "key",
+		}
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
+			serverList, err = sc.dataClient.List(ctx, request, sc.callOpt...)
+			if err != nil {
+				return
+			}
+			for _, item := range serverList.GetItems() {
+				if item.UpdatedAt == nil {
+					if item.CreatedAt != nil {
+						syncList.ToSync(item.Key, item.CreatedAt)
+					}
+				} else {
+					syncList.ToSync(item.Key, item.UpdatedAt)
+				}
+			}
+			if serverList.Total <= request.Offset+request.Limit {
+				break
+			}
+			request.Offset += request.Limit
+		}
 		return
-	}
-	list = model.ListResponse{
-		Total: res.Total,
-	}
-	list.Items = make([]model.DBItem, len(res.Items))
-	for i, item := range res.Items {
-		list.Items[i] = model.DBItem{
-			Key:         item.Key,
-			Description: item.Description,
+	})
+
+	// get client list
+	g.Go(func() (err error) {
+		var request = model.ListQuery{
+			Limit:  cfg.PageSize,
+			Offset: 0,
+			// Orderby: "key",
+			SyncAt: startTime.String(),
 		}
-		if item.CreatedAt != nil {
-			list.Items[i].CreatedAt = item.CreatedAt.AsTime()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
+			clientList, err = sc.s.List(request)
+			if err != nil {
+				return
+			}
+			for _, item := range clientList.Items {
+				if item.UpdatedAt == nil {
+					syncList.ToSync(item.Key, timestamppb.New(item.CreatedAt))
+				} else {
+					syncList.ToSync(item.Key, timestamppb.New(*item.UpdatedAt))
+				}
+			}
+
+			if clientList.Total <= request.Offset+request.Limit {
+				break
+			}
+			request.Offset += request.Limit
 		}
-		if item.UpdatedAt != nil {
-			list.Items[i].UpdatedAt = new(time.Time)
-			*list.Items[i].UpdatedAt = item.UpdatedAt.AsTime()
+		return
+	})
+	err = g.Wait()
+
+	keysQueue := make(chan string)
+	syncCount := int64(0)
+	syncList.Range(func(key, _ interface{}) bool {
+		keysQueue <- key.(string)
+		syncCount++
+		if syncCount >= syncList.Len() {
+			close(keysQueue)
 		}
+		return true
+	})
+	itemSendQueue := make(chan model.DBRecord)
+	itemSaveQueue := make(chan model.DBRecord)
+	resultQueue := make(chan struct{})
+	// run workers for get locals data
+	for i := 0; i < numWorkers; i++ {
+		g.Go(func() (err error) {
+			defer close(itemSendQueue)
+			for key := range keysQueue {
+				item, er := sc.s.GetRaw(key)
+				if er != nil && !errors.Is(er, sql.ErrNoRows) {
+					err = errors.Join(err, er)
+					continue
+				}
+				if item.Key == "" {
+					item.Key = key
+				}
+				itemSendQueue <- item
+			}
+			return
+		})
 	}
-	// todo run goroutines
+
+	// run workers for send to sync
+	for i := 0; i < numWorkers; i++ {
+		g.Go(func() (err error) {
+			defer close(itemSaveQueue)
+			for itemSend := range itemSendQueue {
+				itemGetPb, er := sc.dataClient.SyncItem(ctx, itemSend.ToItemSync())
+				if er != nil {
+					err = errors.Join(err, er)
+					continue
+				}
+				var itemGet model.DBRecord
+				itemGet.FromItemSync(itemGetPb)
+				if itemSend.UpdatedAt != itemGet.UpdatedAt || itemSend.CreatedAt.IsZero() {
+					itemSaveQueue <- itemGet
+				}
+			}
+			return
+		})
+	}
+
+	// run workers for save local
+	for i := 0; i < numWorkers; i++ {
+		g.Go(func() (err error) {
+			defer close(resultQueue)
+			for itemGet := range itemSaveQueue {
+				er := sc.s.SaveRaw(itemGet)
+				if er != nil {
+					err = errors.Join(err, er)
+					continue
+				}
+				resultQueue <- struct{}{}
+			}
+			return
+		})
+	}
+	if er := g.Wait(); err != nil {
+		err = errors.Join(err, er)
+	}
+	var resultCount int
+	for _ = range resultQueue {
+		resultCount++
+	}
+	cfg.User.Set("sync.status.data.last_sync_at", time.Now())
+	cfg.User.Set("sync.status.data.updated", resultCount)
 	return
 }
 
-func (sync syncService) SyncItem(ctx context.Context, item *model.ItemSync) (err error) {
-	pbItem := &pb.ItemSync{
-		Key:         item.Key,
-		Description: item.Description,
-	}
-	if !item.CreatedAt.IsZero() {
-		pbItem.CreatedAt = timestamppb.New(item.CreatedAt)
-	}
-	if item.UpdatedAt != nil {
-		pbItem.UpdatedAt = timestamppb.New(*item.UpdatedAt)
-	}
-	if item.Blob != nil {
-		pbItem.Blob = item.Blob
-	}
-
-	client := pb.NewDataClient(sync.conn)
-	pbItem, err = client.SyncItem(ctx, pbItem, sync.callOpt...)
-	if err != nil {
-		return
-	}
-	item.Description = pbItem.Description
-	item.CreatedAt = pbItem.CreatedAt.AsTime()
-	if pbItem.UpdatedAt != nil {
-		if item.UpdatedAt == nil {
-			item.UpdatedAt = new(time.Time)
-		}
-		*item.UpdatedAt = pbItem.UpdatedAt.AsTime()
-	}
-
-	// todo save it
-
-	return
-}
-
-func (sync syncService) SyncUser(ctx context.Context, newPass string) (err error) {
+func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) {
 	var getUser *pb.UserSync
 	user := &pb.UserSync{
 		Email:       cfg.User.GetString("email"),
@@ -126,8 +231,8 @@ func (sync syncService) SyncUser(ctx context.Context, newPass string) (err error
 		user.UpdatedAt = timestamppb.New(updatedAt)
 	}
 
-	client := pb.NewUserClient(sync.conn)
-	getUser, err = client.SyncUser(ctx, user, sync.callOpt...)
+	client := pb.NewUserClient(sc.conn)
+	getUser, err = client.SyncUser(ctx, user, sc.callOpt...)
 	if err != nil {
 		return
 	}
@@ -159,9 +264,9 @@ func (sync syncService) SyncUser(ctx context.Context, newPass string) (err error
 	return
 }
 
-func (sync syncService) DeleteUser(ctx context.Context) (err error) {
-	client := pb.NewUserClient(sync.conn)
-	_, err = client.DeleteUser(ctx, &pb.NoMessage{}, sync.callOpt...)
+func (sc syncService) DeleteUser(ctx context.Context) (err error) {
+	client := pb.NewUserClient(sc.conn)
+	_, err = client.DeleteUser(ctx, &pb.NoMessage{}, sc.callOpt...)
 	return
 
 }

@@ -22,6 +22,30 @@ The address of the synchronization server is not set, please set it by command
 	return
 }
 
+func (a *app) getSyncToken(cmd *cobra.Command) (syncToken []byte) {
+	encryptedSyncToken := cfg.User.GetString("sync.token")
+	if encryptedSyncToken == "" {
+		cmd.Println(`
+This client is not registered on the server yet, please run the server registration command 
+  sync register`)
+		cmd.Println()
+
+		return
+	}
+	cryptToken, err := a.Srv().GetToken()
+	if err != nil {
+		cmd.PrintErrf("failed to get encription token: %v\n", err)
+		return
+	}
+	syncToken, err = crypt.Decode([]byte(encryptedSyncToken), cryptToken)
+	if err != nil {
+		cmd.PrintErrf("failed to decrypt synchronization token: %v\n", err)
+		return
+	}
+
+	return
+}
+
 func (a *app) addSyncCmd() *app {
 	syncCmd := &cobra.Command{
 		Use:   "sync",
@@ -129,10 +153,8 @@ Since there is no encryption token, first try to get user data from the server`)
 			defer cancel()
 			ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
 			if err != nil {
-				if err != nil {
-					cmd.PrintErrf("sychronization failed: %v\n", err)
-					return
-				}
+				cmd.PrintErrf("sychronization failed: %v\n", err)
+				return
 			}
 			defer syncSrv.Close()
 			err = syncSrv.SyncUser(ctx, "")
@@ -177,28 +199,37 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		if !a.validateServerConfigSet(cmd) {
 			return
 		}
-		if cfg.User.Get("sync.token") == nil {
-			cmd.Println(`
-This client is not registered on the server yet, please run the server registration command 
-  sync register`)
-			cmd.Println()
+		syncToken := a.getSyncToken(cmd)
+		if len(syncToken) == 0 {
 			return
 		}
 
 		cmd.Println(time.Now().Format(time.DateTime), `Start synchronization with server`)
 
-		// ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
-		// defer cancel()
+		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
+		defer cancel()
 
-		// ctx, syncSrv, err := sync.NewSyncService(ctx, cfg.User.GetString("server"), token, a.Srv())
+		var syncSrv sync.SyncService
+		ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
+		if err != nil {
+			cmd.PrintErrf("prepare sychronization failed: %v\n", err)
+			return
+		}
+		defer syncSrv.Close()
 
-		cmd.Println(time.Now().Format(time.DateTime), `Start sync user data`)
+		err = syncSrv.SyncUser(ctx, "")
+		if err != nil {
+			cmd.PrintErrf("user sychronization failed: %v\n", err)
+			return
+		}
+		cmd.Println(time.Now().Format(time.DateTime), `User synchronization finished`)
 
-		// todo sync here
-		cmd.Println(`
-sync Not implemented yet `)
-		cmd.Println()
-
+		err = syncSrv.SyncData(ctx)
+		if err != nil {
+			cmd.PrintErrf("data sychronization failed: %v\n", err)
+			return
+		}
+		cmd.Println(time.Now().Format(time.DateTime), `Data synchronization finished`)
 	}
 }
 
