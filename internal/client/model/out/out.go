@@ -42,7 +42,7 @@ func (i *Item) FromDBItem(dbItem model.DBItem) {
 
 type List struct {
 	Items []Item `json:"items"`
-	Total int    `json:"total"`
+	Total uint64 `json:"total"`
 }
 
 func (l *List) FromDBItems(r ...model.DBItem) {

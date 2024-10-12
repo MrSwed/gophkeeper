@@ -259,7 +259,7 @@ func (s *serviceStoreTestSuite) Test_service() {
 						return
 					}
 					if tt.args.save != nil {
-						assert.Greater(t, gotData.Total, 0)
+						assert.Greater(t, uint64(gotData.Total), uint64(0))
 						exist := false
 						for _, i := range gotData.Items {
 							if i.Key == tt.args.save.GetKey() {

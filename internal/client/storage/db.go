@@ -61,7 +61,7 @@ func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 	return
 }
 
-func (s *dbStore) Count(query model.ListQuery) (n int, err error) {
+func (s *dbStore) Count(query model.ListQuery) (n uint64, err error) {
 	var (
 		builder = sq.Select("count(*) as count").
 			From("storage")
