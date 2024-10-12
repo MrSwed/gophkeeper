@@ -126,12 +126,10 @@ func (s *service) List(query model.ListQuery) (data out.List, err error) {
 	if data.Total, err = s.r.DB.Count(query); err != nil {
 		return
 	}
-	var items []model.DBItem
-	items, err = s.r.DB.List(query)
+	data.Items, err = s.r.DB.List(query)
 	if err != nil {
 		return
 	}
-	data.FromDBItems(items...)
 	return
 }
 

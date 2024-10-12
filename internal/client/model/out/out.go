@@ -36,18 +36,7 @@ func (i *Item) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (i *Item) FromDBItem(dbItem model.DBItem) {
-	i.DBItem = dbItem
-}
-
 type List struct {
-	Items []Item `json:"items"`
-	Total uint64 `json:"total"`
-}
-
-func (l *List) FromDBItems(r ...model.DBItem) {
-	l.Items = make([]Item, len(r))
-	for idx, item := range r {
-		l.Items[idx].FromDBItem(item)
-	}
+	Items []model.DBItem `json:"items"`
+	Total uint64         `json:"total"`
 }
