@@ -3,17 +3,35 @@ package sync
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 type syncList struct {
 	sync.Map
-	count *atomic.Int64
+	count     *atomic.Int64
+	startTime time.Time
 }
 
 func (s *syncList) Len() int64 {
 	return s.count.Load()
+}
+
+func (s *syncList) KeyQueue() chan string {
+	keysQueue := make(chan string)
+	go func() {
+		syncCount := int64(0)
+		s.Range(func(key, _ interface{}) bool {
+			keysQueue <- key.(string)
+			syncCount++
+			if syncCount >= s.Len() {
+				close(keysQueue)
+			}
+			return true
+		})
+	}()
+	return keysQueue
 }
 
 // ToSync
