@@ -106,6 +106,7 @@ func (sc syncService) SyncData(ctx context.Context) (err error) {
 			} else {
 				errCh = nil
 			}
+		default:
 		}
 		if resultQueue == nil && errCh == nil {
 			break
@@ -217,7 +218,7 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 				Limit:  cfg.PageSize,
 				Offset: 0,
 				// Orderby: "key",
-				SyncAt: syncList.startTime.String(),
+				SyncAt: syncList.startTime.Format(time.DateTime),
 			}
 		)
 		for {
@@ -322,12 +323,10 @@ func (sc syncService) saveUpdatedItems(ctx context.Context, itemSaveQueue chan m
 			default:
 				er := sc.s.SaveRaw( /*ctx,*/ itemGet)
 				if er != nil {
-					go func() {
-						errCh <- er
-					}()
-					continue
+					errCh <- er
+				} else {
+					resultQueue <- struct{}{}
 				}
-				resultQueue <- struct{}{}
 			}
 		}
 	}()

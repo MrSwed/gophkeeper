@@ -15,6 +15,9 @@ type syncList struct {
 }
 
 func (s *syncList) Len() int64 {
+	if s.count == nil {
+		return 0
+	}
 	return s.count.Load()
 }
 
@@ -50,5 +53,8 @@ func (s *syncList) ToSync(key any, updatedAt *timestamp.Timestamp) {
 		return
 	}
 	s.Map.Store(key, updatedAt)
+	if s.count == nil {
+		s.count = new(atomic.Int64)
+	}
 	s.count.Add(1)
 }
