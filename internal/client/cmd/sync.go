@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/crypt"
 	"gophKeeper/internal/client/input/password"
@@ -54,6 +55,7 @@ func (a *app) addSyncCmd() *app {
 			err := cfg.UserLoad()
 			if err != nil {
 				cmd.PrintErrf("failed to load config: %v\n", err)
+				return
 			}
 			if cfg.User.Get("sync.status") == nil {
 				cmd.Println(`
@@ -64,7 +66,13 @@ You can run synchronization by command
 				// _ = cmd.Usage()
 				return
 			}
-			cmd.Println("Synchronization status:", cfg.User.Get("sync.status"))
+			syncInfo, err := json.MarshalIndent(cfg.User.Get("sync.status"), "", " ")
+			if err != nil {
+				cmd.PrintErrf("failed to marshal sync.status: %v\n", err)
+				cmd.Println("Synchronization status raw:", cfg.User.Get("sync.status"))
+				return
+			}
+			cmd.Println("Synchronization status:", string(syncInfo))
 		},
 	}
 	syncCmd.AddCommand(
@@ -230,6 +238,13 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 			return
 		}
 		cmd.Println(time.Now().Format(time.DateTime), `Data synchronization finished`)
+		syncInfo, err := json.MarshalIndent(cfg.User.Get("sync.status"), "", " ")
+		if err != nil {
+			cmd.PrintErrf("failed to marshal sync.status: %v\n", err)
+			cmd.Println("Synchronization status raw:", cfg.User.Get("sync.status"))
+			return
+		}
+		cmd.Println("Synchronization status:", string(syncInfo))
 	}
 }
 

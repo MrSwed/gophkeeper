@@ -38,11 +38,16 @@ var (
 	Glob             = config{Viper: viper.New()}
 )
 
+// Set
+// own method with changed_at mark
 func (c *config) Set(key string, value any) {
 	c.Viper.Set(key, value)
 	c.Viper.Set("changed_at", time.Now())
 }
 
+// deepMapSet
+// deep correct value of config, usable at unmarshal,
+// for example time.Duration as string
 func deepMapSet(path []string, value any) (res map[string]any) {
 	res = make(map[string]any)
 	if len(path) >= 1 {
@@ -56,6 +61,8 @@ func deepMapSet(path []string, value any) (res map[string]any) {
 	return
 }
 
+// AllSettings
+// get all printable settings
 func (c *config) AllSettings() (m map[string]any) {
 	m = c.Viper.AllSettings()
 	for _, k := range excludeViewKeys {
