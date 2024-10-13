@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/crypt"
@@ -33,12 +34,17 @@ This client is not registered on the server yet, please run the server registrat
 
 		return
 	}
+	encryptedSyncTokenB, err := hex.DecodeString(encryptedSyncToken)
+	if err != nil {
+		cmd.PrintErrf("failed to hex Decode String encryptedSyncToken: %v\n", err)
+		return
+	}
 	cryptToken, err := a.Srv().GetToken()
 	if err != nil {
 		cmd.PrintErrf("failed to get encription token: %v\n", err)
 		return
 	}
-	syncToken, err = crypt.Decode([]byte(encryptedSyncToken), cryptToken)
+	syncToken, err = crypt.Decode(encryptedSyncTokenB, cryptToken)
 	if err != nil {
 		cmd.PrintErrf("failed to decrypt synchronization token: %v\n", err)
 		return
@@ -190,7 +196,7 @@ please come up with a password for this..`)
 			cmd.PrintErrf("failed to crypt synchronization token: %v\n", err)
 			return
 		}
-		cfg.User.Set("sync.token", encryptedSyncToken)
+		cfg.User.Set("sync.token", hex.EncodeToString(encryptedSyncToken))
 		cfg.User.Set("sync.status.token.created_at", time.Now())
 		cmd.Println(`
 Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings.`)
