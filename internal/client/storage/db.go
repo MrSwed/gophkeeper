@@ -33,12 +33,15 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 	if query.UpdatedAt != "" {
 		b = b.Where(sq.Like{"updated_at": "%" + query.UpdatedAt + "%"})
 	}
+	if query.SyncAt != "" {
+		b = b.Where("sync_at is null or sync_at < ?", query.SyncAt)
+	}
 	return b
 }
 
 func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 	var (
-		builder = sq.Select("key", "description", "created_at", "updated_at").
+		builder = sq.Select("key", "description", "created_at", "updated_at", "sync_at").
 			From("storage")
 		sql  string
 		args []interface{}
