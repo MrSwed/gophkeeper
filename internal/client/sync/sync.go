@@ -128,7 +128,7 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) 
 	if createdAt := cfg.User.GetTime("sync.user.created_at"); !createdAt.IsZero() {
 		user.CreatedAt = timestamppb.New(createdAt)
 	}
-	if updatedAt := cfg.User.GetTime("sync.user.updated_at"); !updatedAt.IsZero() {
+	if updatedAt := cfg.User.GetTime("updated_at"); !updatedAt.IsZero() {
 		user.UpdatedAt = timestamppb.New(updatedAt)
 	}
 
@@ -138,7 +138,7 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) 
 		return
 	}
 	var updated bool
-	if !bytes.Equal(user.PackedKey, getUser.PackedKey) {
+	if getUser.PackedKey != nil && !bytes.Equal(user.PackedKey, getUser.PackedKey) {
 		user.PackedKey = getUser.PackedKey
 		cfg.User.Set("packed_key", user.PackedKey)
 		updated = true
@@ -151,12 +151,12 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) 
 		cfg.User.Set("email", getUser.Email)
 		updated = true
 	}
-	if getUser.CreatedAt != nil && (user.CreatedAt == nil || user.CreatedAt != getUser.CreatedAt) {
+	if getUser.CreatedAt != nil && (user.CreatedAt == nil || user.CreatedAt.AsTime() != getUser.CreatedAt.AsTime()) {
 		cfg.User.Set("sync.user.created_at", getUser.CreatedAt.AsTime())
 		updated = true
 	}
-	if getUser.UpdatedAt != nil {
-		cfg.User.Set("sync.user.updated_at", getUser.UpdatedAt.AsTime())
+	if getUser.UpdatedAt != nil && (user.UpdatedAt == nil || user.UpdatedAt.AsTime() != getUser.UpdatedAt.AsTime()) {
+		cfg.User.Set("updated_at", getUser.UpdatedAt.AsTime())
 		updated = true
 	}
 	if updated {
