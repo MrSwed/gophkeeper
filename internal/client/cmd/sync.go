@@ -171,10 +171,16 @@ Since there is no encryption token, first try to get user data from the server`)
 				return
 			}
 			defer syncSrv.Close()
-			err = syncSrv.SyncUser(ctx, "")
+			var updated bool
+			updated, err = syncSrv.SyncUser(ctx, "")
 			if err != nil {
 				cmd.PrintErrf("sychronization failed: %v\n", err)
 				return
+			}
+			if !updated {
+				cmd.Println(`User sync finished, no new data received`)
+			} else {
+				cmd.Println(`User sync finished, user data updated from server`)
 			}
 			// Steel no encryption key
 			// Notify about create new one
@@ -231,11 +237,18 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		}
 		defer syncSrv.Close()
 
-		err = syncSrv.SyncUser(ctx, "")
+		var updated bool
+		updated, err = syncSrv.SyncUser(ctx, "")
 		if err != nil {
 			cmd.PrintErrf("user sychronization failed: %v\n", err)
 			return
 		}
+		if !updated {
+			cmd.Println(`User sync finished, no new data received`)
+		} else {
+			cmd.Println(`User sync finished, user data updated from server`)
+		}
+
 		cmd.Println(time.Now().Format(time.DateTime), `User synchronization finished`)
 
 		err = syncSrv.SyncData(ctx)

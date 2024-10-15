@@ -21,7 +21,7 @@ import (
 type SyncService interface {
 	SyncData(ctx context.Context) (err error)
 
-	SyncUser(context.Context, string) error
+	SyncUser(context.Context, string) (bool, error)
 	DeleteUser(context.Context) error
 	Close() error
 }
@@ -117,7 +117,7 @@ func (sc syncService) SyncData(ctx context.Context) (err error) {
 	return
 }
 
-func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) {
+func (sc syncService) SyncUser(ctx context.Context, newPass string) (updated bool, err error) {
 	var getUser *pb.UserSync
 	user := &pb.UserSync{
 		Email:       cfg.User.GetString("email"),
@@ -128,7 +128,7 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) 
 	if createdAt := cfg.User.GetTime("sync.user.created_at"); !createdAt.IsZero() {
 		user.CreatedAt = timestamppb.New(createdAt)
 	}
-	if updatedAt := cfg.User.GetTime("updated_at"); !updatedAt.IsZero() {
+	if updatedAt := cfg.User.GetTime("sync.user.updated_at"); !updatedAt.IsZero() {
 		user.UpdatedAt = timestamppb.New(updatedAt)
 	}
 
@@ -156,12 +156,11 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (err error) 
 		updated = true
 	}
 	if getUser.UpdatedAt != nil && (user.UpdatedAt == nil || user.UpdatedAt.AsTime() != getUser.UpdatedAt.AsTime()) {
-		cfg.User.Set("updated_at", getUser.UpdatedAt.AsTime())
+		cfg.User.Set("sync.user.updated_at", getUser.UpdatedAt.AsTime())
 		updated = true
 	}
-	if updated {
-		cfg.User.Set("sync.status.user.last_sync_at", time.Now())
-	}
+	cfg.User.Set("sync.status.user.last_sync_at", time.Now())
+
 	return
 }
 

@@ -30,12 +30,13 @@ func (d duration) MarshalJSON() ([]byte, error) {
 }
 
 var (
-	excludeSaveKeys  = []string{"config_path", "loaded_at", "changed_at", "encryption_key", "sync_password"}
-	excludeViewKeys  = []string{"encryption_key", "sync_password"}
-	durationViewKeys = []string{"sync.timeout.sync", "sync.timeout.register"}
-	clearAfterSave   = []string{"changed_at"}
-	User             config
-	Glob             = config{Viper: viper.New()}
+	excludeSaveKeys          = []string{"config_path", "loaded_at", "changed_at", "encryption_key", "sync_password"}
+	excludeViewKeys          = []string{"encryption_key", "sync_password"}
+	durationViewKeys         = []string{"sync.timeout.sync", "sync.timeout.register"}
+	clearAfterSave           = []string{"changed_at"}
+	syncUpdatedTriggerFields = []string{"email", "packed_key"}
+	User                     config
+	Glob                     = config{Viper: viper.New()}
 )
 
 // Set
@@ -43,6 +44,11 @@ var (
 func (c *config) Set(key string, value any) {
 	c.Viper.Set(key, value)
 	c.Viper.Set("changed_at", time.Now())
+	for _, k := range syncUpdatedTriggerFields {
+		if k == key {
+			c.Viper.Set("sync.user.updated_at", time.Now())
+		}
+	}
 }
 
 // deepMapSet
