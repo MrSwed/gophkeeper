@@ -37,14 +37,17 @@ func (d *DBRecord) FromItemSync(p *pb.ItemSync) {
 }
 
 func (d *DBRecord) ToItemSync() (p *pb.ItemSync) {
+	// we save to local sqlite datetime in localtime zone without zone ext "+03:00"
+	// so we need to convert it to utc
+	_, z := time.Now().Zone()
 	p = &pb.ItemSync{
 		Key:         d.Key,
 		Description: d.Description,
-		CreatedAt:   timestamppb.New(d.CreatedAt),
+		CreatedAt:   timestamppb.New(d.CreatedAt.Add(-time.Duration(z) * time.Second)),
 		Blob:        d.Blob,
 	}
 	if d.UpdatedAt != nil {
-		p.UpdatedAt = timestamppb.New(*d.UpdatedAt)
+		p.UpdatedAt = timestamppb.New((*d.UpdatedAt).Add(-time.Duration(z) * time.Second))
 	}
 	return
 }
