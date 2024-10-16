@@ -54,20 +54,20 @@ func (sc syncService) Close() error {
 
 func (sc syncService) SyncData(ctx context.Context) (err error) {
 	var (
-		g          *errgroup.Group
+		// g          *errgroup.Group
 		numWorkers = runtime.NumCPU()
 		syncList   = &syncList{
 			startTime: time.Now(),
 		}
 	)
-	g, ctx = errgroup.WithContext(ctx)
+	g, gctx := errgroup.WithContext(ctx)
 
 	// Stage 1. collect list with sync needed items
 	// get server list
-	g.Go(sc.getRemoteCollect(ctx, syncList))
+	g.Go(sc.getRemoteCollect(gctx, syncList))
 
 	// get client list
-	g.Go(sc.getLocalCollect(ctx, syncList))
+	g.Go(sc.getLocalCollect(gctx, syncList))
 
 	// wait for full complete sync list
 	err = g.Wait()
@@ -78,6 +78,7 @@ func (sc syncService) SyncData(ctx context.Context) (err error) {
 
 	keysQueue := syncList.KeyQueue()
 
+	numWorkers = min(numWorkers, int(syncList.Len()))
 	localItemQueues := make([]chan model.DBRecord, numWorkers)
 	// run workers for get locals data
 	for i := 0; i < numWorkers; i++ {
@@ -254,6 +255,7 @@ func (sc syncService) getItemChan(ctx context.Context, keysQueue chan string,
 		for key := range keysQueue {
 			select {
 			case <-ctx.Done():
+				return
 			default:
 				item, er := sc.s.GetRaw( /*ctx,*/ key)
 				if er != nil && !errors.Is(er, sql.ErrNoRows) {

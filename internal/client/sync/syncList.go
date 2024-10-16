@@ -24,13 +24,9 @@ func (s *syncList) Len() int64 {
 func (s *syncList) KeyQueue() chan string {
 	keysQueue := make(chan string)
 	go func() {
-		syncCount := int64(0)
+		defer close(keysQueue)
 		s.Range(func(key, _ interface{}) bool {
 			keysQueue <- key.(string)
-			syncCount++
-			if syncCount >= s.Len() {
-				close(keysQueue)
-			}
 			return true
 		})
 	}()
@@ -44,6 +40,7 @@ func (s *syncList) KeyQueue() chan string {
 func (s *syncList) ToSync(key any, updatedAt *timestamp.Timestamp) {
 	if value, ok := s.Map.Load(key); ok && value != nil {
 		// update: keep or drop from list
+		value, _ := value.(*timestamp.Timestamp)
 		if updatedAt.IsValid() && value == updatedAt {
 			s.Map.Delete(key)
 			s.count.Add(-1)

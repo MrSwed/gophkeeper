@@ -47,6 +47,7 @@ func (c *config) Set(key string, value any) {
 	for _, k := range syncUpdatedTriggerFields {
 		if k == key {
 			c.Viper.Set("sync.user.updated_at", time.Now())
+			break
 		}
 	}
 }
