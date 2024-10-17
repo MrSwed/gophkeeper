@@ -54,7 +54,6 @@ func (sc syncService) Close() error {
 
 func (sc syncService) SyncData(ctx context.Context) (err error) {
 	var (
-		// g          *errgroup.Group
 		numWorkers = runtime.NumCPU()
 		syncList   = &syncList{
 			startTime: time.Now(),
@@ -138,7 +137,6 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (updated boo
 	if err != nil {
 		return
 	}
-	var updated bool
 	if getUser.PackedKey != nil && !bytes.Equal(user.PackedKey, getUser.PackedKey) {
 		user.PackedKey = getUser.PackedKey
 		cfg.User.Set("packed_key", user.PackedKey)
@@ -221,6 +219,7 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 				SyncAt: syncList.startTime.Format(time.DateTime),
 			}
 		)
+		_, z := time.Now().Zone()
 		for {
 			select {
 			case <-ctx.Done():
@@ -233,9 +232,9 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 			}
 			for _, item := range clientList.Items {
 				if item.UpdatedAt == nil {
-					syncList.ToSync(item.Key, timestamppb.New(item.CreatedAt))
+					syncList.ToSync(item.Key, timestamppb.New(item.CreatedAt.Add(-time.Duration(z)*time.Second)))
 				} else {
-					syncList.ToSync(item.Key, timestamppb.New(*item.UpdatedAt))
+					syncList.ToSync(item.Key, timestamppb.New((*item.UpdatedAt).Add(-time.Duration(z)*time.Second)))
 				}
 			}
 			if clientList.Total <= request.Offset+request.Limit {

@@ -22,23 +22,29 @@ type DBRecord struct {
 	Blob     []byte  `db:"blob" json:"blob"`
 }
 
+// FromItemSync
+//
+//	convert remote proto item to local db record
 func (d *DBRecord) FromItemSync(p *pb.ItemSync) {
 	d.Key = p.Key
 	d.Description = p.Description
 	if p.UpdatedAt.IsValid() {
 		d.UpdatedAt = new(time.Time)
-		*d.UpdatedAt = p.UpdatedAt.AsTime()
+		*d.UpdatedAt = p.UpdatedAt.AsTime().Local()
 	}
 	if p.CreatedAt.IsValid() {
-		d.CreatedAt = p.CreatedAt.AsTime()
+		d.CreatedAt = p.CreatedAt.AsTime().Local()
 	}
 	d.Blob = p.Blob
 	d.SyncAt = &[]time.Time{time.Now()}[0]
 }
 
+// ToItemSync
+//
+//	Convert local db record to proto item for send to remote
+//	we save to local sqlite datetime in localtime zone without zone ext "+03:00"
+//	so we need to convert it to utc
 func (d *DBRecord) ToItemSync() (p *pb.ItemSync) {
-	// we save to local sqlite datetime in localtime zone without zone ext "+03:00"
-	// so we need to convert it to utc
 	_, z := time.Now().Zone()
 	p = &pb.ItemSync{
 		Key:         d.Key,
