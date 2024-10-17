@@ -162,7 +162,7 @@ The synchronization token has been successfully received...`)
 			cmd.Println(`
 Since there is no encryption token, first try to get user data from the server`)
 			cmd.Println()
-			var syncSrv sync.SyncService
+			var syncSrv sync.Service
 			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
 			defer cancel()
 			ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
@@ -229,7 +229,7 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
 		defer cancel()
 
-		var syncSrv sync.SyncService
+		var syncSrv sync.Service
 		ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
 		if err != nil {
 			cmd.PrintErrf("prepare sychronization failed: %v\n", err)

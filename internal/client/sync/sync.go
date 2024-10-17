@@ -11,6 +11,7 @@ import (
 	"gophKeeper/internal/client/service"
 	pb "gophKeeper/internal/proto"
 	"runtime"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -18,7 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type SyncService interface {
+type Service interface {
 	SyncData(ctx context.Context) (err error)
 
 	SyncUser(context.Context, string) (bool, error)
@@ -26,7 +27,7 @@ type SyncService interface {
 	Close() error
 }
 
-var _ SyncService = (*syncService)(nil)
+var _ Service = (*syncService)(nil)
 
 type syncService struct {
 	s          service.Service
@@ -35,7 +36,12 @@ type syncService struct {
 	dataClient pb.DataClient
 }
 
-func NewSyncService(ctx context.Context, addr string, token []byte, s service.Service) (context.Context, SyncService, error) {
+type dbRecQueue struct {
+	item model.DBRecord
+	err  error
+}
+
+func NewSyncService(ctx context.Context, addr string, token []byte, s service.Service) (context.Context, Service, error) {
 	sc := &syncService{
 		s: s,
 	}
@@ -72,48 +78,32 @@ func (sc syncService) SyncData(ctx context.Context) (err error) {
 	err = g.Wait()
 	// send keys for sync
 
-	errCh := make(chan error)
-	defer close(errCh)
-
 	keysQueue := syncList.KeyQueue()
 
 	numWorkers = min(numWorkers, int(syncList.Len()))
-	localItemQueues := make([]chan model.DBRecord, numWorkers)
+	localItemQueues := make([]chan dbRecQueue, numWorkers)
 	// run workers for get locals data
 	for i := 0; i < numWorkers; i++ {
-		localItemQueues[i] = sc.getItemChan(ctx, keysQueue, errCh) // return localItemsQueue
+		localItemQueues[i] = sc.getItemChan(ctx, keysQueue) // return localItemsQueue
 	}
 
 	// send to sync
-	// syncItemsQueue := make(chan model.DBRecord)
-	remoteItemsQueue := sc.syncItemsHandler(ctx, errCh, localItemQueues...)
+	remoteItemsQueue := sc.syncItemsHandler(ctx, localItemQueues...)
 
 	// run workers for save local
-	resultQueue := sc.saveUpdatedItems(ctx, remoteItemsQueue, errCh)
+	resultQueue := sc.saveUpdatedItems(ctx, remoteItemsQueue)
 
 	var resultCount int
-	for {
-		select {
-		case _, ok := <-resultQueue:
-			if ok {
-				resultCount++
-			} else {
-				resultQueue = nil
-			}
-		case er, ok := <-errCh:
-			if ok {
-				err = errors.Join(err, er)
-			} else {
-				errCh = nil
-			}
-		default:
-		}
-		if resultQueue == nil && errCh == nil {
-			break
+	for er := range resultQueue {
+		if er == nil {
+			resultCount++
+		} else {
+			err = errors.Join(err, er)
 		}
 	}
 	cfg.User.Set("sync.status.data.last_sync_at", time.Now())
 	cfg.User.Set("sync.status.data.updated", resultCount)
+
 	return
 }
 
@@ -177,7 +167,6 @@ func (sc syncService) getRemoteCollect(ctx context.Context, syncList *syncList) 
 			request    = &pb.ListRequest{
 				Limit:  cfg.PageSize,
 				Offset: 0,
-				// Orderby: "key",
 			}
 		)
 		for {
@@ -215,7 +204,6 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 			request    = model.ListQuery{
 				Limit:  cfg.PageSize,
 				Offset: 0,
-				// Orderby: "key",
 				SyncAt: syncList.startTime.Format(time.DateTime),
 			}
 		)
@@ -246,9 +234,9 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 	}
 }
 
-func (sc syncService) getItemChan(ctx context.Context, keysQueue chan string,
-	errCh chan error) (lcItemQueue chan model.DBRecord) {
-	lcItemQueue = make(chan model.DBRecord)
+func (sc syncService) getItemChan(ctx context.Context, keysQueue chan string, /*,
+errCh chan error*/) (lcItemQueue chan dbRecQueue) {
+	lcItemQueue = make(chan dbRecQueue)
 	go func() {
 		defer close(lcItemQueue)
 		for key := range keysQueue {
@@ -257,16 +245,15 @@ func (sc syncService) getItemChan(ctx context.Context, keysQueue chan string,
 				return
 			default:
 				item, er := sc.s.GetRaw( /*ctx,*/ key)
-				if er != nil && !errors.Is(er, sql.ErrNoRows) {
-					// go func() {
-					errCh <- er
-					// }()
-					continue
+				if er != nil {
+					if errors.Is(er, sql.ErrNoRows) {
+						er = nil
+					}
 				}
 				if item.Key == "" {
 					item.Key = key
 				}
-				lcItemQueue <- item
+				lcItemQueue <- dbRecQueue{item, er}
 			}
 		}
 	}()
@@ -274,59 +261,45 @@ func (sc syncService) getItemChan(ctx context.Context, keysQueue chan string,
 	return lcItemQueue
 }
 
-func (sc syncService) syncItemsHandler(ctx context.Context, errCh chan error,
-	localItemQueues ...chan model.DBRecord) (remoteItemsQueue chan model.DBRecord) {
+func (sc syncService) syncItemsHandler(ctx context.Context,
+	localItemQueues ...chan dbRecQueue) (remoteItemsQueue chan dbRecQueue) {
 	var (
-		g *errgroup.Group
+		g sync.WaitGroup
 	)
-	g, ctx = errgroup.WithContext(ctx)
-	remoteItemsQueue = make(chan model.DBRecord)
+	remoteItemsQueue = make(chan dbRecQueue)
 	for _, lcItemQueue := range localItemQueues {
 		// go less 1.22
 		lcItemQueue := lcItemQueue
-		g.Go(func() (err error) {
+		g.Add(1)
+		go func() {
+			defer g.Done()
 			for itemSend := range lcItemQueue {
-				itemGetPb, er := sc.dataClient.SyncItem(ctx, itemSend.ToItemSync())
-				if er != nil {
-					err = errors.Join(err, er)
-					continue
-				}
+				itemGetPb, er := sc.dataClient.SyncItem(ctx, itemSend.item.ToItemSync())
 				var itemGet model.DBRecord
-				itemGet.FromItemSync(itemGetPb)
-				remoteItemsQueue <- itemGet
-				// we do not need check it again, because we filtered the list at prev stage
-				// if itemSend.UpdatedAt != itemGet.UpdatedAt || itemSend.CreatedAt.IsZero() {
-				// 	remoteItemsQueue <- itemGet
-				// }
+				if er == nil {
+					itemGet.FromItemSync(itemGetPb)
+				}
+				remoteItemsQueue <- dbRecQueue{itemGet, nil}
 			}
-			return
-		})
+		}()
 	}
 	go func() {
-		err := g.Wait()
+		g.Wait()
 		close(remoteItemsQueue)
-		if err != nil {
-			errCh <- err
-		}
 	}()
 
 	return remoteItemsQueue
 }
 
-func (sc syncService) saveUpdatedItems(ctx context.Context, itemSaveQueue chan model.DBRecord, errCh chan error) (resultQueue chan struct{}) {
-	resultQueue = make(chan struct{})
+func (sc syncService) saveUpdatedItems(ctx context.Context, forSaveQueue chan dbRecQueue /*, errCh chan error*/) (resultQueue chan error) {
+	resultQueue = make(chan error)
 	go func() {
 		defer close(resultQueue)
-		for itemGet := range itemSaveQueue {
+		for itemGet := range forSaveQueue {
 			select {
 			case <-ctx.Done():
 			default:
-				er := sc.s.SaveRaw( /*ctx,*/ itemGet)
-				if er != nil {
-					errCh <- er
-				} else {
-					resultQueue <- struct{}{}
-				}
+				resultQueue <- sc.s.SaveRaw( /*ctx,*/ itemGet.item)
 			}
 		}
 	}()
