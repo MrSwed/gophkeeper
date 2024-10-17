@@ -107,7 +107,7 @@ func (s *dbStore) Save(data model.DBRecord) (err error) {
  values(?,?,?,?,?,?,?)
  on conflict (key) do update 
   set description=excluded.description,
-      updated_at=case excluded.updated_at when not null then excluded.updated_at else DATETIME('now','localtime') end,
+      updated_at=case when excluded.updated_at is not null then excluded.updated_at else DATETIME('now','localtime') end,
       filename=excluded.filename,
       blob=excluded.blob,
       sync_at=excluded.sync_at`,
