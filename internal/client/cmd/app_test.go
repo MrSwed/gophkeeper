@@ -2,42 +2,117 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	cfg "gophKeeper/internal/client/config"
 	"io"
+	"log"
+	"math/rand"
+	"net"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	cfg "gophKeeper/internal/client/config"
+	serverApp "gophKeeper/internal/server/app"
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
+)
+
+const (
+	waitPortInterval    = 100 * time.Millisecond
+	waitPortConnTimeout = 50 * time.Millisecond
 )
 
 type appTestSuite struct {
 	suite.Suite
+	client appTestClient
+	server appTestServer
+}
+
+type appTestClient struct {
 	oldStdin, stdin, stdinPipe, oldStdOut, stdout, stdoutPipe *os.File
 	outC                                                      chan string
 }
 
+type appTestServer struct {
+	ctx     context.Context
+	stop    context.CancelFunc
+	address string
+	pgCont  *postgres.PostgresContainer
+	osArgs  []string
+}
+
 func (s *appTestSuite) SetupSuite() {
+	s.setupClient()
+}
+
+func (s *appTestSuite) setupClient() {
 	cfg.Glob.Viper.Set("config_path", s.T().TempDir())
 	var err error
-	s.stdin, s.stdinPipe, err = os.Pipe()
+	s.client.stdin, s.client.stdinPipe, err = os.Pipe()
 	require.NoError(s.T(), err)
-	s.oldStdin, os.Stdin = os.Stdin, s.stdin
+	s.client.oldStdin, os.Stdin = os.Stdin, s.client.stdin
+}
+
+func (s *appTestSuite) maybeSetupServer() {
+	if s.server.pgCont != nil {
+		return
+	}
+	var (
+		err error
+	)
+	s.server.osArgs = os.Args
+	os.Args = os.Args[0:1]
+	s.server.ctx, s.server.stop = context.WithCancel(context.Background())
+
+	s.server.pgCont, err = createPostgresContainer(s.server.ctx)
+	require.NoError(s.T(), err)
+	databaseDSN, err := s.server.pgCont.ConnectionString(s.server.ctx, "sslmode=disable")
+	require.NoError(s.T(), err)
+	s.server.address = net.JoinHostPort("", fmt.Sprintf("%d", rand.Intn(200)+30000))
+
+	s.T().Setenv("DATABASE_DSN", databaseDSN)
+	s.T().Setenv("GRPC_ADDRESS", s.server.address)
+	s.T().Setenv("GRPC_OPERATION_TIMEOUT", "5000s")
+
+	go serverApp.RunApp(s.server.ctx, nil, nil, serverApp.BuildMetadata{Version: "testing..", Date: time.Now().String(), Commit: ""})
+	require.NoError(s.T(), waitGRPCPort(s.server.ctx, s.server.address))
+
+	// db, err := sqlx.Connect("postgres", databaseDSN)
+	// predefined, err := os.ReadFile(filepath.Join("../../../", "testdata", "server.sql"))
+	// require.NoError(s.T(), err)
+	// _, err = db.Exec(string(predefined))
+	// require.NoError(s.T(), err)
 }
 
 func (s *appTestSuite) TearDownSuite() {
+	s.tearDownClient()
+	s.tearDownServer()
+}
 
-	require.NoError(s.T(), os.RemoveAll(s.T().TempDir()))
-
+func (s *appTestSuite) tearDownClient() {
 	// restore stdin
-	os.Stdin = s.oldStdin
-	err := s.stdinPipe.Close()
+	os.Stdin = s.client.oldStdin
+	err := s.client.stdinPipe.Close()
 	require.NoError(s.T(), err)
-	err = s.stdin.Close()
+	err = s.client.stdin.Close()
 	require.NoError(s.T(), err)
+}
+
+func (s *appTestSuite) tearDownServer() {
+	if s.server.pgCont != nil {
+		if err := s.server.pgCont.Terminate(s.server.ctx); err != nil {
+			log.Fatalf("error terminating postgres container: %s", err)
+		}
+
+		s.server.stop()
+		os.Args = s.server.osArgs
+	}
 }
 
 func TestApp(t *testing.T) {
@@ -214,8 +289,10 @@ func (s *appTestSuite) Test_App() {
 				r, w, err := os.Pipe()
 				require.NoError(t, err)
 				os.Stdout = w
-
-				consoleOutput, _ := s.executeCommand(cmd...)
+				if len(cmd) > 0 && cmd[0] == "sync" {
+					s.maybeSetupServer()
+				}
+				consoleOutput, _ := s.client.executeCommand(cmd...)
 
 				err = w.Close()
 				require.NoError(t, err)
@@ -240,14 +317,14 @@ func (s *appTestSuite) Test_App() {
 func (s *appTestSuite) input(str ...string) {
 	if len(str) > 0 {
 		input := []byte(strings.Join(str, "\n") + "\n")
-		_, err := s.stdinPipe.Write(input)
+		_, err := s.client.stdinPipe.Write(input)
 		require.NoError(s.T(), err)
 	}
 }
 
 // executeCommand
 // https://github.com/spf13/cobra/issues/1790#issuecomment-2121139148
-func (s *appTestSuite) executeCommand(args ...string) (string, error) {
+func (s *appTestClient) executeCommand(args ...string) (string, error) {
 	buf := new(bytes.Buffer)
 	a := NewApp(BuildMetadata{
 		Version: "N/A",
@@ -261,4 +338,43 @@ func (s *appTestSuite) executeCommand(args ...string) (string, error) {
 	err := a.Execute()
 
 	return buf.String(), err
+}
+
+func createPostgresContainer(ctx context.Context) (*postgres.PostgresContainer, error) {
+	pgContainer, err := postgres.Run(ctx, "postgres:14-alpine",
+		// postgres.WithInitScripts(
+		// 	filepath.Join("../../../", "testdata", "server.sql"),
+		// ),
+		postgres.WithDatabase("test-db"),
+		postgres.WithUsername("postgres"),
+		postgres.WithPassword("postgres"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).WithStartupTimeout(5*time.Second)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pgContainer, nil
+}
+func waitGRPCPort(ctx context.Context, address string) error {
+	if address == "" {
+		return nil
+	}
+	ticker := time.NewTicker(waitPortInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			conn, _ := net.DialTimeout("tcp", address, waitPortConnTimeout)
+			if conn != nil {
+				_ = conn.Close()
+				return nil
+			}
+		}
+	}
 }
