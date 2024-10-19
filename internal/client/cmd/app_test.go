@@ -47,6 +47,11 @@ type appTestServer struct {
 	osArgs  []string
 }
 
+func (s *appTestSuite) getServerAddress() string {
+	s.maybeSetupServer()
+	return s.server.address
+}
+
 func (s *appTestSuite) SetupSuite() {
 	s.setupClient()
 }
@@ -278,6 +283,47 @@ func (s *appTestSuite) Test_App() {
 				6: {"somePass", "somePass"},
 			},
 		},
+		{
+			name: "sync new user",
+			commands: [][]string{
+				{"profile", "use", "newSyncUser"},
+				{"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
+				{"save", "text", "--text", "some text data"},
+				{"sync", "now"},
+				{"config", "user", "--server", s.getServerAddress()},
+				{"sync", "now"},
+				{"sync", "register"},
+				{"config", "user", "-e", "newSyncUser@email.localhost"},
+				{"sync", "register"},
+				{"sync", "register"},
+			},
+			wantStrOut: [][]string{
+				{"Switching to profile..  ", "newSyncUser"},
+				{"Data saved successfully"},
+				{"Data saved successfully"},
+				{"The address of the synchronization server is not set"},
+				{"User configuration: set `server` = `" + s.getServerAddress() + "`"},
+				{"This client is not registered on the server yet"},
+				{"The email is not specified in the configuration"},
+				{"User configuration: set `email` = `newSyncUser@email.localhost`"},
+				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize",
+					"failed to register client", "validation", "password"},
+				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize",
+					"The synchronization token has been successfully received", "Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings."},
+			},
+			inputs: [][]string{
+				{},
+				{"somePass", "somePass"},
+				{"somePass"},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{"simplePass"},
+				{"P@$$w0rd"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -306,7 +352,7 @@ func (s *appTestSuite) Test_App() {
 				}
 				if i < len(tt.wantNoStrOut) {
 					for _, wantNoOut := range tt.wantNoStrOut[i] {
-						require.NotContains(t, consoleOutput, wantNoOut, cmd)
+						require.NotContains(t, consoleOutput, wantNoOut, i, cmd)
 					}
 				}
 			}
