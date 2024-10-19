@@ -230,8 +230,7 @@ func (s *appTestSuite) Test_App() {
 			inputs: [][]string{
 				0: {},
 				1: {"somePass", "somePass"},
-				2: {"somePass", "somePass"},
-				3: {"somePass"},
+				2: {"somePass"},
 			},
 		}, {
 			name: "profile use test2, config",
@@ -288,56 +287,58 @@ func (s *appTestSuite) Test_App() {
 		{
 			name: "sync new user",
 			commands: [][]string{
-				{"profile", "use", "newSyncUser"},
-				{"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
-				{"save", "text", "--text", "some text data"},
-				{"sync", "now"},
-				{"config", "user", "--server", s.getServerAddress()},
-				{"sync", "now"},
-				{"sync", "register"},
-				{"config", "user", "-e", "newSyncUser@email.localhost"},
-				{"sync", "register"},
-				{"sync", "register"},
-				{"sync", "now"},
+				0:  {"profile", "use", "newSyncUser"},
+				1:  {"save", "card", "--num", "0000-0000-0000-0000", "--cvv", "222", "-k", "card-key-1"},
+				2:  {"save", "text", "--text", "some text data"},
+				3:  {"sync", "now"},
+				4:  {"config", "user", "--server", s.getServerAddress()},
+				5:  {"sync", "now"},
+				6:  {"sync", "register"},
+				7:  {"config", "user", "-e", "newSyncUser@email.localhost"},
+				8:  {"sync", "register"},
+				9:  {"sync", "register"},
+				10: {"sync", "now"},
+				11: {"sync"},
 			},
 			wantStrOut: [][]string{
-				{"Switching to profile..  ", "newSyncUser"},
-				{"Data saved successfully"},
-				{"Data saved successfully"},
-				{"The address of the synchronization server is not set"},
-				{"User configuration: set `server` = `" + s.getServerAddress() + "`"},
-				{"This client is not registered on the server yet"},
-				{"The email is not specified in the configuration"},
-				{"User configuration: set `email` = `newSyncUser@email.localhost`"},
-				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "failed to register client", "validation", "password"},
-				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "The synchronization token has been successfully received", "Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings."},
-				{"Start synchronization with server", "User sync finished, no new data received", "User synchronization finished", "Data synchronization finished", "Synchronization status"},
+				0:  {"Switching to profile..  ", "newSyncUser"},
+				1:  {"Data saved successfully"},
+				2:  {"Data saved successfully"},
+				3:  {"The address of the synchronization server is not set"},
+				4:  {"User configuration: set `server` = `" + s.getServerAddress() + "`"},
+				5:  {"This client is not registered on the server yet"},
+				6:  {"The email is not specified in the configuration"},
+				7:  {"User configuration: set `email` = `newSyncUser@email.localhost`"},
+				8:  {"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "failed to register client", "validation", "password"},
+				9:  {"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "The synchronization token has been successfully received", "Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings."},
+				10: {"Start synchronization with server", "User sync finished, no new data received", "User synchronization finished", "Data synchronization finished", "Synchronization status"},
+				11: {"Synchronization status:", "last_sync_at", "last_sync_at", `"updated": 2`},
 			},
 			wantNoStrOut: [][]string{
-				{},
-				{},
-				{},
-				{},
-				{},
-				{},
-				{},
-				{},
-				{},
-				{"This client is already registered on the server. You can run synchronization.", "The email is not specified in the configuration, please set it by command", "failed to get password", "failed to register client"},
-				{"failed to load config", "prepare synchronization failed", "user synchronization failed", "failed to marshal sync.status", "User sync finished, user data updated from server", "data synchronization failed"},
+				0:  {},
+				1:  {},
+				2:  {},
+				3:  {},
+				4:  {},
+				5:  {},
+				6:  {},
+				7:  {},
+				8:  {},
+				9:  {"This client is already registered on the server. You can run synchronization.", "The email is not specified in the configuration, please set it by command", "failed to get password", "failed to register client"},
+				10: {"failed to load config", "prepare synchronization failed", "user synchronization failed", "failed to marshal sync.status", "User sync finished, user data updated from server", "data synchronization failed"},
 			},
 			inputs: [][]string{
-				{},
-				{"somePass", "somePass"},
-				{"somePass"},
-				{},
-				{},
-				{},
-				{},
-				{},
-				{"simplePass"},
-				{"P@$$w0rd"},
-				{"somePass"},
+				0:  {},
+				1:  {"somePass", "somePass"},
+				2:  {"somePass"},
+				3:  {},
+				4:  {},
+				5:  {},
+				6:  {},
+				7:  {},
+				8:  {"simplePass"},
+				9:  {`Pa$$w0rd`},
+				10: {"somePass"},
 			},
 		},
 	}
@@ -363,12 +364,12 @@ func (s *appTestSuite) Test_App() {
 				os.Stdout = rescueStdout
 				if i < len(tt.wantStrOut) {
 					for _, wantOut := range tt.wantStrOut[i] {
-						require.Contains(t, consoleOutput+string(out), wantOut, append(cmd, fmt.Sprintf(" : %d", i)))
+						require.Contains(t, consoleOutput+string(out), wantOut, fmt.Sprintf("cmd %d: %s", i, cmd))
 					}
 				}
 				if i < len(tt.wantNoStrOut) {
 					for _, wantNoOut := range tt.wantNoStrOut[i] {
-						require.NotContains(t, consoleOutput, wantNoOut, i, cmd)
+						require.NotContains(t, consoleOutput+string(out), wantNoOut, fmt.Sprintf("cmd %d: %s", i, cmd))
 					}
 				}
 			}
@@ -398,7 +399,7 @@ func (s *appTestClient) executeCommand(args ...string) (string, error) {
 	a.root.SetArgs(args)
 
 	err := a.Execute()
-
+	// _ = a.Close()
 	return buf.String(), err
 }
 
