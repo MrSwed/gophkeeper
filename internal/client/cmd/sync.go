@@ -41,7 +41,7 @@ This client is not registered on the server yet, please run the server registrat
 	}
 	cryptToken, err := a.Srv().GetToken()
 	if err != nil {
-		cmd.PrintErrf("failed to get encription token: %v\n", err)
+		cmd.PrintErrf("failed to get encryption token: %v\n", err)
 		return
 	}
 	syncToken, err = crypt.Decode(encryptedSyncTokenB, cryptToken)
