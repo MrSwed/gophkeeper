@@ -20,40 +20,12 @@ type appTestSuite struct {
 	outC                                                      chan string
 }
 
-//var testDataPath string = filepath.Join("..", "..", "..", "testdata")
-
-// executeCommand
-// https://github.com/spf13/cobra/issues/1790#issuecomment-2121139148
-func (s *appTestSuite) executeCommand(args ...string) (string, error) {
-	buf := new(bytes.Buffer)
-	a := NewApp(BuildMetadata{
-		Version: "N/A",
-		Date:    time.Now().UTC().Format(time.RFC3339),
-		Commit:  "N/A",
-	})
-	a.root.SetOut(buf)
-	a.root.SetErr(buf)
-	a.root.SetArgs(args)
-
-	err := a.Execute()
-
-	return buf.String(), err
-}
-
 func (s *appTestSuite) SetupSuite() {
 	cfg.Glob.Viper.Set("config_path", s.T().TempDir())
 	var err error
 	s.stdin, s.stdinPipe, err = os.Pipe()
 	require.NoError(s.T(), err)
 	s.oldStdin, os.Stdin = os.Stdin, s.stdin
-}
-
-func (s *appTestSuite) input(str ...string) {
-	if len(str) > 0 {
-		input := []byte(strings.Join(str, "\n") + "\n")
-		_, err := s.stdinPipe.Write(input)
-		require.NoError(s.T(), err)
-	}
 }
 
 func (s *appTestSuite) TearDownSuite() {
@@ -263,4 +235,30 @@ func (s *appTestSuite) Test_App() {
 			}
 		})
 	}
+}
+
+func (s *appTestSuite) input(str ...string) {
+	if len(str) > 0 {
+		input := []byte(strings.Join(str, "\n") + "\n")
+		_, err := s.stdinPipe.Write(input)
+		require.NoError(s.T(), err)
+	}
+}
+
+// executeCommand
+// https://github.com/spf13/cobra/issues/1790#issuecomment-2121139148
+func (s *appTestSuite) executeCommand(args ...string) (string, error) {
+	buf := new(bytes.Buffer)
+	a := NewApp(BuildMetadata{
+		Version: "N/A",
+		Date:    time.Now().UTC().Format(time.RFC3339),
+		Commit:  "N/A",
+	})
+	a.root.SetOut(buf)
+	a.root.SetErr(buf)
+	a.root.SetArgs(args)
+
+	err := a.Execute()
+
+	return buf.String(), err
 }
