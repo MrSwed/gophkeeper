@@ -167,14 +167,14 @@ Since there is no encryption token, first try to get user data from the server`)
 			defer cancel()
 			ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
 			if err != nil {
-				cmd.PrintErrf("sychronization failed: %v\n", err)
+				cmd.PrintErrf("synchronization failed: %v\n", err)
 				return
 			}
 			defer syncSrv.Close()
 			var updated bool
 			updated, err = syncSrv.SyncUser(ctx, "")
 			if err != nil {
-				cmd.PrintErrf("sychronization failed: %v\n", err)
+				cmd.PrintErrf("synchronization failed: %v\n", err)
 				return
 			}
 			if !updated {
@@ -232,7 +232,7 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		var syncSrv sync.Service
 		ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
 		if err != nil {
-			cmd.PrintErrf("prepare sychronization failed: %v\n", err)
+			cmd.PrintErrf("prepare synchronization failed: %v\n", err)
 			return
 		}
 		defer syncSrv.Close()
@@ -240,7 +240,7 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 		var updated bool
 		updated, err = syncSrv.SyncUser(ctx, "")
 		if err != nil {
-			cmd.PrintErrf("user sychronization failed: %v\n", err)
+			cmd.PrintErrf("user synchronization failed: %v\n", err)
 			return
 		}
 		if !updated {
@@ -253,7 +253,7 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 
 		err = syncSrv.SyncData(ctx)
 		if err != nil {
-			cmd.PrintErrf("data sychronization failed: %v\n", err)
+			cmd.PrintErrf("data synchronization failed: %v\n", err)
 			return
 		}
 		cmd.Println(time.Now().Format(time.DateTime), `Data synchronization finished`)

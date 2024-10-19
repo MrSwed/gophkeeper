@@ -102,6 +102,8 @@ func (s *appTestSuite) TearDownSuite() {
 
 func (s *appTestSuite) tearDownClient() {
 	// restore stdin
+	// require.NoError(s.T(), os.RemoveAll(s.T().TempDir()))
+
 	os.Stdin = s.client.oldStdin
 	err := s.client.stdinPipe.Close()
 	require.NoError(s.T(), err)
@@ -296,6 +298,7 @@ func (s *appTestSuite) Test_App() {
 				{"config", "user", "-e", "newSyncUser@email.localhost"},
 				{"sync", "register"},
 				{"sync", "register"},
+				{"sync", "now"},
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "newSyncUser"},
@@ -306,10 +309,22 @@ func (s *appTestSuite) Test_App() {
 				{"This client is not registered on the server yet"},
 				{"The email is not specified in the configuration"},
 				{"User configuration: set `email` = `newSyncUser@email.localhost`"},
-				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize",
-					"failed to register client", "validation", "password"},
-				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize",
-					"The synchronization token has been successfully received", "Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings."},
+				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "failed to register client", "validation", "password"},
+				{"Registering this client at server with email newSyncUser@email.localhost", "If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize", "The synchronization token has been successfully received", "Congratulations! The client is successfully registered on the server, the synchronization token is saved in the settings."},
+				{"Start synchronization with server", "User sync finished, no new data received", "User synchronization finished", "Data synchronization finished", "Synchronization status"},
+			},
+			wantNoStrOut: [][]string{
+				{},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{},
+				{"This client is already registered on the server. You can run synchronization.", "The email is not specified in the configuration, please set it by command", "failed to get password", "failed to register client"},
+				{"failed to load config", "prepare synchronization failed", "user synchronization failed", "failed to marshal sync.status", "User sync finished, user data updated from server", "data synchronization failed"},
 			},
 			inputs: [][]string{
 				{},
@@ -322,6 +337,7 @@ func (s *appTestSuite) Test_App() {
 				{},
 				{"simplePass"},
 				{"P@$$w0rd"},
+				{"somePass"},
 			},
 		},
 	}
