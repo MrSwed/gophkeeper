@@ -39,7 +39,7 @@ func (s *userStore) SaveUser(ctx context.Context, user *model.DBUser) (err error
 		Suffix(`
 on conflict (email) do update
 set description=excluded.description,
-      password=case when excluded.password <> '' then excluded.password else password end,
+      password=case when excluded.password <> '' then excluded.password else ` + userTableName + `.password end,
       packed_key=excluded.packed_key
 RETURNING id, created_at, updated_at`).
 		ToSql()
