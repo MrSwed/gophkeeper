@@ -55,7 +55,7 @@ func (s *service) ChangePasswd() (err error) {
 		return
 	}
 	var passRaw string
-	passRaw, err = password.GetRawPass(true)
+	passRaw, err = password.GetRawPass(true, cfg.PromptNewMasterPassword, cfg.PromptConfirmMasterPassword)
 	userName := cfg.User.GetString("name")
 
 	var (
@@ -78,7 +78,11 @@ func (s *service) GetToken() (token string, err error) {
 		packed := cfg.User.GetString("packed_key")
 		userName := cfg.User.GetString("name")
 		var passRaw string
-		passRaw, err = password.GetRawPass(packed == "")
+		if packed == "" {
+			passRaw, err = password.GetRawPass(true, cfg.PromptNewMasterPassword, cfg.PromptConfirmMasterPassword)
+		} else {
+			passRaw, err = password.GetRawPass(false, cfg.PromptMasterPassword, cfg.PromptConfirmMasterPassword)
+		}
 		if err != nil {
 			return
 		}

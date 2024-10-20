@@ -137,7 +137,7 @@ Registering this client at server with email %s.
 If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize`, cfg.User.Get("email"))
 		cmd.Println()
 
-		pass, err := password.GetRawPass(false, "Please enter the server synchronization password: ")
+		pass, err := password.GetRawPass(false, cfg.PromptSyncPassword)
 		if err != nil {
 			cmd.PrintErrf("failed to get password: %v\n", err)
 			return

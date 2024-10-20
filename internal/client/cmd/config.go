@@ -14,7 +14,12 @@ func (a *app) addConfigCmd() *app {
 
 	configCmd := &cobra.Command{
 		Use:   "config",
-		Short: "Config action",
+		Short: "Config actions",
+	}
+
+	globalCmd := &cobra.Command{
+		Use:   "global",
+		Short: "Global config actions",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := cfg.GlobalLoad()
 			if err != nil {
@@ -50,7 +55,8 @@ func (a *app) addConfigCmd() *app {
 			}
 		},
 	}
-	configCmd.Flags().BoolP("autosave", "a", true, "Global: auto save config")
+	globalCmd.Flags().BoolP("autosave", "a", true, "Global: auto save config")
+	globalCmd.Flags().BoolP("debug", "d", false, "Global: debug mode")
 
 	updUserCmd := &cobra.Command{
 		Use:   "user",
@@ -135,7 +141,7 @@ func (a *app) addConfigCmd() *app {
 		},
 	}
 
-	configCmd.AddCommand(updUserCmd, saveCmd)
+	configCmd.AddCommand(globalCmd, updUserCmd, saveCmd)
 
 	a.root.AddCommand(configCmd)
 	return a

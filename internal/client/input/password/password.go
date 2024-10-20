@@ -10,6 +10,12 @@ import (
 	"golang.org/x/term"
 )
 
+const (
+	PromptPassword        = "Please enter password: "
+	PromptNewPassword     = "Please enter new password: "
+	PromptConfirmPassword = "Please confirm you password: "
+)
+
 func readPassword() (pw []byte, e error) {
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		pw, e = term.ReadPassword(int(os.Stdin.Fd()))
@@ -40,19 +46,23 @@ func readPassword() (pw []byte, e error) {
 	}
 }
 
+// GetRawPass get password from user
+//
+//	if confirm is true, ask for confirm password
+//	if prompts is not empty, use it as prompts for password and confirm password
 func GetRawPass(confirm bool, prompts ...string) (pass string, err error) {
 	var b []byte
 	if len(prompts) == 0 {
-		prompts = make([]string, 2)
 		if confirm {
-			prompts[0] = "Please enter new password: "
+			prompts = append(prompts, PromptPassword)
 		} else {
-			prompts[0] = "Please enter password: "
+			prompts = append(prompts, PromptNewPassword)
 		}
-		prompts[1] = "Please confirm you password: "
+		if confirm && len(prompts) == 1 {
+			prompts = append(prompts, PromptConfirmPassword)
+		}
 	}
 	fmt.Print(prompts[0])
-
 	b, err = readPassword()
 	fmt.Println()
 	if err == nil {
