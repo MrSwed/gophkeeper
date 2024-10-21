@@ -12,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// generateSaveFlags generates flags for a given model.
+// It takes a destination object, a command, and a debug flag as input.
+// It generates flags for the base and destination objects of the model.
 func generateSaveFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
 	if debug != nil {
 		cmd.Flags().BoolVarP(debug, "debug", "", *debug, "debug flag")
@@ -25,6 +28,9 @@ func generateSaveFlags(dst any, cmd *cobra.Command, debug *bool) (err error) {
 	return
 }
 
+// saveDataRun takes a model as input and returns a function that is used to save the data.
+// The returned function first resets the model, gets the key for the data, sanitizes the destination object if it is sanitizable, and then saves the data using the "Save" method of the server.
+// If any of these steps fail, an error message is printed.
 func (a *app) saveDataRun(data model.Model) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		defer data.Reset()
@@ -41,25 +47,6 @@ func (a *app) saveDataRun(data model.Model) func(cmd *cobra.Command, args []stri
 		cmd.Println("Data saved successfully")
 	}
 }
-
-// todo; clean ?
-/** /
-func validSaveArgs(m model.Data) (validArgs []string) {
-	validArgsCommon, err := GenFlags(&model.Common{})
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	validArgsData, err := GenFlags(m)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	validArgs = append(validArgsCommon, validArgsData...)
-	return
-}
-/**/
 
 // saveAuthCmd
 // Cobra command for save auth model
