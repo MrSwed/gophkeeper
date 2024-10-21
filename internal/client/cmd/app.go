@@ -124,25 +124,3 @@ func (a *app) Execute() (err error) {
 
 	return
 }
-
-/*
-// todo: not used yet
-func GenFlags(in any) (flags []string, err error) {
-	rv := reflect.ValueOf(in)
-	if rv.Kind() != reflect.Ptr || rv.Elem().Kind() != reflect.Struct {
-		err = errors.New("not pointer-to-a-struct") // exit if not pointer-to-a-struct
-		return
-	}
-	rv = rv.Elem()
-	rt := rv.Type()
-	for i := 0; i < rt.NumField(); i++ {
-		sf := rt.Field(i)
-		tagNames := [2]string{}
-		copy(tagNames[:], strings.SplitN(sf.Tag.Get("flag"), ",", 2))
-		if tagNames[0] != "" {
-			flags = append(flags, tagNames[0])
-		}
-	}
-	return
-}
-*/
