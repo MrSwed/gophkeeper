@@ -118,7 +118,10 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (updated boo
 	if createdAt := cfg.User.GetTime("sync.user.created_at"); !createdAt.IsZero() {
 		user.CreatedAt = timestamppb.New(createdAt)
 	}
-	if updatedAt := cfg.User.GetTime("sync.user.updated_at"); !updatedAt.IsZero() {
+	var updatedAt time.Time
+	if newPass != "" {
+		user.UpdatedAt = timestamppb.New(time.Now())
+	} else if updatedAt = cfg.User.GetTime("sync.user.updated_at"); !updatedAt.IsZero() {
 		user.UpdatedAt = timestamppb.New(updatedAt)
 	}
 
@@ -144,7 +147,8 @@ func (sc syncService) SyncUser(ctx context.Context, newPass string) (updated boo
 		cfg.User.Set("sync.user.created_at", getUser.CreatedAt.AsTime())
 		updated = true
 	}
-	if getUser.UpdatedAt != nil && (user.UpdatedAt == nil || user.UpdatedAt.AsTime() != getUser.UpdatedAt.AsTime()) {
+	if updated || (getUser.UpdatedAt != nil &&
+		(user.UpdatedAt == nil || user.UpdatedAt.AsTime() != getUser.UpdatedAt.AsTime())) {
 		cfg.User.Set("sync.user.updated_at", getUser.UpdatedAt.AsTime())
 		updated = true
 	}

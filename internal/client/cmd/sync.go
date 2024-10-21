@@ -277,10 +277,46 @@ func (a *app) syncPasswordCmd() func(cmd *cobra.Command, args []string) {
 		if !a.validateServerConfigSet(cmd) {
 			return
 		}
-		// todo
-		cmd.Println(`
-change password Not implemented yet `)
-		cmd.Println()
+
+		syncToken := a.getSyncToken(cmd)
+		if len(syncToken) == 0 {
+			return
+		}
+
+		cmd.Println(time.Now().Format(time.DateTime), `connecting to server..`)
+
+		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
+		defer cancel()
+
+		var syncSrv sync.Service
+		ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
+		if err != nil {
+			cmd.PrintErrf("prepare synchronization failed: %v\n", err)
+			return
+		}
+		defer syncSrv.Close()
+
+		var pass string
+		pass, err = password.GetRawPass(true, cfg.PromptNewSyncPassword, cfg.PromptSyncConfirmPassword)
+		if err != nil {
+			cmd.PrintErrf("failed to get password: %v\n", err)
+			return
+		}
+
+		var updated bool
+		updated, err = syncSrv.SyncUser(ctx, pass)
+		if err != nil {
+			cmd.PrintErrf("user synchronization failed: %v\n", err)
+			return
+		}
+		if !updated {
+			cmd.Println(`User sync finished, no new data received`)
+		} else {
+			cmd.Println(`User sync finished, user data updated from server`)
+		}
+
+		cmd.Println(time.Now().Format(time.DateTime), `User synchronization finished`)
+
 	}
 }
 
