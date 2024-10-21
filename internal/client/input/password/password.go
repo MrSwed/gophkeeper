@@ -68,8 +68,8 @@ func GetRawPass(confirm bool, prompts ...string) (pass string, err error) {
 	if err == nil {
 		if confirm {
 			try := 0
-			fmt.Print(prompts[1])
 		RepeatPass:
+			fmt.Print(prompts[1])
 			b2, err2 := readPassword()
 			fmt.Println()
 			if err2 != nil || string(b) != string(b2) {
