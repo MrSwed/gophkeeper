@@ -301,6 +301,8 @@ func (s *appTestSuite) Test_App() {
 				11: {"sync", "register"},
 				12: {"sync", "now"},
 				13: {"sync"},
+				14: {"sync", "password"},
+				15: {"sync", "password"},
 			},
 			wantStrOut: [][]string{
 				0:  {"Switching to profile..  ", "newSyncUser"},
@@ -317,6 +319,8 @@ func (s *appTestSuite) Test_App() {
 				11: {"This client is already registered on the server. You can run synchronization"},
 				12: {"Start synchronization with server", "User sync finished, no new data received", "User synchronization finished", "Data synchronization finished", "Synchronization status"},
 				13: {"Synchronization status:", "last_sync_at", "last_sync_at", `"updated": 2`},
+				14: {cfg.PromptNewSyncPassword, cfg.PromptSyncConfirmPassword, "Error", "validation", "password"},
+				15: {cfg.PromptNewSyncPassword, cfg.PromptSyncConfirmPassword, "User sync finished"},
 			},
 			wantNoStrOut: [][]string{
 				0:  {},
@@ -346,7 +350,10 @@ func (s *appTestSuite) Test_App() {
 				9:  {"simplePass"},
 				10: {`Pa$$w0rd`},
 				11: {},
-				12: {"somePass"},
+				12: {},
+				13: {},
+				14: {"simplePass", "simplePass"},
+				15: {"Pa$$w0rd1", "Pa$$w0rd1"},
 			},
 		},
 	}
@@ -372,7 +379,7 @@ func (s *appTestSuite) Test_App() {
 				os.Stdout = rescueStdout
 				if i < len(tt.wantStrOut) {
 					for _, wantOut := range tt.wantStrOut[i] {
-						require.Contains(t, consoleOutput+string(out), wantOut, fmt.Sprintf("cmd %d: %s", i, cmd))
+						require.Contains(t, string(out)+consoleOutput, wantOut, fmt.Sprintf("cmd %d: %s", i, cmd))
 					}
 				}
 				if i < len(tt.wantNoStrOut) {
