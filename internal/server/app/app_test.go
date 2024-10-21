@@ -739,8 +739,8 @@ func (suite *AppTestSuite) TestDeleteUser() {
 				if tt.wantResp.Ok {
 					// try again delete deleted user
 					data, err = client.DeleteUser(ctx, tt.req, callOpt...)
-					if tt.wantErr != nil {
-						for _, e := range tt.wantErr {
+					if tt.wantErrTry != nil {
+						for _, e := range tt.wantErrTry {
 							require.NotNil(t, err)
 							require.Contains(t, err.Error(), e)
 						}
