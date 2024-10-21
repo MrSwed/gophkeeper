@@ -34,7 +34,7 @@ var (
 	excludeViewKeys          = []string{"encryption_key", "sync_password"}
 	durationViewKeys         = []string{"sync.timeout.sync", "sync.timeout.register"}
 	clearAfterSave           = []string{"changed_at"}
-	syncUpdatedTriggerFields = []string{"email", "packed_key"}
+	syncUpdatedTriggerFields = []string{"email", "packed_key", "sync.token"}
 	User                     config
 	Glob                     = config{Viper: viper.New()}
 )

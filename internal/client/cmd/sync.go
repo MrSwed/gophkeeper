@@ -118,7 +118,7 @@ func (a *app) syncRegisterCmd() func(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		if cfg.User.Get("sync.token") != nil {
+		if cfg.User.GetString("sync.token") != "" {
 			cmd.Println(`
 This client is already registered on the server. You can run synchronization.`)
 			cmd.Println()
@@ -316,7 +316,6 @@ func (a *app) syncPasswordCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		cmd.Println(time.Now().Format(time.DateTime), `User synchronization finished`)
-
 	}
 }
 
@@ -326,14 +325,39 @@ func (a *app) syncDeleteCmd() func(cmd *cobra.Command, args []string) {
 		if err != nil {
 			cmd.PrintErrf("failed to load config: %v\n", err)
 		}
+
 		if !a.validateServerConfigSet(cmd) {
 			return
 		}
 
-		// todo
-		cmd.Println(`
-delete account Not implemented yet `)
-		cmd.Println()
+		syncToken := a.getSyncToken(cmd)
+		if len(syncToken) == 0 {
+			return
+		}
 
+		cmd.Println(time.Now().Format(time.DateTime), `connecting to server..`)
+
+		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.User.GetDuration("sync.timeout.sync"))
+		defer cancel()
+
+		var syncSrv sync.Service
+		ctx, syncSrv, err = sync.NewSyncService(ctx, cfg.User.GetString("server"), syncToken, a.Srv())
+		if err != nil {
+			cmd.PrintErrf("prepare synchronization failed: %v\n", err)
+			return
+		}
+		defer syncSrv.Close()
+
+		// todo : need confirm ?
+		err = syncSrv.DeleteUser(ctx)
+		if err != nil {
+			cmd.PrintErrf("Error delete user from server: %v\n", err)
+			return
+		}
+		delete(cfg.User.Get("sync").(map[string]any), "token")
+
+		cmd.Println(`
+The user has been successfully deleted from the server, 
+the client token has been deleted from the local configuration`)
 	}
 }
