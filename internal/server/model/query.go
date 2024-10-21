@@ -15,5 +15,3 @@ func (m *ListQuery) Validate() error {
 	}
 	return Validator.Struct(m)
 }
-
-// todo:  custom validator for dates range

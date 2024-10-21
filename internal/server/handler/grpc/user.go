@@ -36,7 +36,7 @@ func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync,
 	out = in
 	defer func() { out.Password = "" }()
 	pass := model.PassChangeRequest{Password: in.GetPassword()}
-	if err = pass.Validate(); err != nil {
+	if err = pass.Validate("Password"); err != nil {
 		err = status.Error(codes.InvalidArgument, err.Error())
 		return
 	}
