@@ -321,6 +321,8 @@ func (suite *AppTestSuite) TestSyncUser() {
 		{
 			name: "bad sync key",
 			req: &pb.UserSync{
+				// testing error on not set email
+				// Email:       "example3@example.com",
 				Description: "description",
 			},
 
@@ -328,6 +330,29 @@ func (suite *AppTestSuite) TestSyncUser() {
 				pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
 			},
 			wantErr: []string{errs.ErrorSyncNoKey.Error()},
+		},
+		{
+			name: "pass change validation error",
+			req: &pb.UserSync{
+				Email:    "example3@example.com",
+				Password: "sss",
+			},
+
+			headers: map[string]string{
+				pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+			},
+			wantErr: []string{"validation", "Password"},
+		},
+		{
+			name: "pass change validation ok",
+			req: &pb.UserSync{
+				Email:    "example3@example.com",
+				Password: "Pa$$w0rd",
+			},
+
+			headers: map[string]string{
+				pb.TokenKey: "C4B7F91016F52C039804D05E61C67A87A51BB8CD78FF04E51AB769ED8336D77E",
+			},
 		},
 	}
 	for _, tt := range tests {

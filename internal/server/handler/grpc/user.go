@@ -35,6 +35,11 @@ func NewUserServer(s service.User, c *config.Config, log *zap.Logger) *user {
 func (g *user) SyncUser(ctx context.Context, in *pb.UserSync) (out *pb.UserSync, err error) {
 	out = in
 	defer func() { out.Password = "" }()
+	pass := model.PassChangeRequest{Password: in.GetPassword()}
+	if err = pass.Validate(); err != nil {
+		err = status.Error(codes.InvalidArgument, err.Error())
+		return
+	}
 	ctx, cancel := context.WithTimeout(ctx, g.c.GRPCOperationTimeout)
 	defer cancel()
 	syncKey := in.GetEmail()

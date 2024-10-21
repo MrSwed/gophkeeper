@@ -6,6 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type PassChangeRequest struct {
+	Password string `json:"password" validate:"omitempty,password"`
+}
+
+func (p *PassChangeRequest) Validate(fields ...string) error {
+	return ValidateStruct(p, fields...)
+}
+
 type User struct {
 	ID          uuid.UUID
 	Password    string

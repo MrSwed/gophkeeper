@@ -17,11 +17,7 @@ type AuthResponse struct {
 }
 
 func (m *AuthRequest) Validate(fields ...string) error {
-	if len(fields) == 0 {
-		return Validator.Struct(m)
-	} else {
-		return Validator.StructPartial(m, fields...)
-	}
+	return ValidateStruct(m, fields...)
 }
 
 func init() {
