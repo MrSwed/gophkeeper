@@ -22,6 +22,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -161,7 +162,7 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2@email.ru",
 				Password: "11111",
 			},
-			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Password'"},
+			wantErr: []string{codes.InvalidArgument.String(), "Error:Field validation for 'Password'"},
 		},
 		{
 			name: "not valid email",
@@ -169,14 +170,14 @@ func (suite *AppTestSuite) TestRegisterClient() {
 				Email:    "test2-email.ru",
 				Password: "Ansddd12@!",
 			},
-			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Email'"},
+			wantErr: []string{codes.InvalidArgument.String(), "Error:Field validation for 'Email'"},
 		},
 		{
 			name: "empty password",
 			req: &pb.RegisterClientRequest{
 				Email: "test2@email.ru",
 			},
-			wantErr: []string{"Unauthenticated", "Error:Field validation for 'Password'", "required"},
+			wantErr: []string{codes.InvalidArgument.String(), "Error:Field validation for 'Password'", "required"},
 		},
 		{
 			name: "exist user, wrong password",

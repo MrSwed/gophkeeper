@@ -50,7 +50,7 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 			// register new one with login data, rest at sync
 			err = req.Validate()
 			if err != nil {
-				err = status.Error(codes.Unauthenticated, err.Error())
+				err = status.Error(codes.InvalidArgument, err.Error())
 				return
 			}
 			u := &model.User{
