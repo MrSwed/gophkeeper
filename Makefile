@@ -38,20 +38,22 @@ race:
 	go test -v -race -count=1 ./...
 
 install_go_cover_treemap:
-	go install github.com/nikolaydubina/go-cover-treemap@latest
-
-run_go_cover_treemap:
-	go-cover-treemap -coverprofile coverage.out > coverage.out.svg
-
+	command -v go-cover-treemap | grep go-cover-treemap > /dev/null || go install github.com/nikolaydubina/go-cover-treemap@latest
 
 .PHONY: cover
-cover: install_go_cover_treemap
+cover:
 	go test -v -count=1 -coverpkg=./... -coverprofile=coverage.out -covermode=count ./...
 	go tool cover -func coverage.out
-	go-cover-treemap -coverprofile coverage.out > coverage.out.svg
+	@command -v go-cover-treemap | grep go-cover-treemap > /dev/null && \
+	( echo "go-cover-treemap -coverprofile coverage.out > coverage.out.svg";\
+		go-cover-treemap -coverprofile coverage.out > coverage.out.svg ) || \
+			( echo "coverage.out.svg is not created, please install go-cover-treemap by command" ;\
+			echo "  make install_go_cover_treemap" )
 
 proto:
 	protoc --go_out=. --go_opt=paths=source_relative \
       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
       internal/grpc/proto/service.proto
 
+sometest:
+	@echo "testssssss"
