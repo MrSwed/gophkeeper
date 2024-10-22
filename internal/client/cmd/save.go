@@ -1,3 +1,15 @@
+/*
+This package provides commands for saving various types of data,
+such as authentication data, text, binary data, and card data.
+It uses the Cobra library to define commands and subcommands.
+
+Main functionalities include:
+
+- Saving authentication data.
+- Saving text data.
+- Saving binary data.
+- Saving card data.
+*/
 package cmd
 
 import (
@@ -48,8 +60,13 @@ func (a *app) saveDataRun(data model.Model) func(cmd *cobra.Command, args []stri
 	}
 }
 
-// saveAuthCmd
-// Cobra command for save auth model
+// saveAuthCmd returns a Cobra command for saving the authentication model.
+// The command encrypts login/password pairs and saves them.
+// Examples of using the command include:
+//
+//	save auth -l login -p password
+//	save auth -l login -p password -d site.com
+//	save auth -l login -p password -k "my-key-name" -d site.com
 func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	debug := false
 	data := auth.New()
@@ -73,8 +90,12 @@ func (a *app) saveAuthCmd() (cmd *cobra.Command) {
 	return
 }
 
-// saveTextCmd
-// Cobra command for save text model
+// saveTextCmd returns a Cobra command for saving the text model.
+// The command encrypts text data and saves it.
+// Examples of using the command include:
+//
+//	save text -f filename
+//	save text -k custom-key -d description -s
 func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	debug := false
 	data := text.New()
@@ -97,8 +118,11 @@ func (a *app) saveTextCmd() (cmd *cobra.Command) {
 	return
 }
 
-// saveBinCmd
-// Cobra command for save bin model
+// saveBinCmd returns a Cobra command for saving the binary model.
+// The command encrypts binary data and saves it.
+// Example of using the command:
+//
+//	save bin -f filename
 func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	debug := false
 	data := bin.New()
@@ -118,8 +142,11 @@ func (a *app) saveBinCmd() (cmd *cobra.Command) {
 	return
 }
 
-// saveCardCmd
-// Cobra command for save card model
+// saveCardCmd returns a Cobra command for saving the card model.
+// The command encrypts bank card data and saves it.
+// Example of using the command:
+//
+//	save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"
 func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	debug := false
 	data := card.New()
@@ -141,8 +168,9 @@ func (a *app) saveCardCmd() (cmd *cobra.Command) {
 	return
 }
 
-// addSaveCmd
-// Cobra commands for save data operation
+// addSaveCmd adds commands for the data saving operation to the root command.
+// Subcommands include commands for saving authentication data,
+// text data, binary data, and card data.
 func (a *app) addSaveCmd() *app {
 	var saveCmd = &cobra.Command{
 		Use:   "save [command]",

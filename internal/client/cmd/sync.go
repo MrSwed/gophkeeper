@@ -1,3 +1,17 @@
+/*
+This package provides command-line interface functionalities for synchronizing
+with a remote server, managing user registration, and handling user data.
+
+The package uses the Cobra library to define commands and subcommands for
+interacting with the synchronization server.
+
+Main functionalities include:
+
+- Registering a client with the server.
+- Performing data synchronization.
+- Changing the server password.
+- Deleting the user account from the server.
+*/
 package cmd
 
 import (
@@ -14,6 +28,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// validateServerConfigSet checks if the server configuration is set.
+// It returns true if the server address is configured, otherwise it prints an error message.
 func (a *app) validateServerConfigSet(cmd *cobra.Command) (ok bool) {
 	if ok = cfg.User.Get("server") != nil; !ok {
 		cmd.Println(`
@@ -24,6 +40,9 @@ The address of the synchronization server is not set, please set it by command
 	return
 }
 
+// getSyncToken retrieves the synchronization token from the configuration.
+// It decrypts the token and returns it as a byte slice. If the token cannot be retrieved
+// or decrypted, it prints an error message and returns nil.
 func (a *app) getSyncToken(cmd *cobra.Command) (syncToken []byte) {
 	encryptedSyncToken := cfg.User.GetString("sync.token")
 	if encryptedSyncToken == "" {
@@ -53,6 +72,12 @@ This client is not registered on the server yet, please run the server registrat
 	return
 }
 
+// addSyncCmd adds the sync command and its subcommands to the root command.
+// Subcommands include:
+// - register: Registers the client with the remote server.
+// - now: Performs immediate synchronization with the server.
+// - password: Changes the synchronization password on the server.
+// - delete: Deletes the user account from the server.
 func (a *app) addSyncCmd() *app {
 	syncCmd := &cobra.Command{
 		Use:   "sync",
@@ -107,6 +132,10 @@ You can run synchronization by command
 	return a
 }
 
+// syncRegisterCmd returns a function that handles the registration of the client
+// with the remote server. It prompts the user for their email and synchronization password,
+// sends a registration request, and handles the response, including synchronization token
+// storage and user data synchronization if necessary.
 func (a *app) syncRegisterCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		err := cfg.UserLoad()
@@ -210,6 +239,9 @@ Congratulations! The client is successfully registered on the server, the synchr
 	}
 }
 
+// syncNowCmd returns a function that handles immediate synchronization with the server.
+// It retrieves the sync token, connects to the server, and synchronizes user data and
+// other relevant information.
 func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		err := cfg.UserLoad()
@@ -267,6 +299,9 @@ func (a *app) syncNowCmd() func(cmd *cobra.Command, args []string) {
 	}
 }
 
+// syncPasswordCmd returns a function that handles changing the synchronization password
+// on the server. It prompts the user for a new password, sends the request, and handles
+// the response.
 func (a *app) syncPasswordCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		err := cfg.UserLoad()
@@ -319,6 +354,9 @@ func (a *app) syncPasswordCmd() func(cmd *cobra.Command, args []string) {
 	}
 }
 
+// syncDeleteCmd returns a function that handles the deletion of the user account from
+// the server. It connects to the server and sends a delete request, then removes the
+// synchronization token from local configuration.
 func (a *app) syncDeleteCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		err := cfg.UserLoad()

@@ -1,3 +1,14 @@
+/*
+Package cmd provides commands for managing user profiles in the application.
+It uses the Cobra library to define commands and subcommands for profile operations.
+
+Main functionalities include:
+
+- Viewing the current profile.
+- Listing available profiles.
+- Switching to another profile.
+- Changing the password for the current profile.
+*/
 package cmd
 
 import (
@@ -6,8 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// addProfileCmd
-// Cobra command for profile operations
+// addProfileCmd adds commands for profile operations to the root command.
+// The main command provides a menu for profile management.
 func (a *app) addProfileCmd() *app {
 	cmd := &cobra.Command{
 		Use:   "profile",
@@ -15,7 +26,7 @@ func (a *app) addProfileCmd() *app {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := cfg.GlobalLoad()
 			if err != nil {
-				cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+				cmd.PrintErrf("Error loading global config %s from %s", err, cfg.Glob.GetString("config_path"))
 				return
 			}
 			cmd.Println("Current profile", cfg.GetUserName())
@@ -23,7 +34,6 @@ func (a *app) addProfileCmd() *app {
 			_ = cmd.Usage()
 		},
 	}
-
 	cmd.AddCommand(
 		&cobra.Command{
 			Use:   "list",
@@ -31,15 +41,14 @@ func (a *app) addProfileCmd() *app {
 			Run: func(cmd *cobra.Command, args []string) {
 				err := cfg.GlobalLoad()
 				if err != nil {
-					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+					cmd.PrintErrf("Error loading global config %s from %s", err, cfg.Glob.GetString("config_path"))
 					return
 				}
 				prs := cfg.Glob.GetStringMap("profiles")
 				if len(prs) == 0 {
-					cmd.Println(`No profiles yet. New default profile will be created, after first save data 
-or set some profile data in config.
-
-also you can create new profile by command
+					cmd.Println(`No profiles yet. A new default profile will be created after the first save of data 
+or setting some profile data in the config.
+You can also create a new profile by the command
     profile use <new_name>`)
 				}
 				cmd.Println("Available profiles: ")
@@ -63,17 +72,17 @@ also you can create new profile by command
 		&cobra.Command{
 			Use:   "use",
 			Short: "switch to another profile",
-			Long:  "if it not exist, it will be created",
+			Long:  "If it does not exist, it will be created.",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
 				err := a.Close()
 				if err != nil {
-					cmd.PrintErrf("Error close prev profile session  %s  %s", err, cfg.Glob.GetString("config_path"))
+					cmd.PrintErrf("Error closing previous profile session  %s  %s", err, cfg.Glob.GetString("config_path"))
 					return
 				}
 				err = cfg.GlobalLoad()
 				if err != nil {
-					cmd.PrintErrf("Error load global config %s from %s", err, cfg.Glob.GetString("config_path"))
+					cmd.PrintErrf("Error loading global config %s from %s", err, cfg.Glob.GetString("config_path"))
 					return
 				}
 				cmd.Println("Current profile", cfg.GetUserName())
@@ -102,7 +111,6 @@ also you can create new profile by command
 			},
 		},
 	)
-
 	a.root.AddCommand(cmd)
 	return a
 }

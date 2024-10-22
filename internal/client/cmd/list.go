@@ -1,18 +1,29 @@
+/*
+This package provides commands for listing data kept in the application.
+It uses the Cobra library to define commands for retrieving and displaying
+a list of stored data.
+
+Main functionalities include:
+
+- Displaying a list of kept data with details such as key, date, and description.
+*/
 package cmd
 
 import (
+	"time"
+
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/helper"
-	"time"
 
 	"github.com/spf13/cobra"
 )
 
-// addListCmd
-// Cobra command for list operation
+// addListCmd adds a command for listing kept data to the root command.
+// The command retrieves and displays a list of stored data, including
+// the total number of items and details for each item such as key, date,
+// and description.
 func (a *app) addListCmd() *app {
 	query := model.ListQuery{}
-
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list kept data",
@@ -32,12 +43,10 @@ func (a *app) addListCmd() *app {
 			}
 		},
 	}
-
 	err := helper.GenerateFlags(&query, cmd.Flags())
 	if err != nil {
 		cmd.Printf("GenerateFlags error: %s\n", err)
 	}
-
 	a.root.AddCommand(cmd)
 	return a
 }

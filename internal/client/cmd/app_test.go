@@ -224,7 +224,7 @@ func (s *appTestSuite) Test_App() {
 				3: {"card-key-1", "Total:"},
 				4: {"Usage:", "view <key name> [flags]"},
 				5: {"card-key-1", "0000 0000 0000 0000", "222"},
-				6: {"card-key-1 success deleted"},
+				6: {"card-key-1 successfully deleted"},
 				7: {"Record not exist: card-key-1"},
 				8: {"Record not exist: card-key-1"},
 			},
@@ -241,7 +241,7 @@ func (s *appTestSuite) Test_App() {
 			},
 			wantStrOut: [][]string{
 				{"Switching to profile..  ", "test2"},
-				{"some@email.net", "User configuration: set", "Success autosave config"},
+				{"some@email.net", "User configuration: set", "Success autosaving config"},
 			},
 		}, {
 			name: "test configs",
