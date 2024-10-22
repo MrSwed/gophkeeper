@@ -1,9 +1,19 @@
+/*
+This package provides the implementation of the gRPC authentication server for the GophKeeper application.
+It defines the methods for handling client registration and authentication.
+
+Main functionalities include:
+
+- Registering a new client.
+- Retrieving client tokens for authenticated sessions.
+*/
 package grpc
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+
 	pb "gophKeeper/internal/proto"
 	"gophKeeper/internal/server/config"
 	"gophKeeper/internal/server/model"
@@ -15,6 +25,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// auth implements the AuthServer interface defined in the protobuf file.
+// It provides methods for client authentication and registration.
 type auth struct {
 	pb.UnimplementedAuthServer
 	s   service.Service
@@ -22,8 +34,10 @@ type auth struct {
 	c   *config.Config
 }
 
+// Ensure that auth implements the AuthServer interface.
 var _ pb.AuthServer = (*auth)(nil)
 
+// NewAuthServer creates a new instance of the auth server.
 func NewAuthServer(s service.Service, c *config.Config, log *zap.Logger) *auth {
 	return &auth{
 		s:   s,
@@ -32,6 +46,9 @@ func NewAuthServer(s service.Service, c *config.Config, log *zap.Logger) *auth {
 	}
 }
 
+// RegisterClient handles the registration of a new client.
+// It takes a context and a RegisterClientRequest as input and returns a ClientToken
+// or an error if the registration fails.
 func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest) (out *pb.ClientToken, err error) {
 	ctx, cancel := context.WithTimeout(ctx, g.c.GRPCOperationTimeout)
 	defer cancel()
@@ -47,7 +64,7 @@ func (g *auth) RegisterClient(ctx context.Context, in *pb.RegisterClientRequest)
 	out.AppToken, err = g.s.GetClientToken(ctx, req)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// register new one with login data, rest at sync
+			// Register a new client with login data; the rest will be handled at sync.
 			err = req.Validate()
 			if err != nil {
 				err = status.Error(codes.InvalidArgument, err.Error())
