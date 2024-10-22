@@ -98,6 +98,7 @@ func (s *appTestSuite) maybeSetupServer() {
 func (s *appTestSuite) TearDownSuite() {
 	s.tearDownClient()
 	s.tearDownServer()
+	require.NoError(s.T(), os.RemoveAll(s.T().TempDir()))
 }
 
 func (s *appTestSuite) tearDownClient() {
