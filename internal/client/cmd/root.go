@@ -25,7 +25,7 @@ import (
 func (a *app) addRootCmd() *app {
 	appInfo := `Client for saving encrypted data.`
 	if a.v.Version != "" {
-		appInfo += ` Version = ` + a.v.Version
+		appInfo += ` Version: ` + a.v.Version
 	}
 	if a.v.Date != "" {
 		appInfo += `, build date: ` + a.v.Date

@@ -1,7 +1,7 @@
 version?=1.1
 
-SERVER_NAME=server
-CLIENT_NAME=client
+SERVER_NAME=gophkeeper-server
+CLIENT_NAME=gophkeeper
 buildVersion=$(shell git log --pretty=format:"%h" -1)
 buildCommit=$(shell git log --pretty=format:"%s (%ad)" --date=rfc2822 -1)
 buildDate=$(shell date +'%Y-%m-%d %H:%M:%S')
@@ -18,17 +18,26 @@ clean: clean_client clean_server
 
 build_server: clean_server
 	CGO_ENABLED=1 \
-    go build -ldflags "-X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${SERVER_NAME}" ./cmd/${SERVER_NAME}/*.go
+    go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${SERVER_NAME}" ./cmd/server/*.go
 
-build_client: clean_client
-	go build -ldflags "-X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}" ./cmd/${CLIENT_NAME}/*.go
+build_client_linux: clean_client
+	go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}" ./cmd/client/*.go
 
-build_all: build_server build_client
+# sudo apt-get install gcc-mingw-w64-i686 and sudo apt-get install gcc-mingw-w64-x86-64
+build_client_windows:
+	GOOS=windows \
+	CGO_ENABLED=1 \
+	CC="i686-w64-mingw32-gcc" \
+	GOARCH=386 \
+	go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}.exe" ./cmd/client/*.go
+	upx -1 "./bin/${CLIENT_NAME}.exe"
+
+build_all: build_server build_client_linux build_client_windows
 
 run_server: build_server
 	./bin/${SERVER_NAME}
 
-run_client: build_client
+run_client: build_client_linux
 	./bin/${CLIENT_NAME}
 
 test:
