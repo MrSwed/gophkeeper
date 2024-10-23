@@ -25,7 +25,7 @@ build_client: clean_client
 
 build_all: build_server build_client
 
-run_app: build_server
+run_server: build_server
 	./bin/${SERVER_NAME}
 
 run_client: build_client
