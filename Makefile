@@ -6,7 +6,7 @@ buildVersion=$(shell git log --pretty=format:"%h" -1)
 buildCommit=$(shell git log --pretty=format:"%s (%ad)" --date=rfc2822 -1)
 buildDate=$(shell date +'%Y-%m-%d %H:%M:%S')
 
-.PHONY: dir clean_server clean_client clean build_server build_client_linux build_client_windows build_all run_server run_client test race install_go_cover_treemap cover proto
+.PHONY: dir clean_server clean_client clean build_server build_client_linux build_client_windows build_all run_server run_client test race install_go_cover_treemap cover proto gosec
 
 dir:
 	mkdir -p ./bin
@@ -65,3 +65,11 @@ proto:
 	protoc --go_out=. --go_opt=paths=source_relative \
       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
       internal/grpc/proto/service.proto
+
+gosec:
+	@if ! command -v gosec &> /dev/null; then \
+		echo "Installing gosec..."; \
+		go install github.com/securego/gosec/v2/cmd/gosec@latest; \
+	fi
+	gosec ./...
+
