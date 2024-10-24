@@ -649,6 +649,15 @@ func (suite *AppTestSuite) TestList() {
 			},
 			headers: headers,
 		},
+		{
+			name: "get list limit wrong order",
+			req: &pb.ListRequest{
+				Limit:   1,
+				Orderby: "wrong_by desc",
+			},
+			wantErr: []string{"InvalidArgument", "validation"},
+			headers: headers,
+		},
 	}
 
 	for _, tt := range tests {

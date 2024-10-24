@@ -63,6 +63,11 @@ func (g *data) List(ctx context.Context, in *pb.ListRequest) (out *pb.ListRespon
 	if in.GetOrderby() != "" {
 		q.OrderBy = in.GetOrderby()
 	}
+	if err = q.Validate(); err != nil {
+		err = status.Error(codes.InvalidArgument, err.Error())
+		return
+	}
+
 	list, err = g.s.ListSelf(ctx, q)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())

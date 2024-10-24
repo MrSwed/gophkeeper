@@ -18,12 +18,6 @@ func NewServiceData(r repository.Storage, c *config.Config) *serv {
 }
 
 func (s *serv) ListSelf(ctx context.Context, q *model.ListQuery) (list model.List, err error) {
-	if err = q.Validate(); err != nil {
-		return
-	}
-	if q == nil {
-		q = &model.ListQuery{}
-	}
 	q.UserID, err = helper.GetCtxUserID(ctx)
 	if err != nil {
 		return
