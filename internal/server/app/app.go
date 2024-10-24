@@ -3,15 +3,15 @@ package app
 import (
 	"context"
 	"errors"
-	"gophKeeper/internal/server/constant"
 	"net"
+	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"gophKeeper/internal/server/config"
-
 	"gophKeeper/internal/server/closer"
+	"gophKeeper/internal/server/config"
+	"gophKeeper/internal/server/constant"
 
 	hgrpc "gophKeeper/internal/server/handler/grpc"
 	myMigrate "gophKeeper/internal/server/migrate"
@@ -23,7 +23,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"net/http"
 )
 
 func buildInfo(s string) string {
@@ -50,6 +49,7 @@ type App struct {
 	closer     *closer.Closer
 	lockDB     chan struct{}
 	isNewStore bool
+	http       *http.Server
 }
 
 func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData BuildMetadata) {
@@ -85,10 +85,18 @@ func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData 
 
 	// Start HTTP server if HTTPAddress is set
 	if cfg.HTTPAddress != "" {
+		appHandler.http = &http.Server{
+			Addr:         cfg.HTTPAddress,
+			Handler:      nil, // Use default handler
+			ReadTimeout:  cfg.ReadTimeout,
+			WriteTimeout: cfg.WriteTimeout,
+			IdleTimeout:  cfg.IdleTimeout,
+		}
 		go func() {
-			log.Info("Starting HTTP server", zap.String("address", cfg.HTTPAddress))
-			if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
-				log.Error("HTTP server error", zap.Error(err))
+			appHandler.log.Info("Starting HTTP server", zap.String("address", cfg.HTTPAddress))
+			if err := appHandler.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				appHandler.log.Error("HTTP server error", zap.Error(err))
+				appHandler.stop()
 			}
 		}()
 	}
@@ -213,11 +221,17 @@ func (a *App) Stop() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), constant.ServerShutdownTimeout*time.Second)
 	defer cancel()
 
+	if a.http != nil {
+		if err := a.http.Shutdown(shutdownCtx); err != nil {
+			a.log.Error("HTTP server shutdown error", zap.Error(err))
+		} else {
+			a.log.Info("HTTP server stopped")
+		}
+	}
+
 	if err := a.closer.Close(shutdownCtx); err != nil {
 		a.log.Error("Shutdown", zap.Error(err), zap.Any("timeout: ", constant.ServerShutdownTimeout))
 	}
 
 	a.log.Info("Server stopped")
-
-	_ = a.log.Sync()
 }
