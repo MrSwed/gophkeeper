@@ -51,6 +51,8 @@ func (a *app) addRootCmd() *app {
 			fmt.Println(a.fullVersionInfo())
 		} else {
 			fmt.Println(a.shortVersionInfo())
+			fmt.Println()
+			_ = cmd.Usage()
 		}
 	}
 
