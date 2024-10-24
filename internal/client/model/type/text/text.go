@@ -54,7 +54,7 @@ func (m *Model) GetKey() string {
 	return m.Key
 }
 
-func (m *Model) Validate(fields ...string) error {
+func (m *Model) Validate(_ ...string) error {
 	return model.Validator.Struct(m)
 }
 
