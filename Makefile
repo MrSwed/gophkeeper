@@ -67,9 +67,8 @@ proto:
       internal/grpc/proto/service.proto
 
 gosec:
-	@if ! command -v gosec &> /dev/null; then \
+	@command -v go-cover-treemap | grep go-cover-treemap > /dev/null || \
 		echo "Installing gosec..."; \
 		go install github.com/securego/gosec/v2/cmd/gosec@latest; \
-	fi
 	gosec ./...
 
