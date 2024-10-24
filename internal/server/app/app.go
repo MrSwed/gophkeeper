@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"net/http"
 )
 
 func buildInfo(s string) string {
@@ -81,6 +82,16 @@ func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData 
 		`Build version`: buildInfo(buildData.Version),
 		`Build date`:    buildInfo(buildData.Date),
 		`Build commit`:  buildInfo(buildData.Commit)}))
+
+	// Start HTTP server if HTTPAddress is set
+	if cfg.HTTPAddress != "" {
+		go func() {
+			log.Info("Starting HTTP server", zap.String("address", cfg.HTTPAddress))
+			if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
+				log.Error("HTTP server error", zap.Error(err))
+			}
+		}()
+	}
 
 	appHandler.Run(ctx)
 	appHandler.Stop()
