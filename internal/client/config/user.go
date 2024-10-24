@@ -73,7 +73,7 @@ func UserLoad(reload ...bool) (err error) {
 	if usrCfgDir, err = UsrCfgDir(); err != nil {
 		return
 	}
-	if err = os.MkdirAll(usrCfgDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(usrCfgDir, 0750); err != nil {
 		return
 	}
 	err = User.Load(AppName, usrCfgDir,

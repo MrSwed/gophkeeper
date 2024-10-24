@@ -36,5 +36,5 @@ func (s *fileStore) GetOrigin(filePath string) (b []byte, err error) {
 	return os.ReadFile(filePath)
 }
 func (s *fileStore) SaveOrigin(filePath string, b []byte) (err error) {
-	return os.WriteFile(filePath, b, 0644)
+	return os.WriteFile(filePath, b, 0600)
 }

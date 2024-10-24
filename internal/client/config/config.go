@@ -117,7 +117,7 @@ func (c *config) Save() error {
 	}()
 
 	c.Viper.Set("updated_at", time.Now())
-	_ = os.MkdirAll(c.path, 0755)
+	_ = os.MkdirAll(c.path, 0750)
 
 	if isNew {
 		return c.Viper.SafeWriteConfig()
