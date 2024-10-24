@@ -166,7 +166,7 @@ Registering this client at server with email %s.
 If you have not yet registered on the server with your email, come up with a new synchronization password, a new account will be created for you, after which this client will be able to synchronize`, cfg.User.Get("email"))
 		cmd.Println()
 
-		pass, err := password.GetRawPass(false, cfg.PromptSyncPassword)
+		pass, err := password.GetRawPass(false, cfg.PromptSyncPs)
 		if err != nil {
 			cmd.PrintErrf("failed to get password: %v\n", err)
 			return
@@ -332,7 +332,7 @@ func (a *app) syncPasswordCmd() func(cmd *cobra.Command, args []string) {
 		defer syncSrv.Close()
 
 		var pass string
-		pass, err = password.GetRawPass(true, cfg.PromptNewSyncPassword, cfg.PromptSyncConfirmPassword)
+		pass, err = password.GetRawPass(true, cfg.PromptNewSyncPs, cfg.PromptSyncConfirmPs)
 		if err != nil {
 			cmd.PrintErrf("failed to get password: %v\n", err)
 			return

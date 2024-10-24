@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	PromptPassword        = "Please enter password: "
-	PromptNewPassword     = "Please enter new password: "
-	PromptConfirmPassword = "Please confirm you password: "
+	PromptPs        = "Please enter password: "
+	PromptNewPs     = "Please enter new password: "
+	PromptConfirmPs = "Please confirm you password: "
 )
 
 func readPassword() (pw []byte, e error) {
@@ -54,12 +54,12 @@ func GetRawPass(confirm bool, prompts ...string) (pass string, err error) {
 	var b []byte
 	if len(prompts) == 0 {
 		if confirm {
-			prompts = append(prompts, PromptPassword)
+			prompts = append(prompts, PromptPs)
 		} else {
-			prompts = append(prompts, PromptNewPassword)
+			prompts = append(prompts, PromptNewPs)
 		}
 		if confirm && len(prompts) == 1 {
-			prompts = append(prompts, PromptConfirmPassword)
+			prompts = append(prompts, PromptConfirmPs)
 		}
 	}
 	fmt.Print(prompts[0])
