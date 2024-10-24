@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	pb "gophKeeper/internal/proto"
-	errs "gophKeeper/internal/server/errors"
 	"log"
 	"math/rand"
 	"net"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	pb "gophKeeper/internal/proto"
+	errs "gophKeeper/internal/server/errors"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -122,6 +123,7 @@ func (suite *AppTestSuite) SetupSuite() {
 	require.NoError(suite.T(), waitGRPCPort(suite.ctx, suite.address))
 
 	db, err := sqlx.Connect("postgres", databaseDSN)
+	require.NoError(suite.T(), err)
 	predefined, err := os.ReadFile(filepath.Join("../../../", "testdata", "server.sql"))
 	require.NoError(suite.T(), err)
 	_, err = db.Exec(string(predefined))
@@ -739,6 +741,8 @@ func (suite *AppTestSuite) TestDeleteUser() {
 				if tt.wantResp.Ok {
 					// try again delete deleted user
 					data, err = client.DeleteUser(ctx, tt.req, callOpt...)
+					assert.False(t, data.GetOk(), "No user")
+
 					if tt.wantErrTry != nil {
 						for _, e := range tt.wantErrTry {
 							require.NotNil(t, err)

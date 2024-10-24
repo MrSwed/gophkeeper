@@ -16,15 +16,16 @@ const (
 	PromptConfirmPs = "Please confirm you password: "
 )
 
-func readPassword() (pw []byte, e error) {
+func readPassword() (pw []byte, err error) {
 	if term.IsTerminal(int(os.Stdin.Fd())) {
-		pw, e = term.ReadPassword(int(os.Stdin.Fd()))
+		pw, err = term.ReadPassword(int(os.Stdin.Fd()))
 		return
 	}
 
 	var b [1]byte
 	for {
-		n, err := os.Stdin.Read(b[:])
+		var n int
+		n, err = os.Stdin.Read(b[:])
 		// terminal.ReadPassword discards any '\r', so do the same
 		if n > 0 && b[0] != '\r' {
 			if b[0] == '\n' {

@@ -16,8 +16,8 @@ func (p *PassChangeRequest) Validate(fields ...string) error {
 
 type User struct {
 	ID          uuid.UUID
-	Password    string
 	Email       string
+	Password    string
 	Description *string
 	PackedKey   []byte
 	CreatedAt   time.Time
@@ -26,8 +26,8 @@ type User struct {
 
 type DBUser struct {
 	ID          uuid.UUID  `db:"id"`
-	Password    []byte     `db:"password"`
 	Email       string     `db:"email"`
+	Password    []byte     `db:"password"`
 	Description *string    `db:"description"`
 	PackedKey   []byte     `db:"packed_key"`
 	CreatedAt   time.Time  `db:"created_at"`

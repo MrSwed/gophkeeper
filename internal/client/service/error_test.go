@@ -15,8 +15,8 @@ func TestNewServiceError(t *testing.T) {
 		e error
 	}
 	tests := []struct {
-		name string
 		args args
+		name string
 	}{
 		{
 			name: "test error stub",

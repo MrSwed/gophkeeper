@@ -3,10 +3,11 @@ package card
 import (
 	"encoding/json"
 	"fmt"
-	"gophKeeper/internal/client/model"
 	"regexp"
 	"strings"
 	"time"
+
+	"gophKeeper/internal/client/model"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -40,8 +41,8 @@ func init() {
 }
 
 type Model struct {
-	model.Common
 	Data *Data `json:"data" validate:"required"`
+	model.Common
 }
 
 func New() *Model {
@@ -80,8 +81,8 @@ func (m *Model) GetDst() any {
 }
 
 type Data struct {
-	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date" flag:"exp,e" default:"" usage:"expiry           MM/YY"`
 	Number string `json:"number" validate:"required,credit_card" flag:"num,n" default:"" usage:"long card number 0000-0000-0000-0000"`
+	Exp    string `json:"exp" validate:"omitempty,credit_card_exp_date" flag:"exp,e" default:"" usage:"expiry           MM/YY"`
 	CVV    string `json:"cvv,omitempty" validate:"omitempty,credit_card_cvv" flag:"cvv,c" default:"" usage:"cvv value        000"`
 	Name   string `json:"name,omitempty" validate:"omitempty" flag:"owner,o" default:"" usage:"owner, card holder     Firstname Lastname"`
 }
@@ -114,10 +115,10 @@ func (m *Data) GetDst() any {
 }
 
 func (m *Data) Reset() {
-	(*m).CVV = ""
-	(*m).Exp = ""
-	(*m).Number = ""
-	(*m).Name = ""
+	m.CVV = ""
+	m.Exp = ""
+	m.Number = ""
+	m.Name = ""
 }
 
 type cardNumber [16]byte

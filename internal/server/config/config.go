@@ -22,8 +22,8 @@ type GRPC struct {
 
 // Config all configs
 type Config struct {
-	GRPC
 	StorageConfig
+	GRPC
 	Debug        bool          `env:"DEBUG" json:"debug" flag:"debug" usage:"Enable debug mode"`
 	GRPCAddress  string        `env:"GRPC_ADDRESS" json:"grpc_address" envDefault:"localhost:50051"`
 	HTTPAddress  string        `env:"HTTP_ADDRESS" json:"http_address" envDefault:""`

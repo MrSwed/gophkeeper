@@ -15,9 +15,9 @@ import (
 
 type testStruct struct {
 	StringVar string  `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
-	IntVar    int     `json:"int" flag:"int,i" default:"" usage:"usage for intVar"`
 	FloatVar  float64 `json:"float" flag:"float,f" default:"" usage:"usage for floatVar"`
 	UintVar   uint64  `json:"uint" flag:"uint,u" default:"" usage:"usage for uintVar"`
+	IntVar    int     `json:"int" flag:"int,i" default:"" usage:"usage for intVar"`
 }
 
 func (ts *testStruct) check(t *testing.T, _ map[string]string) {
@@ -28,13 +28,13 @@ func (ts *testStruct) check(t *testing.T, _ map[string]string) {
 }
 
 type testErrStruct struct {
-	StringVar string         `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
 	BadVar    map[string]any `json:"bad" flag:"bad,b" default:"" usage:"usage for badVar"`
+	StringVar string         `json:"string" flag:"string,s" default:"" usage:"usage for stringVar"`
 }
 
 type testStructSub struct {
-	BoolVar     bool          `json:"bool" flag:"bool,b" default:"" usage:"usage for boolVar"`
 	DurationVar time.Duration `json:"duration" flag:"duration,d" default:"" usage:"usage for durationVar"`
+	BoolVar     bool          `json:"bool" flag:"bool,b" default:"" usage:"usage for boolVar"`
 }
 
 func (ts *testStructSub) check(t *testing.T, want map[string]string) {
@@ -51,8 +51,8 @@ func (ts *testStructSub) check(t *testing.T, want map[string]string) {
 }
 
 type testStructCollect struct {
-	testStructSub
 	testStruct
+	testStructSub
 }
 
 func TestGenerateFlags(t *testing.T) {
@@ -64,8 +64,8 @@ func TestGenerateFlags(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    map[string]string
 		wantErr error
+		want    map[string]string
 	}{
 		{
 			name: "test ok",

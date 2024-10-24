@@ -5,14 +5,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"runtime"
+	"sync"
+	"time"
+
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/out"
 	"gophKeeper/internal/client/service"
 	pb "gophKeeper/internal/proto"
-	"runtime"
-	"sync"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -30,10 +31,10 @@ type Service interface {
 var _ Service = (*syncService)(nil)
 
 type syncService struct {
-	s          service.Service
 	conn       *grpc.ClientConn
 	callOpt    []grpc.CallOption
 	dataClient pb.DataClient
+	s          service.Service
 }
 
 type dbRecQueue struct {
@@ -283,7 +284,7 @@ func (sc syncService) syncItemsHandler(ctx context.Context,
 				if er == nil {
 					itemGet.FromItemSync(itemGetPb)
 				}
-				remoteItemsQueue <- dbRecQueue{itemGet, nil}
+				remoteItemsQueue <- dbRecQueue{item: itemGet}
 			}
 		}()
 	}

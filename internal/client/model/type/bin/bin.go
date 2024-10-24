@@ -17,8 +17,8 @@ func init() {
 }
 
 type Model struct {
-	model.Common
 	Data *Data `json:"data"`
+	model.Common
 }
 
 func New() *Model {

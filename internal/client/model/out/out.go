@@ -18,8 +18,8 @@ type dRaw struct {
 }
 
 type Item struct {
-	model.DBItem
 	Data model.Data `json:"data"`
+	model.DBItem
 }
 
 func (i *Item) UnmarshalJSON(b []byte) (err error) {

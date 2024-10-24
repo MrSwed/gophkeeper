@@ -69,6 +69,6 @@ func (m *Data) GetDst() any {
 }
 
 func (m *Data) Reset() {
-	(*m).Password = ""
-	(*m).Login = ""
+	m.Password = ""
+	m.Login = ""
 }

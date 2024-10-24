@@ -2,9 +2,10 @@ package text
 
 import (
 	"fmt"
-	"gophKeeper/internal/client/model"
 	"os"
 	"time"
+
+	"gophKeeper/internal/client/model"
 )
 
 var (
@@ -29,8 +30,8 @@ func init() {
 }
 
 type Model struct {
-	model.Common
 	Data *Data `json:"data"`
+	model.Common
 }
 
 func (m *Model) DataFromFile() (err error) {
@@ -79,5 +80,5 @@ func (m *Data) GetDst() any {
 }
 
 func (m *Data) Reset() {
-	(*m).Text = ""
+	m.Text = ""
 }

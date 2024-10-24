@@ -15,8 +15,8 @@ type ListRequest struct {
 }
 
 type ListResponse struct {
-	Total int64    `json:"total"`
 	Items []DBItem `json:"items"`
+	Total int64    `json:"total"`
 }
 
 type OkResponse struct {

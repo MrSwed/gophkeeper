@@ -53,13 +53,11 @@ func (a *app) addConfigCmd() *app {
 				}
 				cmd.Println(string(out))
 				cmd.Println()
-			} else {
-				if cfg.Glob.Get("autosave") == nil || cfg.Glob.GetBool("autosave") {
-					if err := cfg.Glob.Save(); err != nil {
-						cmd.Println("Error autosaving config", err)
-					} else {
-						cmd.Println("Success autosaving config")
-					}
+			} else if cfg.Glob.Get("autosave") == nil || cfg.Glob.GetBool("autosave") {
+				if err := cfg.Glob.Save(); err != nil {
+					cmd.Println("Error autosaving config", err)
+				} else {
+					cmd.Println("Success autosaving config")
 				}
 			}
 		},

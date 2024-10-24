@@ -3,14 +3,15 @@ package _type
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+	"testing"
+
 	"gophKeeper/internal/client/model"
 	"gophKeeper/internal/client/model/type/auth"
 	"gophKeeper/internal/client/model/type/bin"
 	"gophKeeper/internal/client/model/type/card"
 	"gophKeeper/internal/client/model/type/text"
-	"reflect"
-	"strings"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,8 @@ var (
 )
 
 type unkModel struct {
-	model.Common
 	model.Data
+	model.Common
 }
 
 func (m *unkModel) GetKey() string         { return "" }
@@ -40,12 +41,12 @@ func (m *unkModel) GetDst() any                { return m.Data.GetDst() }
 func TestModel(t *testing.T) {
 	tests := []struct {
 		name                string
-		m                   model.Model
+		wantBytes           []byte
 		validate            []string
 		validateWantErrKeys []string
+		m                   model.Model
 		detectModelErr      bool
 		packedErr           bool
-		wantBytes           []byte
 	}{
 		{
 			name: "auth",
@@ -339,7 +340,7 @@ func TestModel(t *testing.T) {
 						return
 					}
 					if !reflect.DeepEqual(got, tt.wantBytes) {
-						t.Errorf("PackedBytes() got = %v, want %v", got, tt.wantBytes)
+						t.Errorf("PackedBytes() got = %s, want %s, data %v", string(got), string(tt.wantBytes), tt.m.GetDst())
 					}
 				})
 			}

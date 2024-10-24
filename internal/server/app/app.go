@@ -39,17 +39,17 @@ type BuildMetadata struct {
 }
 
 type App struct {
-	stop       context.CancelFunc
 	cfg        *config.Config
-	eg         *errgroup.Group
-	grpc       *grpc.Server
-	srv        service.Service
 	log        *zap.Logger
 	db         *sqlx.DB
 	closer     *closer.Closer
+	grpc       *grpc.Server
+	srv        service.Service
+	http       *http.Server
+	eg         *errgroup.Group
+	stop       context.CancelFunc
 	lockDB     chan struct{}
 	isNewStore bool
-	http       *http.Server
 }
 
 func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData BuildMetadata) {

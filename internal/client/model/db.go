@@ -1,8 +1,9 @@
 package model
 
 import (
-	pb "gophKeeper/internal/proto"
 	"time"
+
+	pb "gophKeeper/internal/proto"
 
 	_ "github.com/mattn/go-sqlite3"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -10,16 +11,16 @@ import (
 
 type DBItem struct {
 	Key         string     `db:"key" json:"key"`
-	Description string     `db:"description" json:"description"`
 	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at" json:"updated_at"`
 	SyncAt      *time.Time `db:"sync_at" json:"sync_at"`
+	Description string     `db:"description" json:"description"`
 }
 
 type DBRecord struct {
 	DBItem
-	Filename *string `db:"filename,omitempty"`
 	Blob     []byte  `db:"blob" json:"blob"`
+	Filename *string `db:"filename,omitempty"`
 }
 
 // FromItemSync
@@ -53,7 +54,7 @@ func (d *DBRecord) ToItemSync() (p *pb.ItemSync) {
 		Blob:        d.Blob,
 	}
 	if d.UpdatedAt != nil {
-		p.UpdatedAt = timestamppb.New((*d.UpdatedAt).Add(-time.Duration(z) * time.Second))
+		p.UpdatedAt = timestamppb.New(d.UpdatedAt.Add(-time.Duration(z) * time.Second))
 	}
 	return
 }

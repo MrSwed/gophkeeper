@@ -14,9 +14,9 @@ type Common struct {
 }
 
 func (c *Common) Reset() {
-	(*c).Key = ""
-	(*c).Description = ""
-	(*c).FileName = ""
+	c.Key = ""
+	c.Description = ""
+	c.FileName = ""
 }
 
 func (c *Common) GetKey() string {
