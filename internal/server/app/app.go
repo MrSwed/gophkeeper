@@ -83,24 +83,6 @@ func RunApp(ctx context.Context, cfg *config.Config, log *zap.Logger, buildData 
 		`Build date`:    buildInfo(buildData.Date),
 		`Build commit`:  buildInfo(buildData.Commit)}))
 
-	// Start HTTP server if HTTPAddress is set
-	if cfg.HTTPAddress != "" {
-		appHandler.http = &http.Server{
-			Addr:         cfg.HTTPAddress,
-			Handler:      nil, // Use default handler
-			ReadTimeout:  cfg.ReadTimeout,
-			WriteTimeout: cfg.WriteTimeout,
-			IdleTimeout:  cfg.IdleTimeout,
-		}
-		go func() {
-			appHandler.log.Info("Starting HTTP server", zap.String("address", cfg.HTTPAddress))
-			if err := appHandler.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				appHandler.log.Error("HTTP server error", zap.Error(err))
-				appHandler.stop()
-			}
-		}()
-	}
-
 	appHandler.Run(ctx)
 	appHandler.Stop()
 }
@@ -152,15 +134,6 @@ func (a *App) maybeConnectDB(ctx context.Context) {
 
 }
 
-// func (a *App) shutdownFileStore(ctx context.Context) (err error) {
-// 	defer close(a.lockDB)
-// 	// var n int64
-// 	// if n, err = a.srv.SaveToFile(ctx); err == nil {
-// 	// 	a.log.Info("Storage saved", zap.Any("records", n))
-// 	// }
-// 	return
-// }
-
 func (a *App) shutdownDBStore(_ context.Context) (err error) {
 	if a.db != nil {
 		<-a.lockDB
@@ -181,26 +154,32 @@ func (a *App) grpcShutdown(_ context.Context) error {
 func (a *App) Run(ctx context.Context) {
 	a.log.Info("Start server", zap.Any("Config", a.cfg))
 
-	// a.closer.Add("WEB", a.http.Shutdown)
 	a.closer.Add("grpc", a.grpcShutdown)
 
-	// if a.cfg.FileStoragePath != "" {
-	// 	a.closer.Add("Storage save", a.shutdownFileStore)
-	// } else {
+	// Start HTTP server if HTTPAddress is set
+	if a.cfg.HTTPAddress != "" {
+		a.http = &http.Server{
+			Addr:         a.cfg.HTTPAddress,
+			Handler:      nil, // Use default handler
+			ReadTimeout:  a.cfg.ReadTimeout,
+			WriteTimeout: a.cfg.WriteTimeout,
+			IdleTimeout:  a.cfg.IdleTimeout,
+		}
+		a.closer.Add("WEB", a.http.Shutdown)
+		go func() {
+			a.log.Info("Starting HTTP server", zap.String("address", a.cfg.HTTPAddress))
+			if err := a.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				a.log.Error("HTTP server error", zap.Error(err))
+				a.stop()
+			}
+		}()
+	}
+
 	close(a.lockDB)
-	// }
 
 	if a.db != nil {
 		a.closer.Add("DB Close", a.shutdownDBStore)
 	}
-
-	// go func() {
-	// 	if err := a.http.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-	// 		a.log.Error("http server", zap.Error(err))
-	// 		a.stop()
-	// 	}
-	// }()
-	// a.log.Info("http server started")
 
 	go func() {
 		listen, err := net.Listen("tcp", a.cfg.GRPCAddress)
@@ -220,14 +199,6 @@ func (a *App) Stop() {
 	a.log.Info("Shutting down server gracefully")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), constant.ServerShutdownTimeout*time.Second)
 	defer cancel()
-
-	if a.http != nil {
-		if err := a.http.Shutdown(shutdownCtx); err != nil {
-			a.log.Error("HTTP server shutdown error", zap.Error(err))
-		} else {
-			a.log.Info("HTTP server stopped")
-		}
-	}
 
 	if err := a.closer.Close(shutdownCtx); err != nil {
 		a.log.Error("Shutdown", zap.Error(err), zap.Any("timeout: ", constant.ServerShutdownTimeout))

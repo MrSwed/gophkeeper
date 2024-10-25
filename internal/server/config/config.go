@@ -25,7 +25,6 @@ type Config struct {
 	StorageConfig
 	GRPC
 	Debug        bool          `env:"DEBUG" json:"debug" flag:"debug" usage:"Enable debug mode"`
-	GRPCAddress  string        `env:"GRPC_ADDRESS" json:"grpc_address" envDefault:"localhost:50051"`
 	HTTPAddress  string        `env:"HTTP_ADDRESS" json:"http_address" envDefault:""`
 	ReadTimeout  time.Duration `env:"READ_TIMEOUT" json:"read_timeout" envDefault:"5s"`
 	WriteTimeout time.Duration `env:"WRITE_TIMEOUT" json:"write_timeout" envDefault:"10s"`

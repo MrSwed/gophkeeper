@@ -117,6 +117,7 @@ func (suite *AppTestSuite) SetupSuite() {
 
 	suite.T().Setenv("DATABASE_DSN", databaseDSN)
 	suite.T().Setenv("GRPC_ADDRESS", suite.address)
+	suite.T().Setenv("HTTP_ADDRESS", net.JoinHostPort("", fmt.Sprintf("%d", rand.Intn(200)+20000)))
 	suite.T().Setenv("GRPC_OPERATION_TIMEOUT", "5000s")
 
 	go RunApp(suite.ctx, nil, nil, BuildMetadata{Version: "testing..", Date: time.Now().String(), Commit: ""})
