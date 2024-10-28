@@ -1,4 +1,5 @@
-version?=1.1
+clientVersion?=0.1
+serverVersion?=0.1
 
 SERVER_NAME=gophkeeper-server
 CLIENT_NAME=gophkeeper
@@ -21,10 +22,10 @@ clean: clean_client clean_server
 
 build_server: clean_server
 	CGO_ENABLED=1 \
-	go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${SERVER_NAME}" ./cmd/server/*.go
+	go build -ldflags "-w -s -X 'main.buildVersion=${serverVersion} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${SERVER_NAME}" ./cmd/server/*.go
 
 build_client_linux: clean_client
-	go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}" ./cmd/client/*.go
+	go build -ldflags "-w -s -X 'main.buildVersion=${clientVersion} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}" ./cmd/client/*.go
 
 # sudo apt-get install gcc-mingw-w64-i686 and sudo apt-get install gcc-mingw-w64-x86-64
 build_client_windows:
@@ -32,7 +33,7 @@ build_client_windows:
 	CGO_ENABLED=1 \
 	CC="i686-w64-mingw32-gcc" \
 	GOARCH=386 \
-	go build -ldflags "-w -s -X 'main.buildVersion=${version} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}.exe" ./cmd/client/*.go
+	go build -ldflags "-w -s -X 'main.buildVersion=${serverVersion} (${buildVersion})' -X 'main.buildDate=${buildDate}' -X 'main.buildCommit=${buildCommit}'" -o "./bin/${CLIENT_NAME}.exe" ./cmd/client/*.go
 	upx -1 "./bin/${CLIENT_NAME}.exe"
 
 build_all: build_server build_client_linux build_client_windows
