@@ -1,8 +1,9 @@
 package storage
 
 import (
-	"gophKeeper/internal/client/model"
 	"time"
+
+	"gophKeeper/internal/client/model"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -42,6 +43,7 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 	var (
 		builder = sq.Select("key", "description", "created_at", "updated_at", "sync_at").
+			Where("blob is not null or filename is not null").
 			From("storage")
 		sql  string
 		args []interface{}
@@ -116,6 +118,8 @@ func (s *dbStore) Save(data model.DBRecord) (err error) {
 }
 
 func (s *dbStore) Delete(key string) (err error) {
-	_, err = s.db.Exec(`delete from storage where key = ?`, key)
+	_, err = s.db.Exec(`update storage 
+set description = '', updated_at=DATETIME('now','localtime'), filename = null, blob=null
+where key = ?`, key)
 	return
 }

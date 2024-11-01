@@ -23,6 +23,12 @@ type DBRecord struct {
 	Filename *string `db:"filename,omitempty"`
 }
 
+// IsDeleted checks if the DBRecord is considered deleted.
+// A record is considered deleted if its Blob is empty and its Filename is nil.
+func (d *DBRecord) IsDeleted() bool {
+	return len(d.Blob) == 0 && d.Filename == nil
+}
+
 // FromItemSync
 //
 //	convert remote proto item to local db record

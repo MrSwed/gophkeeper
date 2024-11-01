@@ -2,11 +2,13 @@ package service
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"gophKeeper/internal/client/input/password"
 	"time"
+
+	"gophKeeper/internal/client/input/password"
 
 	cfg "gophKeeper/internal/client/config"
 	"gophKeeper/internal/client/crypt"
@@ -144,7 +146,10 @@ func (s *service) Get(key string) (data out.Item, err error) {
 	if r, err = s.GetRaw(key); err != nil {
 		return
 	}
-
+	if r.IsDeleted() {
+		err = sql.ErrNoRows
+		return
+	}
 	data.DBItem = r.DBItem
 	var (
 		deCrypted []byte
@@ -227,6 +232,10 @@ func (s *service) SaveRaw(data model.DBRecord) (err error) {
 func (s *service) Delete(key string) (err error) {
 	var r model.DBRecord
 	if r, err = s.r.DB.Get(key); err != nil {
+		return
+	}
+	if r.IsDeleted() {
+		err = sql.ErrNoRows
 		return
 	}
 	if r.Filename != nil && *r.Filename != "" {
