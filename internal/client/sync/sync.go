@@ -207,9 +207,10 @@ func (sc syncService) getLocalCollect(ctx context.Context, syncList *syncList) f
 		var (
 			clientList out.List
 			request    = model.ListQuery{
-				Limit:  cfg.PageSize,
-				Offset: 0,
-				SyncAt: syncList.startTime.Format(time.DateTime),
+				Limit:   cfg.PageSize,
+				Offset:  0,
+				SyncAt:  syncList.startTime.Format(time.DateTime),
+				Deleted: true,
 			}
 		)
 		_, z := time.Now().Zone()

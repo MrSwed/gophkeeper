@@ -9,6 +9,7 @@ type ListQuery struct {
 	Limit       uint64 `json:"limit" validate:"omitempty" default:"10" flag:"limit,l" usage:"set limit"`
 	Offset      uint64 `json:"offset" validate:"omitempty" flag:"offset,o" usage:"set offset"`
 	OrderBy     string `json:"orderBy" validate:"omitempty,oneof=key created_at updated_at sync_at 'key desc' 'created_at desc' 'updated_at desc' 'sync_at desc'" flag:"order-by,b" usage:"set order by"`
+	Deleted     bool   `json:"deleted" flag:"deleted" usage:"show deleted"`
 }
 
 func (m *ListQuery) Validate() (err error) {

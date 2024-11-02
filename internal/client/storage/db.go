@@ -37,13 +37,15 @@ func (s *dbStore) querySqlBuilder(b sq.SelectBuilder, query model.ListQuery) sq.
 	if query.SyncAt != "" {
 		b = b.Where("sync_at is null or sync_at < ?", query.SyncAt)
 	}
+	if !query.Deleted {
+		b = b.Where("blob is not null or filename is not null")
+	}
 	return b
 }
 
 func (s *dbStore) List(query model.ListQuery) (data []model.DBItem, err error) {
 	var (
 		builder = sq.Select("key", "description", "created_at", "updated_at", "sync_at").
-			Where("blob is not null or filename is not null").
 			From("storage")
 		sql  string
 		args []interface{}
