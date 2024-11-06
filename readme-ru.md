@@ -72,7 +72,7 @@ GophKeeper — это клиент-серверная система для бе
 
 ### Примеры использования клиентской части
 
-- **Информация о версиях, справка**
+#### Информация о версиях, справка
 
   ```bash
   gophkeeper
@@ -81,65 +81,73 @@ GophKeeper — это клиент-серверная система для бе
   gophkeeper [команда] -h
   ```
 
-- **Shell**
+#### Shell
+
+```bash
+gophkeeper shell
+```
+
+#### Сохранение данных
+ 
+При сохранении данных ключ формируется автоматически на основе типа данных и текущей даты, при необходимости ключ можно задать свой с помощью параметра `-k|--key`.
+
+```bash
+gophkeeper save [auth|bin|card|text] [args]
+```
+
+```bash
+gophkeeper save --help
+gophkeeper save text -k "manual key name" -t "some text"
+gophkeeper save bin -f filename -d "описание"
+gophkeeper save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"
+gophkeeper save auth -l login -p password -k "my-key-name" -d site.com
+```
+
+#### Получение данных по ключу
+
+```bash
+gophkeeper view <key name>
+```
+
+#### Настройки
+
+```bash
+gophkeeper config global
+gophkeeper config user
+```
+
+##### Настройка email, сервера синхронизации
+
+```bash
+gophkeeper config user -e <email>
+gophkeeper config user -s <адрес сервера для синхронизации>
+```
+
+#### Синхронизация с удаленным сервером
+
+##### Регистрация
 
   ```bash
-  gophkeeper shell
+  gophkeeper sync register
   ```
 
-- **Сохранение данных**:
+##### Синхронизация
 
-  ```bash
-  gophkeeper save --help
-  gophkeeper save bin -f filename -d "описание"
-  gophkeeper save card --num 2222-4444-5555-1111 --exp 10/29 --cvv 123 --owner "Max Space"
-  gophkeeper save auth -l login -p password -k "my-key-name" -d site.com
-  ```
+```bash
+gophkeeper sync now
+```
 
-- **Получение данных по ключу**:
+##### Смена пароля авторизации на сервере
 
-  ```bash
-  gophkeeper view <key name>
-  ```
+```bash
+gophkeeper sync password
+```
 
-- **Настройки**
+##### Полное удаление аккаунта с сервера
 
-  ```bash
-  gophkeeper config global
-  gophkeeper config user
-  ```
-
-  - **Настройка email, сервера синхронизации**
-
-      ```bash
-      gophkeeper config user -e <email>
-      gophkeeper config user -s <адрес сервера для синхронизации>
-      ```
-
-- **Синхронизация с удаленным сервером**
-  - **Регистрация**:
-
-      ```bash
-      gophkeeper sync register
-      ```
-
-    - **Синхронизация**:
-
-      ```bash
-      gophkeeper sync now
-      ```
-
-    - **Смена пароля авторизации на сервере**:
-
-      ```bash
-      gophkeeper sync password
-      ```
-
-    - **Полное удаление аккаунта с сервера**:
-
-      ```bash
-      gophkeeper sync delete
-      ```
+```bash
+gophkeeper sync delete
+```
 
 ## Лицензия
 
