@@ -1,0 +1,76 @@
+/* protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    service.proto */
+syntax = "proto3";
+
+package service;
+
+option go_package = "grpc/proto";
+
+import "google/protobuf/timestamp.proto";
+
+service Data {
+  rpc List(ListRequest) returns (ListResponse);
+  rpc SyncItem(ItemSync) returns (ItemSync);
+}
+
+service Auth {
+  rpc RegisterClient (RegisterClientRequest) returns (ClientToken);
+}
+
+service User {
+  rpc SyncUser (UserSync) returns (UserSync);
+  rpc DeleteUser (NoMessage) returns (OkResponse);
+}
+
+message NoMessage{}
+
+message ItemShort {
+  string key = 1;
+  string description = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message ItemSync {
+  string key = 1;
+  string description = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  bytes blob = 5;
+}
+
+message ListRequest {
+  uint64 limit = 1;
+  uint64 offset = 2;
+  string orderby = 3;
+}
+
+message ListResponse {
+  uint64 total = 1;
+  repeated ItemShort items = 2;
+}
+
+message OkResponse {
+  bool ok = 1;
+}
+
+message RegisterClientRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message ClientToken {
+  bytes app_token = 1;
+}
+
+message UserSync {
+  string email = 1;
+  string password = 2;
+  bytes packed_key = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  string description = 6;
+}
+
+
